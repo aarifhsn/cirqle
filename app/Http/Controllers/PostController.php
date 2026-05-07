@@ -17,7 +17,7 @@ class PostController extends Controller
 
         $followingIds = $authUser->following()->pluck('following_id');
 
-        $query = Post::with(['author', 'likes', 'comments.author'])->latest();
+        $query = Post::with(['author', 'likes', 'comments.author', 'comments.replies.author'])->latest();
 
         if ($filter === 'following') {
             // only posts from people I follow + my own, respecting privacy
@@ -63,7 +63,7 @@ class PostController extends Controller
             'privacy' => $request->input('privacy'),
         ]);
 
-        $post->load(['author', 'likes', 'comments.author']);
+        $post->load(['author', 'likes', 'comments.author', 'comments.replies.author']);
 
         return response()->json($this->formatPost($post));
     }
@@ -143,7 +143,10 @@ class PostController extends Controller
 
     public function comment(Request $request, $id)
     {
-        $request->validate(['comment' => 'required|string']);
+        $request->validate([
+            'comment' => 'required|string',
+            'parent_id' => 'nullable|exists:comments,id',
+        ]);
 
         $post = Post::findOrFail($id);
 
@@ -151,24 +154,43 @@ class PostController extends Controller
             'post_id' => $id,
             'user_id' => $request->user()->id,
             'comment' => $request->comment,
-            'parent_id' => $request->input('parent_id'),
+            'parent_id' => $request->input('parent_id', null),
         ]);
 
-        $post->load('comments.author');
+        $post->load('comments.author', 'comments.replies.author');
 
-        return response()->json([
-            'comments' => $post->comments->map(fn($c) => [
-                'id' => $c->id,
-                'comment' => $c->comment,
-                'createdAt' => $c->created_at,
+        // only return top-level comments with replies nested inside
+        $comments = $post->comments
+            ->whereNull('parent_id')
+            ->values()
+            ->map(fn($c) => $this->formatComment($c));
+
+        return response()->json(['comments' => $comments]);
+    }
+
+    private function formatComment($c): array
+    {
+        return [
+            'id' => $c->id,
+            'comment' => $c->comment,
+            'createdAt' => $c->created_at,
+            'author' => [
+                'id' => $c->author->id,
+                'name' => $c->author->firstName . ' ' . $c->author->lastName,
+                'avatar' => $c->author->avatar,
+            ],
+            'replies' => $c->replies->map(fn($r) => [
+                'id' => $r->id,
+                'comment' => $r->comment,
+                'createdAt' => $r->created_at,
                 'author' => [
-                    'id' => $c->author->id,
-                    'name' => $c->author->firstName . ' ' . $c->author->lastName,
-                    'avatar' => $c->author->avatar,
-                    'username' => $c->author->username,
+                    'id' => $r->author->id,
+                    'name' => $r->author->firstName . ' ' . $r->author->lastName,
+                    'avatar' => $r->author->avatar,
                 ],
-            ]),
-        ]);
+                'replies' => [], // one level deep only
+            ])->values()->toArray(),
+        ];
     }
 
     public function formatPost(Post $post): array

@@ -1,11 +1,22 @@
 import React from "react";
 
-const Field = ({ label, children, htmlFor, error }) => {
+const Field = ({ label, children, hideLabel = false, htmlFor, error }) => {
     const id = htmlFor || getChildId(children);
     return (
         <div className="form-control">
-            {label && (
-                <label htmlFor={id} className="auth-label">
+            {!hideLabel && label && (
+                <label
+                    htmlFor={id}
+                    className="auth-label"
+                    style={{
+                        display: "block",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        color: "var(--text-secondary)",
+                        marginBottom: "0.4rem",
+                        letterSpacing: "0.02em",
+                    }}
+                >
                     {label}
                 </label>
             )}

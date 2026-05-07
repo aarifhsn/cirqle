@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 
@@ -18,7 +17,6 @@ const Logout = ({ isMenuItem = false }) => {
         } finally {
             setAuth({});
             navigate("/login");
-            toast.success("Logged out successfully!");
         }
     };
 

@@ -5,6 +5,9 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegistrationPage from "./pages/RegistrationPage";
 
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import GoogleSuccess from "./pages/GoogleSuccess";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import PrivateRoutes from "./routes/PrivateRoutes";
 
@@ -23,6 +26,12 @@ function App() {
                 <Route element={<LoginPage />} path="/login" />
                 <Route element={<RegistrationPage />} path="/register" />
                 <Route element={<NotFoundPage />} path="*" />
+                <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/google-success" element={<GoogleSuccess />} />
             </Routes>
         </>
     );

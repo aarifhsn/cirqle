@@ -6,6 +6,7 @@ use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -40,11 +41,39 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // ── Check rate limit BEFORE touching the DB ──────────────
+        $key = str($request->input('email'))->lower()->value()
+            . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts('login:' . $key, 5)) {
+            $seconds = RateLimiter::availableIn('login:' . $key);
+
+            return response()->json([
+                'message' => 'Too many login attempts. Please try again in '
+                    . ceil($seconds / 60) . ' minutes.',
+                'retry_after' => $seconds,
+            ], 429);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            // Increment the counter on failure
+            RateLimiter::hit('login:' . $key, decay: 15 * 60); // 15-min window
+
+            $attempts = RateLimiter::attempts('login:' . $key);
+            $remaining = 5 - $attempts;
+
+            return response()->json([
+                'message' => $remaining > 0
+                    ? "Invalid email or password. {$remaining} attempt(s) remaining."
+                    : 'Too many login attempts. Please try again in 15 minutes.',
+                'remaining' => max(0, $remaining),
+            ], 401);
         }
+
+        // ── Success — clear the rate limit counter ────────────────
+        RateLimiter::clear('login:' . $key);
 
         $user->tokens()->delete();
 

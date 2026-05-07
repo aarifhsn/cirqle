@@ -13,6 +13,7 @@ const EditProfileModal = ({ onClose }) => {
         lastName: state?.user?.lastName ?? "",
         bio: state?.user?.bio ?? "",
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,6 +21,7 @@ const EditProfileModal = ({ onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             const response = await api.patch(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/profile/${state?.user?.id}`,
@@ -36,85 +38,201 @@ const EditProfileModal = ({ onClose }) => {
         } catch (error) {
             console.error(error);
             toast.error("Failed to update profile!");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className="w-full max-w-md mx-4 rounded-md border border-[#3F3F3F] bg-mediumDark p-6">
+        <div
+            className="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: "rgba(0,0,0,0.75)" }}
+        >
+            <div
+                className="modal-content card w-full max-w-md"
+                style={{ padding: "1.75rem" }}
+            >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">
-                        Edit Profile
-                    </h2>
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "1.5rem",
+                        paddingBottom: "1rem",
+                        borderBottom: "1px solid var(--border)",
+                    }}
+                >
+                    <div>
+                        <h2
+                            style={{
+                                fontSize: "1.15rem",
+                                fontWeight: 700,
+                                color: "var(--text-primary)",
+                            }}
+                        >
+                            Edit Profile
+                        </h2>
+                        <p
+                            style={{
+                                fontSize: "0.8rem",
+                                color: "var(--text-muted)",
+                                marginTop: "0.15rem",
+                            }}
+                        >
+                            Update your public information
+                        </p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white text-xl"
+                        className="icon-btn"
+                        style={{ width: 32, height: 32 }}
                     >
-                        ✕
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2.5}
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-1">
-                            First Name
-                        </label>
-                        <input
-                            type="text"
-                            name="firstName"
-                            value={form.firstName}
-                            onChange={handleChange}
-                            className="auth-input"
-                            required
-                        />
+                <form onSubmit={handleSubmit}>
+                    {/* Name row */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "0.75rem",
+                            marginBottom: "1rem",
+                        }}
+                    >
+                        <div>
+                            <label
+                                htmlFor="firstName"
+                                className="auth-label"
+                                style={{
+                                    marginBottom: "0.4rem",
+                                    display: "block",
+                                }}
+                            >
+                                First Name
+                            </label>
+                            <input
+                                type="text"
+                                id="firstName"
+                                name="firstName"
+                                value={form.firstName}
+                                onChange={handleChange}
+                                className="auth-input"
+                                required
+                                placeholder="John"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="lastName"
+                                className="auth-label"
+                                style={{
+                                    marginBottom: "0.4rem",
+                                    display: "block",
+                                }}
+                            >
+                                Last Name
+                            </label>
+                            <input
+                                type="text"
+                                id="lastName"
+                                name="lastName"
+                                value={form.lastName}
+                                onChange={handleChange}
+                                className="auth-input"
+                                placeholder="Doe"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-1">
-                            Last Name
-                        </label>
-                        <input
-                            type="text"
-                            name="lastName"
-                            value={form.lastName}
-                            onChange={handleChange}
-                            className="auth-input"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-1">
+                    {/* Bio */}
+                    <div style={{ marginBottom: "1.25rem" }}>
+                        <label
+                            htmlFor="bio"
+                            className="auth-label"
+                            style={{ marginBottom: "0.4rem", display: "block" }}
+                        >
                             Bio
                         </label>
                         <textarea
+                            id="bio"
                             name="bio"
                             value={form.bio}
                             onChange={handleChange}
                             rows={4}
                             maxLength={500}
-                            className="auth-input resize-none"
-                            placeholder="Write something about yourself..."
+                            className="auth-input"
+                            style={{ resize: "none", lineHeight: 1.6 }}
+                            placeholder="Write something about yourself…"
                         />
-                        <p className="text-xs text-gray-500 mt-1 text-right">
-                            {form.bio.length}/500
-                        </p>
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                marginTop: "0.3rem",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: "0.72rem",
+                                    color:
+                                        form.bio.length > 450
+                                            ? "var(--danger)"
+                                            : "var(--text-muted)",
+                                }}
+                            >
+                                {form.bio.length} / 500
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    {/* Action buttons */}
+                    <div style={{ display: "flex", gap: "0.75rem" }}>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-2 rounded-md bg-lighterDark text-white hover:bg-[#2f3136] transition-all"
+                            className="btn-ghost"
+                            style={{ flex: 1 }}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 py-2 rounded-md bg-lwsGreen text-deepDark font-bold hover:opacity-90 transition-all"
+                            disabled={isSubmitting}
+                            className="btn-primary"
+                            style={{ flex: 1 }}
                         >
-                            Save Changes
+                            {isSubmitting ? (
+                                <span
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.5rem",
+                                    }}
+                                >
+                                    <span
+                                        className="spinner"
+                                        style={{ width: 16, height: 16 }}
+                                    />
+                                    Saving…
+                                </span>
+                            ) : (
+                                "Save Changes"
+                            )}
                         </button>
                     </div>
                 </form>

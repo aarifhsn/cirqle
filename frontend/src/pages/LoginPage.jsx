@@ -7,7 +7,7 @@ const LoginPage = () => {
         <main className="auth-bg flex min-h-screen items-center justify-center py-8 px-4">
             <div className="w-full max-w-5xl">
                 <div className="grid items-center gap-10 lg:grid-cols-2">
-                    {/* ── Left: Branding ── */}
+                    {/* ── Left: Branding (desktop only) ── */}
                     <div className="hidden lg:flex flex-col justify-center">
                         <img
                             className="mb-10 max-w-xs opacity-90"
@@ -33,7 +33,6 @@ const LoginPage = () => {
                             about, and discover what's happening around you.
                         </p>
 
-                        {/* Feature pills */}
                         <div className="flex flex-wrap gap-2 mt-6">
                             {[
                                 "Posts & Reactions",
@@ -49,30 +48,19 @@ const LoginPage = () => {
 
                     {/* ── Right: Form card ── */}
                     <div>
-                        <div className="card" style={{ padding: "2rem 2rem" }}>
-                            {/* Mobile branding */}
-                            <div className="lg:hidden mb-6">
-                                <h1
-                                    className="font-display text-3xl font-bold"
+                        <div className="card" style={{ padding: "2rem" }}>
+                            {/* Unified header — works at all breakpoints */}
+                            <div className="mb-6">
+                                {/* Logo shown on mobile, hidden on desktop (desktop has left-panel branding) */}
+                                <p
+                                    className="lg:hidden font-display text-2xl font-bold mb-1"
                                     style={{ color: "var(--text-primary)" }}
                                 >
                                     Cirqle
                                     <span style={{ color: "var(--accent)" }}>
                                         .
                                     </span>
-                                </h1>
-                                <p
-                                    style={{
-                                        color: "var(--text-secondary)",
-                                        fontSize: "0.9rem",
-                                        marginTop: "0.25rem",
-                                    }}
-                                >
-                                    Sign in to your account
                                 </p>
-                            </div>
-
-                            <div className="hidden lg:block mb-6">
                                 <h2
                                     style={{
                                         fontSize: "1.4rem",

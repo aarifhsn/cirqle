@@ -16,25 +16,45 @@ const Avatar = ({ user, size = "md", className = "" }) => {
         flexShrink: 0,
     };
 
-    if (user?.avatar) {
+    // check avatar is a valid non-empty string
+    const hasAvatar =
+        user?.avatar && user.avatar.trim() !== "" && user.avatar !== "null";
+
+    const avatarSrc = hasAvatar
+        ? user.avatar.startsWith("http")
+            ? user.avatar
+            : `${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`
+        : null;
+
+    // derive initials from firstName/lastName or full name string
+    const getInitials = () => {
+        if (user?.firstName || user?.lastName) {
+            return `${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`;
+        }
+        if (user?.name) {
+            const parts = user.name.trim().split(" ");
+            return (parts[0]?.[0] || "") + (parts[1]?.[0] || "");
+        }
+        return "";
+    };
+
+    if (hasAvatar) {
         return (
             <img
-                src={`${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`}
+                src={avatarSrc}
                 style={style}
                 className={className}
-                alt={user?.firstName || "avatar"}
+                alt={user?.firstName || user?.name || "avatar"}
+                onError={(e) => {
+                    // if image fails to load, swap to initials div
+                    e.target.style.display = "none";
+                    e.target.nextSibling?.style.removeProperty("display");
+                }}
             />
         );
     }
 
-    let initials = "";
-    if (user?.firstName || user?.lastName) {
-        initials = `${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`;
-    } else if (user?.name) {
-        const parts = user.name.trim().split(" ");
-        initials =
-            (parts[0]?.[0] || "") + (parts.length > 1 ? parts[1]?.[0] : "");
-    }
+    const initials = getInitials();
 
     return (
         <div
