@@ -12,6 +12,7 @@ import { usePost } from "../../hooks/usePost";
 import { getDateDifferenceFromNow } from "../../utils";
 import Avatar from "../common/Avatar";
 import PostEntry from "./PostEntry";
+import PrivacyIcon from "./PrivacyIcon";
 
 const PostHeader = ({ post }) => {
     const [showAction, setShowAction] = useState(false);
@@ -21,8 +22,6 @@ const PostHeader = ({ post }) => {
     const profileLink = `/${post?.author?.username}`;
     const { dispatch } = usePost();
     const { api } = useAxios();
-
-    console.log("PostHeader render", { post });
 
     const handleDeletePost = async () => {
         const confirmed = window.confirm(
@@ -57,12 +56,16 @@ const PostHeader = ({ post }) => {
                         <Avatar user={post?.author} size="md" />
                     </Link>
                     <div>
-                        <Link
-                            to={profileLink}
-                            className="text-lg lg:text-xl hover:underline hover:text-lwsGreen transition-all"
-                        >
-                            {post?.author?.name}
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                to={profileLink}
+                                className="text-lg lg:text-xl hover:underline hover:text-lwsGreen transition-all"
+                            >
+                                {post?.author?.name}
+                            </Link>
+
+                            <PrivacyIcon privacy={post?.privacy} />
+                        </div>
                         <div className="flex items-center gap-1.5">
                             <img src={TimeIcon} alt="time" />
                             <span className="text-sm text-gray-400 lg:text-base">

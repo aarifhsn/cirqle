@@ -13,15 +13,12 @@ import Avatar from "./Avatar";
 const Header = () => {
     const { auth } = useAuth();
     const { state } = useProfile();
+    const profileUser = state?.user;
+    console.log("Header render - profileUser:", profileUser);
     const { api } = useAxios();
     const navigate = useNavigate();
 
     const user = auth?.user;
-    const profileUser = state?.user;
-
-    // use latest avatar — if i updated avatar in profile, reflect in header
-    const displayAvatar =
-        profileUser?.id === user?.id ? profileUser?.avatar : user?.avatar;
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
@@ -75,11 +72,11 @@ const Header = () => {
         }
     };
 
-    const handleSearchSelect = (userId) => {
+    const handleSearchSelect = (username) => {
         setSearchQuery("");
         setSearchResults([]);
         setShowSearch(false);
-        navigate(userId === user?.id ? "/me" : `/users/${userId}`);
+        navigate(`/${username}`);
     };
 
     return (
@@ -138,7 +135,7 @@ const Header = () => {
                                 <button
                                     key={result.id}
                                     onClick={() =>
-                                        handleSearchSelect(result.id)
+                                        handleSearchSelect(result.username)
                                     }
                                     className="flex items-center gap-3 w-full px-4 py-3 hover:bg-[#27292F] transition-all"
                                 >

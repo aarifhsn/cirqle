@@ -41,6 +41,7 @@ class PostController extends Controller
         $request->validate([
             'content' => 'required|string',
             'photo' => 'nullable|image|max:4096',
+            'privacy' => 'required|in:public,followers,only_me',
         ]);
 
         $imagePath = null;
@@ -52,6 +53,7 @@ class PostController extends Controller
             'user_id' => $request->user()->id,
             'content' => $request->input('content'),
             'image' => $imagePath,
+            'privacy' => $request->input('privacy'),
         ]);
 
         $post->load(['author', 'likes', 'comments.author']);
@@ -70,6 +72,7 @@ class PostController extends Controller
         $request->validate([
             'content' => 'required|string',
             'photo' => 'nullable|image|max:4096',
+            'privacy' => 'required|in:public,followers,only_me',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -80,6 +83,7 @@ class PostController extends Controller
         }
 
         $post->content = $request->content;
+        $post->privacy = $request->input('privacy');
         $post->save();
         $post->load(['author', 'likes', 'comments.author']);
 
@@ -164,6 +168,7 @@ class PostController extends Controller
         return [
             'id' => $post->id,
             'content' => $post->content,
+            'privacy' => $post->privacy,
             'image' => $post->image,
             'createAt' => $post->created_at,
             'author' => [

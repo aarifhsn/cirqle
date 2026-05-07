@@ -8,6 +8,7 @@ import useAxios from "../../hooks/useAxios";
 import { usePost } from "../../hooks/usePost";
 import { useProfile } from "../../hooks/useProfile";
 import Field from "../common/Field";
+import PrivacyIcon from "./PrivacyIcon";
 
 const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     const { auth } = useAuth();
@@ -28,10 +29,12 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     const {
         register,
         handleSubmit,
+        watch,
         formState: { errors },
     } = useForm({
         defaultValues: {
             content: postToEdit?.content ?? "",
+            privacy: postToEdit?.privacy ?? "public",
         },
     });
 
@@ -52,6 +55,7 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             if (photoFile) {
                 data.append("photo", photoFile);
             }
+            data.append("privacy", formData.privacy);
 
             let response;
 
@@ -124,8 +128,9 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         />
                     )}
                     <div>
-                        <h6 className="text-lg lg:text-xl">
+                        <h6 className="text-lg lg:text-xl flex items-center gap-2">
                             {user?.firstName} {user?.lastName}
+                            <PrivacyIcon privacy={watch("privacy")} />
                         </h6>
                         <span className="text-sm text-gray-400 lg:text-base">
                             {/* add a privacy selector dropdown before submit  */}
