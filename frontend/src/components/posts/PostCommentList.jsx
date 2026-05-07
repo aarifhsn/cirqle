@@ -1,13 +1,16 @@
+// PostCommentList.jsx
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getDateDifferenceFromNow } from "../../utils";
 import Avatar from "../common/Avatar";
 
-const PostCommentList = ({ comments }) => {
+export const PostCommentList = ({ comments }) => {
     const { auth } = useAuth();
 
     return (
-        <div className="space-y-4 divide-y divide-lighterDark">
+        <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+        >
             {comments &&
                 comments.map((comment) => {
                     const isMe = comment?.author?.id === auth?.user?.id;
@@ -17,30 +20,85 @@ const PostCommentList = ({ comments }) => {
 
                     return (
                         <div
-                            className="flex items-start gap-3 pt-4"
                             key={comment.id}
+                            style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "0.625rem",
+                            }}
                         >
-                            <Link to={profileLink}>
+                            <Link to={profileLink} style={{ flexShrink: 0 }}>
                                 <Avatar user={comment?.author} size="sm" />
                             </Link>
-                            <div>
-                                <div className="flex gap-1 text-xs lg:text-sm items-center">
+                            <div
+                                style={{
+                                    background: "var(--bg-input)",
+                                    borderRadius: "var(--r-md)",
+                                    padding: "0.5rem 0.875rem",
+                                    flex: 1,
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "baseline",
+                                        gap: "0.5rem",
+                                        flexWrap: "wrap",
+                                    }}
+                                >
                                     <Link
                                         to={profileLink}
-                                        className="font-semibold hover:underline hover:text-lwsGreen"
+                                        style={{
+                                            fontWeight: 600,
+                                            fontSize: "0.82rem",
+                                            color: "var(--text-primary)",
+                                            textDecoration: "none",
+                                        }}
                                     >
-                                        {comment?.author?.name}:
+                                        {comment?.author?.name}
                                     </Link>
-                                    <span>{comment.comment}</span>
-                                    <span className="ml-4 text-[11px] text-gray-300 hover:underline cursor-pointer grow">
-                                        Reply
+                                    <span
+                                        style={{
+                                            fontSize: "0.875rem",
+                                            color: "var(--text-primary)",
+                                        }}
+                                    >
+                                        {comment.comment}
                                     </span>
                                 </div>
-                                <span className="text-[11px] text-gray-500 mt-0.5 block">
-                                    {getDateDifferenceFromNow(
-                                        comment?.createdAt,
-                                    )}{" "}
-                                </span>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.75rem",
+                                        marginTop: "0.25rem",
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontSize: "0.72rem",
+                                            color: "var(--text-muted)",
+                                        }}
+                                    >
+                                        {getDateDifferenceFromNow(
+                                            comment?.createdAt,
+                                        )}
+                                    </span>
+                                    <button
+                                        style={{
+                                            fontSize: "0.72rem",
+                                            color: "var(--text-muted)",
+                                            background: "none",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            fontWeight: 600,
+                                            padding: 0,
+                                            fontFamily: "'DM Sans', sans-serif",
+                                        }}
+                                    >
+                                        Reply
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     );

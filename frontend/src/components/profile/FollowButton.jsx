@@ -7,6 +7,7 @@ import { useProfile } from "../../hooks/useProfile";
 const FollowButton = ({ userId }) => {
     const { state, dispatch } = useProfile();
     const [isFollowing, setIsFollowing] = useState(state?.user?.isFollowing);
+    const [isHovered, setIsHovered] = useState(false);
     const { api } = useAxios();
 
     const handleFollow = async () => {
@@ -14,7 +15,6 @@ const FollowButton = ({ userId }) => {
             const response = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/users/${userId}/follow`,
             );
-
             if (response.status === 200) {
                 setIsFollowing(response.data.isFollowing);
                 dispatch({
@@ -25,23 +25,42 @@ const FollowButton = ({ userId }) => {
             }
         } catch (error) {
             console.error(error);
-            console.error(error.response?.data);
             toast.error(
                 error.response?.data?.message ?? "Failed to update follow!",
             );
         }
     };
 
+    if (isFollowing) {
+        return (
+            <button
+                onClick={handleFollow}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="btn-ghost"
+                style={{
+                    fontSize: "0.85rem",
+                    borderColor: isHovered
+                        ? "var(--danger)"
+                        : "var(--border-strong)",
+                    color: isHovered
+                        ? "var(--danger)"
+                        : "var(--text-secondary)",
+                    transition: "all 150ms ease",
+                }}
+            >
+                {isHovered ? "Unfollow" : "Following ✓"}
+            </button>
+        );
+    }
+
     return (
         <button
             onClick={handleFollow}
-            className={`px-6 py-2 rounded-md font-semibold transition-all ${
-                isFollowing
-                    ? "bg-lighterDark text-white hover:bg-red-500"
-                    : "bg-lwsGreen text-deepDark hover:opacity-90"
-            }`}
+            className="btn-primary"
+            style={{ fontSize: "0.85rem" }}
         >
-            {isFollowing ? "Unfollow" : "Follow"}
+            + Follow
         </button>
     );
 };

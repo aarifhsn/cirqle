@@ -15,7 +15,10 @@ const PrivateRoutes = () => {
                     <PostProvider>
                         <ProfileProvider>
                             <Header />
-                            <main className="mx-auto max-w-[1020px] py-8">
+                            <main
+                                className="mx-auto max-w-[1020px] py-8"
+                                style={{ margin: "0 auto" }}
+                            >
                                 <div className="container">
                                     <Outlet />
                                 </div>

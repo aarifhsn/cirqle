@@ -13,25 +13,32 @@ class PostController extends Controller
     public function index(Request $request)
     {
         $authUser = $request->user();
+        $filter = $request->query('filter', 'public');
 
-        // get IDs of users I follow
         $followingIds = $authUser->following()->pluck('following_id');
 
-        // include my own posts too
-        $followingIds->push($authUser->id);
+        $query = Post::with(['author', 'likes', 'comments.author'])->latest();
 
-
-        $posts = Post::with(['author', 'likes', 'comments.author'])
-            ->where(function ($q) use ($authUser, $followingIds) {
+        if ($filter === 'following') {
+            // only posts from people I follow + my own, respecting privacy
+            $query->whereIn('user_id', $followingIds)
+                ->where(function ($q) use ($authUser, $followingIds) {
+                    $q->where('privacy', 'public')
+                        ->orWhere('privacy', 'followers');
+                });
+        } else {
+            // public feed — all public posts + followers-only from people I follow + my own
+            $query->where(function ($q) use ($authUser, $followingIds) {
                 $q->where('privacy', 'public')
                     ->orWhere('user_id', $authUser->id)
                     ->orWhere(function ($q2) use ($followingIds) {
                         $q2->where('privacy', 'followers')
                             ->whereIn('user_id', $followingIds);
                     });
-            })
-            ->latest()->get()
-            ->map(fn($post) => $this->formatPost($post));
+            });
+        }
+
+        $posts = $query->get()->map(fn($post) => $this->formatPost($post));
 
         return response()->json($posts);
     }
@@ -153,6 +160,7 @@ class PostController extends Controller
             'comments' => $post->comments->map(fn($c) => [
                 'id' => $c->id,
                 'comment' => $c->comment,
+                'createdAt' => $c->created_at,
                 'author' => [
                     'id' => $c->author->id,
                     'name' => $c->author->firstName . ' ' . $c->author->lastName,

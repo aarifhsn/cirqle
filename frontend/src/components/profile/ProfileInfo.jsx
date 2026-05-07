@@ -26,7 +26,7 @@ const ProfileInfo = () => {
 
         try {
             const response = await api.post(
-                `${import.meta.env.VITE_SERVER_BASE_URL}/profile/${state?.user?.id}/cover`,
+                `/profile/${state?.user?.id}/cover`,
                 formData,
             );
             if (response.status === 200) {
@@ -58,39 +58,18 @@ const ProfileInfo = () => {
 
                 {/* Cover upload button — only for my profile */}
                 {isMe && (
-                    <div className="absolute bottom-3 right-3">
-                        <label
-                            htmlFor="cover_upload"
+                    <div className="absolute bottom-3 right-3 z-20">
+                        <button
+                            type="button"
+                            onClick={() => coverRef.current.click()}
                             className="flex items-center gap-2 cursor-pointer bg-black/50 hover:bg-black/70 text-white text-sm px-3 py-1.5 rounded-md transition-all"
                         >
-                            <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            {state?.user?.cover_photo
-                                ? "Change Cover"
-                                : "Add Cover"}
-                        </label>
+                            Add Cover
+                        </button>
                         <input
-                            id="cover_upload"
                             type="file"
                             accept="image/*"
-                            className="hidden"
+                            style={{ display: "none" }}
                             ref={coverRef}
                             onChange={handleCoverUpload}
                         />

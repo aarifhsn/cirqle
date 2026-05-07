@@ -20,10 +20,8 @@ const ProfileImage = () => {
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const formData = new FormData();
         formData.append("avatar", file);
-
         try {
             const response = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/profile/${state?.user?.id}/avatar`,
@@ -43,33 +41,89 @@ const ProfileImage = () => {
         }
     };
 
+    const size = 88;
+
     return (
-        <div className="relative w-24 h-24 lg:w-32 lg:h-32 rounded-full ring-4 ring-[#1E1F24]">
+        <div
+            style={{
+                width: size,
+                height: size,
+                borderRadius: "50%",
+                border: "3px solid var(--bg-card)",
+                outline: "2px solid var(--accent)",
+                position: "relative",
+                flexShrink: 0,
+                cursor: isMe ? "pointer" : "default",
+            }}
+            onClick={handleImageUpload}
+        >
             {state?.user?.avatar ? (
                 <img
-                    className="w-full h-full rounded-full object-cover"
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        display: "block",
+                    }}
                     src={`${import.meta.env.VITE_STORAGE_URL}/${state.user.avatar}`}
                     alt={state?.user?.firstName}
                 />
             ) : (
-                <div className="w-full h-full rounded-full bg-lwsGreen flex items-center justify-center text-deepDark font-bold text-2xl">
+                <div
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        background: "var(--accent-soft)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "1.75rem",
+                        fontWeight: 700,
+                        color: "var(--accent)",
+                    }}
+                >
                     {state?.user?.firstName?.[0]}
                     {state?.user?.lastName?.[0]}
                 </div>
             )}
 
-            {/* Edit overlay — only for my profile */}
+            {/* Camera overlay on hover */}
             {isMe && (
                 <>
-                    <button
-                        onClick={handleImageUpload}
-                        className="absolute inset-0 rounded-full bg-black/40 opacity-0 hover:opacity-100 transition-all flex items-center justify-center"
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            borderRadius: "50%",
+                            background: "rgba(0,0,0,0)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "background 150ms ease",
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background =
+                                "rgba(0,0,0,0.45)";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(0,0,0,0)";
+                        }}
                     >
                         <svg
-                            className="w-6 h-6 text-white"
+                            style={{
+                                width: 22,
+                                height: 22,
+                                color: "#fff",
+                                opacity: 0,
+                            }}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = 1;
+                            }}
                         >
                             <path
                                 strokeLinecap="round"
@@ -84,7 +138,7 @@ const ProfileImage = () => {
                                 d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                             />
                         </svg>
-                    </button>
+                    </div>
                     <input
                         type="file"
                         ref={fileUploaderRef}

@@ -26,7 +26,8 @@ const Logout = ({ isMenuItem = false }) => {
         return (
             <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-lighterDark hover:text-red-300 transition-all"
+                className="action-menu-item"
+                style={{ color: "var(--danger)" }}
             >
                 <svg
                     className="w-4 h-4"
@@ -41,17 +42,14 @@ const Logout = ({ isMenuItem = false }) => {
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                 </svg>
-                Logout
+                Sign Out
             </button>
         );
     }
 
     return (
-        <button
-            onClick={handleLogout}
-            className="icon-btn text-red-400 hover:text-red-300"
-        >
-            Logout
+        <button onClick={handleLogout} className="btn-danger">
+            Sign Out
         </button>
     );
 };

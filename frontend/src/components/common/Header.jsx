@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Logo from "../../assets/images/logo.svg";
+import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 import { useProfile } from "../../hooks/useProfile";
 import Logout from "../auth/Logout";
-
-import HomeIcon from "../../assets/icons/home.svg";
-import Notification from "../../assets/icons/notification.svg";
-import Logo from "../../assets/images/logo.svg";
 import Avatar from "./Avatar";
 
 const Header = () => {
     const { auth } = useAuth();
     const { state } = useProfile();
-    const profileUser = state?.user;
-    console.log("Header render - profileUser:", profileUser);
     const { api } = useAxios();
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     const user = auth?.user;
 
@@ -24,12 +21,11 @@ const Header = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [notificationCount] = useState(3); // placeholder until notifications feature
+    const [notificationCount] = useState(3);
 
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
 
-    // close dropdown and search on outside click
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (
@@ -48,17 +44,14 @@ const Header = () => {
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // search users
     const handleSearch = async (e) => {
         const query = e.target.value;
         setSearchQuery(query);
-
         if (query.trim().length < 2) {
             setSearchResults([]);
             setShowSearch(false);
             return;
         }
-
         try {
             const response = await api.get(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/users/search?q=${query}`,
@@ -80,22 +73,42 @@ const Header = () => {
     };
 
     return (
-        <nav className="sticky top-0 z-50 border-b border-[#3F3F3F] bg-[#1E1F24] shadow-lg">
-            <div className="container flex items-center justify-between gap-4 py-3">
-                {/* Logo */}
-                <Link to="/" className="shrink-0">
+        <nav
+            className="sticky top-0 z-50 glass"
+            style={{
+                borderBottom: "1px solid var(--border)",
+                boxShadow: "var(--shadow-sm)",
+            }}
+        >
+            <div className="container flex items-center justify-between gap-3 py-3">
+                {/* ── Logo ───────────────────────────────────── */}
+                <Link to="/" className="shrink-0 flex items-center gap-2">
                     <img
-                        className="max-w-[90px] lg:max-w-[120px]"
+                        className="max-w-[80px] lg:max-w-[100px]"
                         src={Logo}
-                        alt="logo"
+                        alt="Cirqle"
                     />
                 </Link>
 
-                {/* Search Bar */}
-                <div className="relative flex-1 max-w-md" ref={searchRef}>
-                    <div className="flex items-center gap-2 rounded-full bg-[#27292F] px-4 py-2">
+                {/* ── Search ─────────────────────────────────── */}
+                <div className="relative flex-1 max-w-sm" ref={searchRef}>
+                    <div
+                        className="flex items-center gap-2 px-3 py-2 rounded-full"
+                        style={{
+                            background: "var(--bg-input)",
+                            border: "1px solid var(--border-strong)",
+                            transition:
+                                "border-color var(--duration) var(--ease)",
+                        }}
+                        onFocus={() => {}}
+                    >
+                        {/* Search icon */}
                         <svg
-                            className="w-4 h-4 text-gray-400 shrink-0"
+                            style={{
+                                color: "var(--text-muted)",
+                                flexShrink: 0,
+                            }}
+                            className="w-4 h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -111,8 +124,15 @@ const Header = () => {
                             type="text"
                             value={searchQuery}
                             onChange={handleSearch}
-                            placeholder="Search people..."
-                            className="w-full bg-transparent text-sm text-white placeholder-gray-400 focus:outline-none"
+                            placeholder="Search people…"
+                            style={{
+                                background: "transparent",
+                                color: "var(--text-primary)",
+                                fontSize: "0.875rem",
+                                outline: "none",
+                                width: "100%",
+                            }}
+                            className="placeholder-[var(--text-muted)]"
                         />
                         {searchQuery && (
                             <button
@@ -121,31 +141,61 @@ const Header = () => {
                                     setSearchResults([]);
                                     setShowSearch(false);
                                 }}
-                                className="text-gray-400 hover:text-white"
+                                style={{
+                                    color: "var(--text-muted)",
+                                    flexShrink: 0,
+                                }}
+                                className="hover:text-[var(--text-primary)] transition-colors"
                             >
-                                ✕
+                                <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2.5}
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
                             </button>
                         )}
                     </div>
 
-                    {/* Search Results Dropdown */}
+                    {/* Search results dropdown */}
                     {showSearch && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 rounded-md border border-[#3F3F3F] bg-[#1E1F24] shadow-xl overflow-hidden">
+                        <div
+                            className="absolute top-full left-0 right-0 mt-2 overflow-hidden action-modal-container"
+                            style={{ zIndex: 60 }}
+                        >
                             {searchResults.map((result) => (
                                 <button
                                     key={result.id}
                                     onClick={() =>
                                         handleSearchSelect(result.username)
                                     }
-                                    className="flex items-center gap-3 w-full px-4 py-3 hover:bg-[#27292F] transition-all"
+                                    className="action-menu-item"
                                 >
                                     <Avatar user={result} size="sm" />
                                     <div className="text-left">
-                                        <p className="text-sm font-medium text-white">
+                                        <p
+                                            style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                color: "var(--text-primary)",
+                                            }}
+                                        >
                                             {result.firstName} {result.lastName}
                                         </p>
-                                        <p className="text-xs text-gray-400">
-                                            {result.email}
+                                        <p
+                                            style={{
+                                                fontSize: "0.75rem",
+                                                color: "var(--text-muted)",
+                                            }}
+                                        >
+                                            @{result.username}
                                         </p>
                                     </div>
                                 </button>
@@ -153,53 +203,60 @@ const Header = () => {
                         </div>
                     )}
 
-                    {/* No results */}
                     {showSearch &&
                         searchQuery.length >= 2 &&
                         searchResults.length === 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-2 rounded-md border border-[#3F3F3F] bg-[#1E1F24] shadow-xl px-4 py-3 text-sm text-gray-400">
+                            <div
+                                className="absolute top-full left-0 right-0 mt-2 px-4 py-3 action-modal-container"
+                                style={{
+                                    fontSize: "0.875rem",
+                                    color: "var(--text-muted)",
+                                }}
+                            >
                                 No users found for "{searchQuery}"
                             </div>
                         )}
                 </div>
 
-                {/* Right Side */}
-                <div className="flex items-center gap-3 shrink-0">
-                    {/* Home */}
+                {/* ── Right actions ──────────────────────────── */}
+                <div className="flex items-center gap-2 shrink-0">
+                    {/* Home link — desktop */}
                     <Link
                         to="/"
-                        className="hidden sm:flex items-center gap-2 rounded-md bg-lighterDark px-4 py-2 text-sm font-medium text-white hover:bg-[#2f3136] transition-all"
+                        className="hidden sm:flex items-center gap-1.5 btn-ghost"
+                        style={{ fontSize: "0.85rem" }}
                     >
-                        <img src={HomeIcon} alt="Home" className="w-4 h-4" />
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75v-5.25h-4.5V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"
+                            />
+                        </svg>
                         <span>Home</span>
                     </Link>
 
-                    {/* Notification Bell */}
-                    <button className="relative p-2 rounded-md bg-lighterDark hover:bg-[#2f3136] transition-all">
-                        <img
-                            src={Notification}
-                            alt="Notification"
-                            className="w-5 h-5"
-                        />
-                        {notificationCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-[10px] font-bold text-white">
-                                {notificationCount > 9
-                                    ? "9+"
-                                    : notificationCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Avatar Dropdown */}
-                    <div className="relative" ref={dropdownRef}>
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center gap-2 rounded-full p-1 hover:bg-lighterDark transition-all"
-                        >
-                            <Avatar user={user} size="md" />
-                            {/* Dropdown Arrow */}
+                    {/* ── Theme toggle ── */}
+                    <button
+                        onClick={toggleTheme}
+                        className="icon-btn"
+                        title={
+                            theme === "dark"
+                                ? "Switch to light mode"
+                                : "Switch to dark mode"
+                        }
+                        aria-label="Toggle theme"
+                    >
+                        {theme === "dark" ? (
+                            /* Sun icon */
                             <svg
-                                className={`w-3 h-3 text-gray-400 transition-transform ${showDropdown ? "rotate-180" : ""}`}
+                                className="w-4 h-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -208,29 +265,140 @@ const Header = () => {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
+                                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z"
+                                />
+                            </svg>
+                        ) : (
+                            /* Moon icon */
+                            <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"
+                                />
+                            </svg>
+                        )}
+                    </button>
+
+                    {/* ── Notification bell ── */}
+                    <button
+                        className="icon-btn relative"
+                        aria-label="Notifications"
+                    >
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                            />
+                        </svg>
+                        {notificationCount > 0 && (
+                            <span
+                                className="notif-badge absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full text-white"
+                                style={{
+                                    background: "var(--danger)",
+                                    fontSize: "0.6rem",
+                                    fontWeight: 700,
+                                }}
+                            >
+                                {notificationCount > 9
+                                    ? "9+"
+                                    : notificationCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* ── Avatar dropdown ── */}
+                    <div className="relative" ref={dropdownRef}>
+                        <button
+                            onClick={() => setShowDropdown(!showDropdown)}
+                            className="flex items-center gap-1.5 p-1 rounded-full transition-all"
+                            style={{
+                                background: showDropdown
+                                    ? "var(--bg-elevated)"
+                                    : "transparent",
+                            }}
+                        >
+                            <Avatar user={user} size="md" />
+                            <svg
+                                className="w-3 h-3 transition-transform duration-200"
+                                style={{
+                                    color: "var(--text-muted)",
+                                    transform: showDropdown
+                                        ? "rotate(180deg)"
+                                        : "rotate(0deg)",
+                                }}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
                                     d="M19 9l-7 7-7-7"
                                 />
                             </svg>
                         </button>
 
-                        {/* Dropdown Menu */}
                         {showDropdown && (
-                            <div className="absolute right-0 top-full mt-2 w-56 rounded-md border border-[#3F3F3F] bg-[#1E1F24] shadow-xl overflow-hidden">
-                                {/* User Info */}
-                                <div className="px-4 py-3 border-b border-[#3F3F3F]">
-                                    <p className="text-sm font-semibold text-white">
-                                        {user?.firstName} {user?.lastName}
-                                    </p>
-                                    <p className="text-xs text-gray-400 truncate">
-                                        {user?.email}
-                                    </p>
+                            <div
+                                className="absolute right-0 top-full mt-2 w-56 overflow-hidden action-modal-container"
+                                style={{ zIndex: 60 }}
+                            >
+                                {/* User info header */}
+                                <div
+                                    className="px-4 py-3 flex items-center gap-3"
+                                    style={{
+                                        borderBottom: "1px solid var(--border)",
+                                    }}
+                                >
+                                    <Avatar user={user} size="sm" />
+                                    <div className="overflow-hidden">
+                                        <p
+                                            style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 600,
+                                                color: "var(--text-primary)",
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {user?.firstName} {user?.lastName}
+                                        </p>
+                                        <p
+                                            style={{
+                                                fontSize: "0.72rem",
+                                                color: "var(--text-muted)",
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            @{user?.username}
+                                        </p>
+                                    </div>
                                 </div>
-                                {/* Menu Items */}
+
+                                {/* Menu items */}
                                 <div className="py-1">
                                     <Link
                                         to={`/${user?.username}`}
                                         onClick={() => setShowDropdown(false)}
-                                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-lighterDark hover:text-white transition-all"
+                                        className="action-menu-item"
                                     >
                                         <svg
                                             className="w-4 h-4"
@@ -248,22 +416,78 @@ const Header = () => {
                                         My Profile
                                     </Link>
 
+                                    {/* Home — mobile only */}
                                     <Link
                                         to="/"
                                         onClick={() => setShowDropdown(false)}
-                                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-lighterDark hover:text-white transition-all sm:hidden"
+                                        className="action-menu-item sm:hidden"
                                     >
-                                        <img
-                                            src={HomeIcon}
-                                            alt="Home"
+                                        <svg
                                             className="w-4 h-4"
-                                        />
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75v-5.25h-4.5V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"
+                                            />
+                                        </svg>
                                         Home
                                     </Link>
 
-                                    <div className="border-t border-[#3F3F3F] mt-1 pt-1">
-                                        <Logout isMenuItem />
-                                    </div>
+                                    {/* Theme toggle in dropdown */}
+                                    <button
+                                        onClick={() => {
+                                            toggleTheme();
+                                            setShowDropdown(false);
+                                        }}
+                                        className="action-menu-item"
+                                    >
+                                        {theme === "dark" ? (
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z"
+                                                />
+                                            </svg>
+                                        ) : (
+                                            <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"
+                                                />
+                                            </svg>
+                                        )}
+                                        {theme === "dark"
+                                            ? "Light Mode"
+                                            : "Dark Mode"}
+                                    </button>
+
+                                    <div
+                                        style={{
+                                            height: "1px",
+                                            background: "var(--border)",
+                                            margin: "4px 0",
+                                        }}
+                                    />
+                                    <Logout isMenuItem />
                                 </div>
                             </div>
                         )}

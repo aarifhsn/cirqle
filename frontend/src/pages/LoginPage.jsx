@@ -1,38 +1,118 @@
-import AuthIllustration from "../assets/images/auth_illustration.png";
 import { Link } from "react-router-dom";
+import AuthIllustration from "../assets/images/auth_illustration.png";
 import LoginForm from "../components/auth/LoginForm";
+
 const LoginPage = () => {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-deepDark py-8">
-            <div className="max-w-[1368px] flex-1">
-                <div className="container grid items-center gap-8 lg:grid-cols-2">
-                    <div>
+        <main className="auth-bg flex min-h-screen items-center justify-center py-8 px-4">
+            <div className="w-full max-w-5xl">
+                <div className="grid items-center gap-10 lg:grid-cols-2">
+                    {/* ── Left: Branding ── */}
+                    <div className="hidden lg:flex flex-col justify-center">
                         <img
-                            className="mb-12 max-w-full max-lg:hidden"
+                            className="mb-10 max-w-xs opacity-90"
                             src={AuthIllustration}
-                            alt="auth_illustration"
+                            alt="Cirqle illustration"
                         />
-                        <div>
-                            <h1 className="mb-3 text-4xl font-bold lg:text-[40px]">
-                                Facehook
-                            </h1>
-                            <p className="max-w-[452px] text-gray-600/95 lg:text-lg">
-                                Create a social media app with features like,
-                                showing the post, post details, reactions,
-                                comments and profile.
-                            </p>
+                        <h1
+                            className="font-display mb-3 text-5xl font-bold leading-tight"
+                            style={{ color: "var(--text-primary)" }}
+                        >
+                            Welcome back
+                            <span style={{ color: "var(--accent)" }}>.</span>
+                        </h1>
+                        <p
+                            style={{
+                                color: "var(--text-secondary)",
+                                fontSize: "1.05rem",
+                                maxWidth: "380px",
+                                lineHeight: 1.7,
+                            }}
+                        >
+                            Share your thoughts, connect with people you care
+                            about, and discover what's happening around you.
+                        </p>
+
+                        {/* Feature pills */}
+                        <div className="flex flex-wrap gap-2 mt-6">
+                            {[
+                                "Posts & Reactions",
+                                "Follow People",
+                                "Private Messaging",
+                            ].map((f) => (
+                                <span key={f} className="badge badge-accent">
+                                    {f}
+                                </span>
+                            ))}
                         </div>
                     </div>
-                    <div className="card">
-                        <LoginForm />
-                        <div className="py-4 lg:py-6">
-                            <p className="text-center text-xs text-gray-600/95 lg:text-sm">
-                                Don’t have an account?
-                                <Link
-                                    className="text-white transition-all hover:text-lwsGreen hover:underline mx-2"
-                                    to="/register"
+
+                    {/* ── Right: Form card ── */}
+                    <div>
+                        <div className="card" style={{ padding: "2rem 2rem" }}>
+                            {/* Mobile branding */}
+                            <div className="lg:hidden mb-6">
+                                <h1
+                                    className="font-display text-3xl font-bold"
+                                    style={{ color: "var(--text-primary)" }}
                                 >
-                                    Create New
+                                    Cirqle
+                                    <span style={{ color: "var(--accent)" }}>
+                                        .
+                                    </span>
+                                </h1>
+                                <p
+                                    style={{
+                                        color: "var(--text-secondary)",
+                                        fontSize: "0.9rem",
+                                        marginTop: "0.25rem",
+                                    }}
+                                >
+                                    Sign in to your account
+                                </p>
+                            </div>
+
+                            <div className="hidden lg:block mb-6">
+                                <h2
+                                    style={{
+                                        fontSize: "1.4rem",
+                                        fontWeight: 700,
+                                        color: "var(--text-primary)",
+                                    }}
+                                >
+                                    Sign in
+                                </h2>
+                                <p
+                                    style={{
+                                        color: "var(--text-muted)",
+                                        fontSize: "0.875rem",
+                                        marginTop: "0.2rem",
+                                    }}
+                                >
+                                    Good to see you again
+                                </p>
+                            </div>
+
+                            <LoginForm />
+
+                            <p
+                                className="mt-5 text-center"
+                                style={{
+                                    fontSize: "0.875rem",
+                                    color: "var(--text-muted)",
+                                }}
+                            >
+                                Don't have an account?{" "}
+                                <Link
+                                    to="/register"
+                                    style={{
+                                        color: "var(--accent)",
+                                        fontWeight: 600,
+                                        textDecoration: "none",
+                                    }}
+                                    className="hover:underline transition-all"
+                                >
+                                    Create one free
                                 </Link>
                             </p>
                         </div>
