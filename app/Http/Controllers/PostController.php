@@ -159,6 +159,13 @@ class PostController extends Controller
                 'user_id' => $userId,
                 'reaction_type' => $request->reaction_type
             ]);
+
+            // notify post owner (not self)
+            if ($post->user_id !== $userId) {
+                $post->author->notify(
+                    new \App\Notifications\PostLikedNotification($request->user(), $post)
+                );
+            }
         }
 
         $post->load('likes');
@@ -183,6 +190,17 @@ class PostController extends Controller
             'comment' => $request->comment,
             'parent_id' => $request->input('parent_id', null),
         ]);
+
+        // notify post owner (not self)
+        if ($post->user_id !== $request->user()->id) {
+            $post->author->notify(
+                new \App\Notifications\PostCommentedNotification(
+                    $request->user(),
+                    $post,
+                    $request->comment
+                )
+            );
+        }
 
         $post->load('comments.author', 'comments.replies.author');
 

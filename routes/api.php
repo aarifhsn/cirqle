@@ -7,6 +7,7 @@ use App\Http\Controllers\FollowController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\NotificationController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // 10 attempts per minute
@@ -36,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
     Route::get('/{identifier}/following', [FollowController::class, 'following']);
     Route::post('/profile/{identifier}/cover', [ProfileController::class, 'updateCoverPhoto']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead']);
 });
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);

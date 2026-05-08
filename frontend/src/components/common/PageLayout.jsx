@@ -5,7 +5,7 @@
 const PageLayout = ({ children }) => {
     return (
         <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
-            <main className="max-w-3xl mx-auto">{children}</main>
+            <main className="max-w-3xl mx-auto mt-4">{children}</main>
         </div>
     );
 };

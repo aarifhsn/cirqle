@@ -33,6 +33,12 @@ class FollowController extends Controller
             $message = 'Followed successfully';
         }
 
+        if ($isFollowing) {
+            $targetUser->notify(
+                new \App\Notifications\UserFollowedNotification($request->user())
+            );
+        }
+
         return response()->json([
             'isFollowing' => $isFollowing,
             'message' => $message,

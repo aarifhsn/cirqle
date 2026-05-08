@@ -23,6 +23,7 @@ const Header = () => {
     const [showSearch, setShowSearch] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [notificationCount] = useState(3);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
@@ -43,6 +44,23 @@ const Header = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () =>
             document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const fetchUnread = async () => {
+            try {
+                const res = await api.get(
+                    `${import.meta.env.VITE_SERVER_BASE_URL}/notifications/unread-count`,
+                );
+                setUnreadCount(res.data.count);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 30000); // poll every 30s
+        return () => clearInterval(interval);
     }, []);
 
     const handleSearch = async (e) => {
@@ -242,7 +260,6 @@ const Header = () => {
                         </svg>
                         <span>Home</span>
                     </Link>
-
                     {/* ── Theme toggle ── */}
                     <button
                         onClick={toggleTheme}
@@ -287,8 +304,9 @@ const Header = () => {
                         )}
                     </button>
 
-                    {/* ── Notification bell ── */}
-                    <button
+                    {/* Notifications link */}
+                    <Link
+                        to="/notifications"
                         className="icon-btn relative"
                         aria-label="Notifications"
                     >
@@ -305,22 +323,12 @@ const Header = () => {
                                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                             />
                         </svg>
-                        {notificationCount > 0 && (
-                            <span
-                                className="notif-badge absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full text-white"
-                                style={{
-                                    background: "var(--danger)",
-                                    fontSize: "0.6rem",
-                                    fontWeight: 700,
-                                }}
-                            >
-                                {notificationCount > 9
-                                    ? "9+"
-                                    : notificationCount}
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                {unreadCount > 9 ? "9+" : unreadCount}
                             </span>
                         )}
-                    </button>
-
+                    </Link>
                     {/* ── Avatar dropdown ── */}
                     <div className="relative" ref={dropdownRef}>
                         <button

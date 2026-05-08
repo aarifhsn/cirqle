@@ -10,6 +10,7 @@ import FollowersPage from "./pages/FollowersPage";
 import FollowingPage from "./pages/FollowingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GoogleSuccess from "./pages/GoogleSuccess";
+import NotificationsPage from "./pages/NotificationsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import PrivateRoutes from "./routes/PrivateRoutes";
@@ -34,6 +35,11 @@ function App() {
                         element={<FollowingPage />}
                         path="/:username/following"
                     />
+                    <Route
+                        element={<NotificationsPage />}
+                        path="/notifications"
+                    />
+
                     <Route path="/not-found" element={<NotFoundPage />} />
                 </Route>
                 <Route element={<LoginPage />} path="/login" />
