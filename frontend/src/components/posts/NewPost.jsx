@@ -7,9 +7,6 @@ const NewPost = () => {
     const [showPostEntry, setShowPostEntry] = useState(false);
     const { auth } = useAuth();
 
-    // temporarily in NewPost.jsx
-    console.log("auth.user:", auth?.user);
-
     return (
         <>
             <div className="card" style={{ padding: "1rem 1.25rem" }}>

@@ -5,6 +5,7 @@ const PhotosTab = ({ userId }) => {
     const { api } = useAxios();
     const [photos, setPhotos] = useState([]);
     const [lightbox, setLightbox] = useState(null);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -19,23 +20,34 @@ const PhotosTab = ({ userId }) => {
             .catch(() => setLoading(false));
     }, [userId]);
 
+    const openLightbox = (index) => {
+        setLightboxIndex(index);
+        setLightbox(
+            `${import.meta.env.VITE_STORAGE_URL}/${photos[index].image}`,
+        );
+    };
+
+    const prev = (e) => {
+        e.stopPropagation();
+        const i = (lightboxIndex - 1 + photos.length) % photos.length;
+        setLightboxIndex(i);
+        setLightbox(`${import.meta.env.VITE_STORAGE_URL}/${photos[i].image}`);
+    };
+
+    const next = (e) => {
+        e.stopPropagation();
+        const i = (lightboxIndex + 1) % photos.length;
+        setLightboxIndex(i);
+        setLightbox(`${import.meta.env.VITE_STORAGE_URL}/${photos[i].image}`);
+    };
+
     if (loading) {
         return (
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "0.5rem",
-                }}
-            >
+            <div className="grid grid-cols-3 gap-1">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                         key={i}
-                        className="skeleton"
-                        style={{
-                            aspectRatio: "1",
-                            borderRadius: "var(--r-md)",
-                        }}
+                        className="aspect-square rounded-md bg-lighterDark animate-pulse"
                     />
                 ))}
             </div>
@@ -44,28 +56,10 @@ const PhotosTab = ({ userId }) => {
 
     if (photos.length === 0) {
         return (
-            <div
-                className="card"
-                style={{ padding: "3rem 2rem", textAlign: "center" }}
-            >
-                <div
-                    style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: "50%",
-                        background: "var(--accent-soft)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        margin: "0 auto 1rem",
-                    }}
-                >
+            <div className="card flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-12 h-12 rounded-full bg-lwsGreen/10 flex items-center justify-center mb-3">
                     <svg
-                        style={{
-                            width: 22,
-                            height: 22,
-                            color: "var(--accent)",
-                        }}
+                        className="w-5 h-5 text-lwsGreen"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -78,57 +72,23 @@ const PhotosTab = ({ userId }) => {
                         />
                     </svg>
                 </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
-                    No photos yet
-                </p>
+                <p className="text-gray-500 text-sm">No photos yet</p>
             </div>
         );
     }
 
     return (
         <>
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "0.5rem",
-                }}
-            >
-                {photos.map((p) => (
+            <div className="grid grid-cols-3 gap-1">
+                {photos.map((p, index) => (
                     <div
                         key={p.id}
-                        onClick={() =>
-                            setLightbox(
-                                `${import.meta.env.VITE_STORAGE_URL}/${p.image}`,
-                            )
-                        }
-                        style={{
-                            aspectRatio: "1",
-                            borderRadius: "var(--r-md)",
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            border: "1px solid var(--border)",
-                            transition:
-                                "transform 150ms ease, box-shadow 150ms ease",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "scale(1.02)";
-                            e.currentTarget.style.boxShadow =
-                                "var(--shadow-md)";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "scale(1)";
-                            e.currentTarget.style.boxShadow = "none";
-                        }}
+                        onClick={() => openLightbox(index)}
+                        className="aspect-square rounded-md overflow-hidden cursor-pointer group border border-[#3F3F3F]"
                     >
                         <img
                             src={`${import.meta.env.VITE_STORAGE_URL}/${p.image}`}
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                display: "block",
-                            }}
+                            className="w-full h-full object-cover group-hover:opacity-80 group-hover:scale-105 transition-all duration-200"
                             alt="photo"
                         />
                     </div>
@@ -138,42 +98,43 @@ const PhotosTab = ({ userId }) => {
             {/* Lightbox */}
             {lightbox && (
                 <div
-                    className="modal-overlay"
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
                     onClick={() => setLightbox(null)}
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        zIndex: 60,
-                        background: "rgba(0,0,0,0.92)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "1.5rem",
-                    }}
                 >
+                    {photos.length > 1 && (
+                        <button
+                            onClick={prev}
+                            className="absolute left-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center text-xl transition-all z-10"
+                        >
+                            ‹
+                        </button>
+                    )}
+
                     <img
                         src={lightbox}
-                        style={{
-                            maxHeight: "90vh",
-                            maxWidth: "90vw",
-                            objectFit: "contain",
-                            borderRadius: "var(--r-lg)",
-                            boxShadow: "var(--shadow-lg)",
-                        }}
-                        alt="full size"
+                        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
+                        alt="full size"
                     />
+
+                    {photos.length > 1 && (
+                        <button
+                            onClick={next}
+                            className="absolute right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center text-xl transition-all z-10"
+                        >
+                            ›
+                        </button>
+                    )}
+
+                    {photos.length > 1 && (
+                        <span className="absolute bottom-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                            {lightboxIndex + 1} / {photos.length}
+                        </span>
+                    )}
+
                     <button
                         onClick={() => setLightbox(null)}
-                        className="icon-btn"
-                        style={{
-                            position: "absolute",
-                            top: 20,
-                            right: 20,
-                            background: "rgba(255,255,255,0.1)",
-                            border: "1px solid rgba(255,255,255,0.2)",
-                            color: "#fff",
-                        }}
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all"
                     >
                         <svg
                             className="w-4 h-4"

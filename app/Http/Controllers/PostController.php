@@ -17,7 +17,7 @@ class PostController extends Controller
 
         $followingIds = $authUser->following()->pluck('following_id');
 
-        $query = Post::with(['author', 'likes', 'comments.author', 'comments.replies.author'])->latest();
+        $query = Post::with(['author', 'likes', 'comments.author', 'comments.replies.author', 'images'])->latest();
 
         if ($filter === 'following') {
             // only posts from people I follow + my own, respecting privacy
@@ -47,23 +47,26 @@ class PostController extends Controller
     {
         $request->validate([
             'content' => 'required|string',
-            'photo' => 'nullable|image|max:4096',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|max:4096',
             'privacy' => 'required|in:public,followers,only_me',
         ]);
-
-        $imagePath = null;
-        if ($request->hasFile('photo')) {
-            $imagePath = $request->file('photo')->store('posts', 'public');
-        }
 
         $post = Post::create([
             'user_id' => $request->user()->id,
             'content' => $request->input('content'),
-            'image' => $imagePath,
             'privacy' => $request->input('privacy'),
         ]);
 
-        $post->load(['author', 'likes', 'comments.author', 'comments.replies.author']);
+        // 👇 this block was missing in your store method
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $file) {
+                $path = $file->store('posts', 'public');
+                $post->images()->create(['image' => $path, 'order' => $index]);
+            }
+        }
+
+        $post->load(['author', 'likes', 'comments.author', 'comments.replies.author', 'images']);
 
         return response()->json($this->formatPost($post));
     }
@@ -78,21 +81,35 @@ class PostController extends Controller
 
         $request->validate([
             'content' => 'required|string',
-            'photo' => 'nullable|image|max:4096',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|max:4096',
             'privacy' => 'required|in:public,followers,only_me',
+            'removed_images' => 'nullable|array',
+            'removed_images.*' => 'integer',
         ]);
 
-        if ($request->hasFile('photo')) {
-            if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+        // remove deleted images
+        if ($request->has('removed_images')) {
+            $toRemove = $post->images()->whereIn('id', $request->removed_images)->get();
+            foreach ($toRemove as $img) {
+                Storage::disk('public')->delete($img->image);
+                $img->delete();
             }
-            $post->image = $request->file('photo')->store('posts', 'public');
+        }
+
+        // add new images
+        if ($request->hasFile('images')) {
+            $currentCount = $post->images()->count();
+            foreach ($request->file('images') as $index => $file) {
+                $path = $file->store('posts', 'public');
+                $post->images()->create(['image' => $path, 'order' => $currentCount + $index]);
+            }
         }
 
         $post->content = $request->content;
         $post->privacy = $request->input('privacy');
         $post->save();
-        $post->load(['author', 'likes', 'comments.author']);
+        $post->load(['author', 'likes', 'comments.author', 'comments.replies.author', 'images']);
 
         return response()->json($this->formatPost($post));
     }
@@ -103,6 +120,11 @@ class PostController extends Controller
 
         if ($post->user_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // delete all associated images from storage
+        foreach ($post->images as $img) {
+            Storage::disk('public')->delete($img->image);
         }
 
         if ($post->image) {
@@ -200,6 +222,11 @@ class PostController extends Controller
             'content' => $post->content,
             'privacy' => $post->privacy,
             'image' => $post->image,
+            'images' => $post->images->map(fn($img) => [
+                'id' => $img->id,
+                'image' => $img->image,
+                'order' => $img->order,
+            ]),
             'createAt' => $post->created_at,
             'author' => [
                 'id' => $post->author->id,
@@ -208,17 +235,10 @@ class PostController extends Controller
                 'username' => $post->author->username,
             ],
             'likes' => $post->likes->pluck('user_id'),
-            'comments' => $post->comments->map(fn($c) => [
-                'id' => $c->id,
-                'comment' => $c->comment,
-                'createdAt' => $c->created_at,
-                'author' => [
-                    'id' => $c->author->id,
-                    'name' => $c->author->firstName . ' ' . $c->author->lastName,
-                    'avatar' => $c->author->avatar,
-                    'username' => $c->author->username,
-                ],
-            ]),
+            'comments' => $post->comments
+                ->whereNull('parent_id')
+                ->values()
+                ->map(fn($c) => $this->formatComment($c)),
         ];
     }
 }

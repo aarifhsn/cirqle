@@ -2,6 +2,8 @@
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
 
+/* PLACEHOLDER - will be replaced below */
+
 /* ─── Design Tokens ─────────────────────────────────────────────── */
 :root {
     /* Brand */
@@ -78,13 +80,6 @@
 }
 
 /* ─── Global Reset & Base ─────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
 
 html {
     scroll-behavior: smooth;

@@ -23,7 +23,11 @@ export const PostCard = ({ post }) => {
             }}
         >
             <PostHeader post={post} />
-            <PostBody poster={post?.image} content={post?.content} />
+            <PostBody
+                content={post?.content}
+                images={post?.images ?? []}
+                poster={post?.image}
+            />
             <PostAction post={post} commentCount={comments?.length} />
             <PostComments
                 post={post}

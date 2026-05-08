@@ -86,7 +86,7 @@ const PostComments = ({ post }) => {
                     )}
                     <input
                         type="text"
-                        className="h-8 w-full rounded-full bg-lighterDark px-4 text-xs focus:outline-none sm:h-[38px]"
+                        className="h-8 w-full rounded-full bg-slate-400 dark:bg-lighterDark px-4 text-xs focus:outline-none sm:h-[38px]"
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
                         onKeyDown={addComment}

@@ -70,20 +70,7 @@ const ProfileImage = () => {
                     alt={state?.user?.firstName}
                 />
             ) : (
-                <div
-                    style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        background: "var(--accent-soft)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "1.75rem",
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                    }}
-                >
+                <div className="flex items-center justify-center w-full h-full rounded-full uppercase bg-gradient-to-r from-[#00D991]/40 via-[#1E1F24] to-[#27292F] text-white text-2xl font-bold tracking-wide">
                     {state?.user?.firstName?.[0]}
                     {state?.user?.lastName?.[0]}
                 </div>

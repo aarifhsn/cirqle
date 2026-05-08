@@ -152,18 +152,33 @@ class ProfileController extends Controller
         return response()->json($users);
     }
 
-    public function photos(Request $request, $userId)
+    public function photos(Request $request, $identifier)
     {
-        $user = User::findOrFail($userId);
-        $photos = $user->posts()
+        $user = is_numeric($identifier)
+            ? User::findOrFail($identifier)
+            : User::where('username', $identifier)->firstOrFail();
+
+        // get images from post_images table (new multiple)
+        $postImages = $user->posts()
+            ->with('images')
+            ->get()
+            ->flatMap(fn($post) => $post->images)
+            ->map(fn($img) => [
+                'id' => $img->id,
+                'image' => $img->image,
+            ]);
+
+        // get old single images (backward compat)
+        $singleImages = $user->posts()
             ->whereNotNull('image')
-            ->latest()
             ->get()
             ->map(fn($post) => [
                 'id' => $post->id,
                 'image' => $post->image,
-                'created_at' => $post->created_at,
             ]);
+
+        $photos = $postImages->merge($singleImages)->values();
+
         return response()->json($photos);
     }
 

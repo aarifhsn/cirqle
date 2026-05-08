@@ -16,15 +16,16 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     const { api } = useAxios();
     const { state: profile } = useProfile();
     const user = profile?.user ?? auth?.user;
-
     const isEditMode = !!postToEdit;
 
-    const [photoPreview, setPhotoPreview] = useState(
-        postToEdit?.image
-            ? `${import.meta.env.VITE_STORAGE_URL}/${postToEdit.image}`
-            : null,
+    const [photoFiles, setPhotoFiles] = useState(
+        postToEdit?.images?.map((img) => ({
+            existing: true,
+            id: img.id,
+            preview: `${import.meta.env.VITE_STORAGE_URL}/${img.image}`,
+        })) ?? [],
     );
-    const [photoFile, setPhotoFile] = useState(null);
+    const [removedImages, setRemovedImages] = useState([]);
 
     const {
         register,
@@ -39,11 +40,22 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     });
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPhotoFile(file);
-            setPhotoPreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        const remaining = 5 - photoFiles.length;
+        const toAdd = files.slice(0, remaining).map((file) => ({
+            existing: false,
+            file,
+            preview: URL.createObjectURL(file),
+        }));
+        setPhotoFiles((prev) => [...prev, ...toAdd]);
+    };
+
+    const removePhoto = (index) => {
+        const item = photoFiles[index];
+        if (item.existing) {
+            setRemovedImages((prev) => [...prev, item.id]);
         }
+        setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handlePostSubmit = async (formData) => {
@@ -51,12 +63,18 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
         try {
             const data = new FormData();
             data.append("content", formData.content);
-            if (photoFile) data.append("photo", photoFile);
             data.append("privacy", formData.privacy);
+
+            photoFiles
+                .filter((p) => !p.existing)
+                .forEach((p) => data.append("images[]", p.file));
+
+            removedImages.forEach((id) => data.append("removed_images[]", id));
 
             let response;
             if (isEditMode) {
-                response = await api.patch(
+                data.append("_method", "PATCH"); // for Laravel to recognize as PATCH
+                response = await api.post(
                     `${import.meta.env.VITE_SERVER_BASE_URL}/posts/${postToEdit.id}`,
                     data,
                     { headers: { "Content-Type": "multipart/form-data" } },
@@ -95,40 +113,23 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
         }
     };
 
+    const gridCols =
+        photoFiles.length === 1
+            ? "grid-cols-1"
+            : photoFiles.length === 2
+              ? "grid-cols-2"
+              : "grid-cols-3";
+
     return (
-        <div
-            className="card"
-            style={{
-                padding: "1.5rem",
-                position: "relative",
-                maxHeight: "90vh",
-                overflowY: "auto",
-            }}
-        >
+        <div className="card relative max-h-[90vh] overflow-y-auto p-6">
             {/* Header */}
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "1.25rem",
-                    paddingBottom: "1rem",
-                    borderBottom: "1px solid var(--border)",
-                }}
-            >
-                <h3
-                    style={{
-                        fontSize: "1.1rem",
-                        fontWeight: 700,
-                        color: "var(--text-primary)",
-                    }}
-                >
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#3F3F3F]">
+                <h3 className="text-lg font-bold text-white">
                     {isEditMode ? "Edit Post" : "Create Post"}
                 </h3>
                 <button
                     onClick={onClose}
-                    className="icon-btn"
-                    style={{ width: 32, height: 32 }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-lighterDark hover:bg-[#3F3F3F] text-gray-400 hover:text-white transition-all"
                 >
                     <svg
                         className="w-4 h-4"
@@ -148,31 +149,11 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
 
             <form onSubmit={handleSubmit(handlePostSubmit)}>
                 {/* Author row */}
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                        marginBottom: "1rem",
-                    }}
-                >
+                <div className="flex items-center gap-3 mb-4">
                     <Avatar user={user} size="md" />
                     <div>
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.4rem",
-                                marginBottom: "0.3rem",
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontWeight: 600,
-                                    fontSize: "0.95rem",
-                                    color: "var(--text-primary)",
-                                }}
-                            >
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <span className="font-semibold text-sm text-white">
                                 {user?.firstName} {user?.lastName}
                             </span>
                             <PrivacyIcon privacy={watch("privacy")} />
@@ -181,16 +162,7 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                             {...register("privacy", {
                                 required: "Privacy setting is required!",
                             })}
-                            style={{
-                                background: "var(--bg-input)",
-                                border: "1px solid var(--border-strong)",
-                                borderRadius: "var(--r-sm)",
-                                color: "var(--text-secondary)",
-                                fontSize: "0.78rem",
-                                padding: "0.25rem 0.5rem",
-                                outline: "none",
-                                cursor: "pointer",
-                            }}
+                            className="bg-lighterDark border border-[#3F3F3F] rounded text-gray-400 text-xs px-2 py-1 outline-none cursor-pointer hover:border-lwsGreen transition-all"
                         >
                             <option value="public">🌐 Public</option>
                             <option value="followers">👥 Followers</option>
@@ -199,7 +171,7 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     </div>
                 </div>
 
-                {/* Content textarea */}
+                {/* Textarea */}
                 <Field label="" error={errors.content}>
                     <textarea
                         {...register("content", {
@@ -207,99 +179,72 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         })}
                         id="content"
                         placeholder={`What's on your mind, ${user?.firstName}?`}
-                        style={{
-                            width: "100%",
-                            minHeight: 120,
-                            background: "transparent",
-                            border: "none",
-                            outline: "none",
-                            resize: "none",
-                            fontSize: "1rem",
-                            lineHeight: 1.6,
-                            color: "var(--text-primary)",
-                            fontFamily: "'DM Sans', sans-serif",
-                        }}
-                        className="placeholder-[var(--text-muted)]"
+                        className="w-full min-h-[120px] bg-transparent border-none outline-none resize-none text-base leading-relaxed text-white placeholder-gray-500 font-sans"
                     />
                 </Field>
 
-                {/* Photo preview */}
-                {photoPreview && (
-                    <div
-                        style={{
-                            position: "relative",
-                            marginBottom: "1rem",
-                            borderRadius: "var(--r-md)",
-                            overflow: "hidden",
-                        }}
-                    >
-                        <img
-                            src={photoPreview}
-                            alt="preview"
-                            style={{
-                                width: "100%",
-                                maxHeight: 280,
-                                objectFit: "cover",
-                                display: "block",
-                            }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setPhotoPreview(null);
-                                setPhotoFile(null);
-                            }}
-                            style={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                background: "rgba(0,0,0,0.65)",
-                                border: "none",
-                                borderRadius: "50%",
-                                width: 28,
-                                height: 28,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: "pointer",
-                                color: "#fff",
-                            }}
-                        >
-                            <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2.5}
-                                    d="M6 18L18 6M6 6l12 12"
+                {/* Image previews grid */}
+                {photoFiles.length > 0 && (
+                    <>
+                        <div className={`grid ${gridCols} gap-2 mb-2`}>
+                            {photoFiles.map((photo, index) => (
+                                <div
+                                    key={index}
+                                    className="relative aspect-square rounded-lg overflow-hidden group"
+                                >
+                                    <img
+                                        src={photo.preview}
+                                        className="w-full h-full object-cover"
+                                        alt={`preview ${index + 1}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(index)}
+                                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/65 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add more — small link below grid, not a grid cell */}
+                        {photoFiles.length < 5 && (
+                            <label className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-lwsGreen cursor-pointer transition-all mb-3 w-fit">
+                                <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 4v16m8-8H4"
+                                    />
+                                </svg>
+                                Add more ({photoFiles.length}/5)
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handlePhotoChange}
                                 />
-                            </svg>
-                        </button>
-                    </div>
+                            </label>
+                        )}
+                    </>
                 )}
 
-                {/* Footer actions */}
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingTop: "1rem",
-                        borderTop: "1px solid var(--border)",
-                        marginTop: "0.5rem",
-                    }}
-                >
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-4 border-t border-[#3F3F3F] mt-2">
                     <label
-                        className="btn-ghost"
                         htmlFor="photo"
-                        style={{ cursor: "pointer", fontSize: "0.85rem" }}
+                        className="flex items-center gap-2 text-gray-400 hover:text-lwsGreen text-sm cursor-pointer transition-all"
                     >
                         <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -311,12 +256,15 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        {photoPreview ? "Change Photo" : "Add Photo"}
+                        {photoFiles.length > 0
+                            ? `${photoFiles.length} / 5 photos`
+                            : "Add Photos"}
                     </label>
                     <input
                         type="file"
                         id="photo"
                         accept="image/*"
+                        multiple
                         className="hidden"
                         onChange={handlePhotoChange}
                     />
@@ -324,15 +272,29 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="btn-primary"
-                        style={{ minWidth: 100 }}
+                        className="min-w-[100px] px-5 py-2 rounded-md bg-lwsGreen text-deepDark font-bold text-sm hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
-                            <span className="flex items-center gap-2">
-                                <span
-                                    className="spinner"
-                                    style={{ width: 16, height: 16 }}
-                                />
+                            <span className="flex items-center justify-center gap-2">
+                                <svg
+                                    className="w-4 h-4 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    />
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                </svg>
                                 {isEditMode ? "Saving…" : "Posting…"}
                             </span>
                         ) : isEditMode ? (

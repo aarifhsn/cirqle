@@ -13,14 +13,14 @@ export const getDateDifferenceFromNow = (fromDate) => {
     }
 
     if (days > 0) {
-        return `${days} day${days > 1 ? "s" : ""} ago`;
+        return `${days} day${days > 1 ? "s" : ""}`;
     }
 
     if (hours > 0) {
-        return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+        return `${hours} hour${hours > 1 ? "s" : ""}`;
     }
 
-    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+    return `${minutes} minute${minutes > 1 ? "s" : ""}`;
 };
 
 // Add this helper inline or in utils.js
