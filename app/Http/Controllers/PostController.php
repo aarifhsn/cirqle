@@ -38,9 +38,14 @@ class PostController extends Controller
             });
         }
 
-        $posts = $query->get()->map(fn($post) => $this->formatPost($post));
+        $paginated = $query->paginate(10);
 
-        return response()->json($posts);
+        return response()->json([
+            'data' => collect($paginated->items())->map(fn($post) => $this->formatPost($post)),
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'has_more' => $paginated->hasMorePages(),
+        ]);
     }
 
     public function store(Request $request)

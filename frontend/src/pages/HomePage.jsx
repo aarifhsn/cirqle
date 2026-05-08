@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { actions } from "../actions";
 import PageLayout from "../components/common/PageLayout";
 import NewPost from "../components/posts/NewPost";
@@ -180,36 +180,81 @@ const HomePage = () => {
     const { state, dispatch } = usePost();
     const { api } = useAxios();
     const [filter, setFilter] = useState("public");
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const sentinelRef = useRef(null);
 
-    useEffect(() => {
-        dispatch({ type: actions.post.DATA_FETCHING });
+    const fetchPosts = useCallback(
+        async (pageNum, currentFilter, append = false) => {
+            if (append) {
+                setLoadingMore(true);
+            } else {
+                dispatch({ type: actions.post.DATA_FETCHING });
+            }
 
-        const fetchPost = async () => {
             try {
                 const response = await api.get(
-                    `${import.meta.env.VITE_SERVER_BASE_URL}/posts?filter=${filter}`,
+                    `${import.meta.env.VITE_SERVER_BASE_URL}/posts?filter=${currentFilter}&page=${pageNum}`,
                 );
                 if (response.status === 200) {
+                    const { data, has_more } = response.data;
+                    setHasMore(has_more);
                     dispatch({
-                        type: actions.post.DATA_FETCHED,
-                        data: response.data,
+                        type: append
+                            ? actions.post.DATA_APPENDED
+                            : actions.post.DATA_FETCHED,
+                        data,
                     });
                 }
             } catch (error) {
-                console.error(error);
                 dispatch({
                     type: actions.post.DATA_FETCH_ERROR,
                     error: error.message,
                 });
+            } finally {
+                setLoadingMore(false);
             }
-        };
+        },
+        [api],
+    );
 
-        fetchPost();
+    // reset on filter change
+    useEffect(() => {
+        setPage(1);
+        setHasMore(true);
+        fetchPosts(1, filter, false);
     }, [filter]);
+
+    // intersection observer for infinite scroll
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (
+                    entries[0].isIntersecting &&
+                    hasMore &&
+                    !loadingMore &&
+                    !state?.loading
+                ) {
+                    setPage((prev) => {
+                        const next = prev + 1;
+                        fetchPosts(next, filter, true);
+                        return next;
+                    });
+                }
+            },
+            { threshold: 0.1 },
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, loadingMore, state?.loading, filter, fetchPosts]);
 
     return (
         <PageLayout>
-            {/* New post box */}
             <NewPost />
 
             {/* Feed filter */}
@@ -257,6 +302,42 @@ const HomePage = () => {
             )}
             {!state?.loading && !state?.error && state?.posts?.length > 0 && (
                 <PostList posts={state.posts} />
+            )}
+
+            {/* Sentinel — watched by IntersectionObserver */}
+            <div ref={sentinelRef} className="h-4" />
+
+            {/* Loading more spinner */}
+            {loadingMore && (
+                <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-sm">
+                    <svg
+                        className="w-4 h-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        />
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                        />
+                    </svg>
+                    Loading more posts...
+                </div>
+            )}
+
+            {/* End of feed message */}
+            {!hasMore && !loadingMore && state?.posts?.length > 0 && (
+                <p className="text-center text-gray-500 text-sm py-6">
+                    You're all caught up. Happy Reading
+                </p>
             )}
         </PageLayout>
     );

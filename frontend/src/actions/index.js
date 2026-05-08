@@ -6,6 +6,7 @@ export const actions = {
         DATA_CREATED: "POST_DATA_CREATED",
         DATA_EDITED: "POST_DATA_EDITED",
         POST_DELETED: "POST_DATA_DELETED",
+        DATA_APPENDED: "POST_DATA_APPENDED",
     },
     profile: {
         DATA_FETCHING: "PROFILE_DATA_FETCHING",
