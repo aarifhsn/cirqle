@@ -9,8 +9,8 @@ import ProfileInfo from "../components/profile/ProfileInfo";
 import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 import { useProfile } from "../hooks/useProfile";
+import NotFoundPage from "./NotFoundPage";
 
-/* ── Profile skeleton ──────────────────────────────── */
 const ProfileSkeleton = () => (
     <div
         className="card"
@@ -109,15 +109,14 @@ const ProfileSkeleton = () => (
     </div>
 );
 
-/* ── ProfilePage ───────────────────────────────────── */
 const ProfilePage = () => {
     const { state, dispatch } = useProfile();
     const { api } = useAxios();
     const { auth } = useAuth();
     const { username } = useParams();
     const [activeTab, setActiveTab] = useState("posts");
-
     const isMe = auth?.user?.username === username;
+    const [notFound, setNotFound] = useState(false);
 
     useEffect(() => {
         dispatch({ type: actions.profile.DATA_FETCHING });
@@ -134,7 +133,10 @@ const ProfilePage = () => {
                     });
                 }
             } catch (error) {
-                console.error(error);
+                if (error.response?.status === 404) {
+                    setNotFound(true);
+                    return;
+                }
                 dispatch({
                     type: actions.profile.DATA_FETCH_ERROR,
                     error: error.message,
@@ -144,6 +146,8 @@ const ProfilePage = () => {
 
         fetchProfile();
     }, [username]);
+
+    if (notFound) return <NotFoundPage />;
 
     return (
         <PageLayout>

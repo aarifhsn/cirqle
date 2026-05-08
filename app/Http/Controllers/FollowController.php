@@ -41,9 +41,11 @@ class FollowController extends Controller
         ]);
     }
 
-    public function followers(Request $request, $userId)
+    public function followers(Request $request, $identifier)
     {
-        $user = User::findOrFail($userId);
+        $user = User::where('id', $identifier)
+            ->orWhere('username', $identifier)
+            ->firstOrFail();
 
         $followers = $user->followers()
             ->with('follower')
@@ -52,6 +54,8 @@ class FollowController extends Controller
                 'id' => $follow->follower->id,
                 'firstName' => $follow->follower->firstName,
                 'lastName' => $follow->follower->lastName,
+                'email' => $follow->follower->email,
+                'username' => $follow->follower->username,
                 'avatar' => $follow->follower->avatar,
                 'isFollowing' => $request->user()->isFollowing($follow->follower->id),
             ]);
@@ -59,9 +63,11 @@ class FollowController extends Controller
         return response()->json($followers);
     }
 
-    public function following(Request $request, $userId)
+    public function following(Request $request, $identifier)
     {
-        $user = User::findOrFail($userId);
+        $user = User::where('id', $identifier)
+            ->orWhere('username', $identifier)
+            ->firstOrFail();
 
         $following = $user->following()
             ->with('following')
@@ -70,10 +76,25 @@ class FollowController extends Controller
                 'id' => $follow->following->id,
                 'firstName' => $follow->following->firstName,
                 'lastName' => $follow->following->lastName,
+                'email' => $follow->following->email,
+                'username' => $follow->following->username,
                 'avatar' => $follow->following->avatar,
                 'isFollowing' => $request->user()->isFollowing($follow->following->id),
+
             ]);
 
         return response()->json($following);
+    }
+
+    public function myFollowers(Request $request)
+    {
+        $user = $request->user();
+        return $this->followers($request, $user->id);
+    }
+
+    public function myFollowing(Request $request)
+    {
+        $user = $request->user();
+        return $this->following($request, $user->id);
     }
 }

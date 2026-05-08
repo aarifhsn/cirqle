@@ -2,37 +2,37 @@
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
 
-/* PLACEHOLDER - will be replaced below */
+/* ─── Tailwind v4 tokens ─────────────────────────────────────────── */
+@theme {
+    --font-sans: "DM Sans", sans-serif;
+    --font-display: "Playfair Display", serif;
 
-/* ─── Design Tokens ─────────────────────────────────────────────── */
-:root {
-    /* Brand */
-    --accent: #00d991;
-    --accent-dim: #00b87a;
-    --accent-glow: rgba(0, 217, 145, 0.15);
-    --accent-soft: rgba(0, 217, 145, 0.08);
+    --color-accent: #00d991;
+    --color-accent-dim: #00b87a;
+    --color-danger: #ff4d6d;
 
-    /* Danger */
-    --danger: #ff4d6d;
-    --danger-soft: rgba(255, 77, 109, 0.1);
+    /* Legacy aliases — keeps old template classes working */
+    --color-lwsGreen: #00d991;
+    --color-deepDark: #0d0e12;
+    --color-mediumDark: #1a1b22;
+    --color-lighterDark: #222330;
 
-    /* Transition */
-    --ease: cubic-bezier(0.16, 1, 0.3, 1);
-    --duration: 200ms;
-
-    /* Radius */
-    --r-sm: 6px;
-    --r-md: 10px;
-    --r-lg: 16px;
-    --r-xl: 24px;
-    --r-full: 9999px;
+    --container-center: true;
+    --container-padding: 1rem;
 }
 
-/* ─── Dark Theme (default) ──────────────────────────────────────── */
+/* dark: utilities respond to data-theme="dark" on <html> */
+@variant dark (&:is([data-theme="dark"] *));
+
+/* ─── Theme tokens (CSS vars) ────────────────────────────────────
+   Only needed for:
+   1. Components using inline style={{ color: "var(--text-primary)" }}
+   2. Runtime dark/light switching
+   Everything else → Tailwind utilities in JSX
+──────────────────────────────────────────────────────────────── */
 :root,
 [data-theme="dark"] {
     --bg-base: #0d0e12;
-    --bg-surface: #13141a;
     --bg-card: #1a1b22;
     --bg-elevated: #222330;
     --bg-input: #1e1f28;
@@ -52,12 +52,27 @@
 
     --glass-bg: rgba(26, 27, 34, 0.85);
     --glass-blur: blur(20px);
+
+    --accent: #00d991;
+    --accent-dim: #00b87a;
+    --accent-soft: rgba(0, 217, 145, 0.08);
+    --accent-glow: rgba(0, 217, 145, 0.15);
+
+    --danger: #ff4d6d;
+    --danger-soft: rgba(255, 77, 109, 0.1);
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration: 200ms;
+
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+    --r-full: 9999px;
 }
 
-/* ─── Light Theme ────────────────────────────────────────────────── */
 [data-theme="light"] {
     --bg-base: #f4f5f9;
-    --bg-surface: #ffffff;
     --bg-card: #ffffff;
     --bg-elevated: #f0f1f6;
     --bg-input: #f0f1f6;
@@ -77,81 +92,60 @@
 
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-blur: blur(20px);
+
+    --accent-soft: rgba(0, 217, 145, 0.1);
+    --accent-glow: rgba(0, 217, 145, 0.18);
+
+    --danger-soft: rgba(255, 77, 109, 0.08);
 }
 
-/* ─── Global Reset & Base ─────────────────────────────────────────── */
-
-html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+/* ─── Base ───────────────────────────────────────────────────────── */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+        font-family: "DM Sans", sans-serif;
+        background-color: var(--bg-base);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        transition:
+            background-color 0.3s var(--ease),
+            color 0.3s var(--ease);
+    }
+    ::selection {
+        background: var(--accent-glow);
+        color: var(--accent);
+    }
+    ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-strong);
+        border-radius: var(--r-full);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
 }
 
-body {
-    font-family: "DM Sans", sans-serif;
-    background-color: var(--bg-base);
-    color: var(--text-primary);
-    line-height: 1.6;
-    transition:
-        background-color 0.3s var(--ease),
-        color 0.3s var(--ease);
-    min-height: 100vh;
-}
-
-/* ─── Scrollbar ──────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-    border-radius: var(--r-full);
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
-
-/* ─── Selection ──────────────────────────────────────────────────── */
-::selection {
-    background: var(--accent-glow);
-    color: var(--accent);
-}
-
-/* ─── Typography ─────────────────────────────────────────────────── */
-.font-display {
-    font-family: "Playfair Display", serif;
-}
-
-/* ─── Tailwind Theme Extension ───────────────────────────────────── */
-@theme {
-    --font-sans: "DM Sans", sans-serif;
-    --font-display: "Playfair Display", serif;
-
-    --color-accent: #00d991;
-    --color-accent-dim: #00b87a;
-    --color-deepDark: #0d0e12;
-    --color-mediumDark: #1a1b22;
-    --color-lighterDark: #222330;
-    --color-lwsGreen: #00d991;
-
-    --container-center: true;
-    --container-padding: 1rem;
-}
-
-/* ─── Component Utilities ────────────────────────────────────────── */
+/* ─── Only keep what Tailwind genuinely can't do ─────────────────── */
 @layer components {
-    /* Layout */
-    .flex-center {
-        @apply flex items-center justify-center;
-    }
-    .flex-between {
-        @apply flex items-center justify-between;
+    /* Glassmorphism — backdrop-filter has no Tailwind shorthand for CSS vars */
+    .glass {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
     }
 
-    /* Cards */
+    /* Card — needs CSS var border + shadow combo */
     .card {
         background: var(--bg-card);
         border: 1px solid var(--border);
@@ -166,115 +160,7 @@ body {
         border-color: var(--border-strong);
     }
 
-    .card-elevated {
-        background: var(--bg-elevated);
-        border: 1px solid var(--border);
-        border-radius: var(--r-lg);
-        padding: 1.25rem 1.5rem;
-    }
-
-    /* Buttons */
-    .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1.25rem;
-        border-radius: var(--r-full);
-        background: var(--accent);
-        color: var(--text-inverse);
-        font-weight: 600;
-        font-size: 0.875rem;
-        letter-spacing: 0.01em;
-        border: none;
-        cursor: pointer;
-        transition: all var(--duration) var(--ease);
-        box-shadow: 0 2px 12px var(--accent-glow);
-    }
-    .btn-primary:hover {
-        background: var(--accent-dim);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 20px var(--accent-glow);
-    }
-    .btn-primary:active {
-        transform: translateY(0);
-    }
-
-    .btn-ghost {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.55rem 1.1rem;
-        border-radius: var(--r-full);
-        background: transparent;
-        color: var(--text-secondary);
-        font-weight: 500;
-        font-size: 0.875rem;
-        border: 1px solid var(--border-strong);
-        cursor: pointer;
-        transition: all var(--duration) var(--ease);
-    }
-    .btn-ghost:hover {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-        border-color: var(--border-strong);
-    }
-
-    .btn-danger {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.55rem 1.1rem;
-        border-radius: var(--r-full);
-        background: var(--danger-soft);
-        color: var(--danger);
-        font-weight: 600;
-        font-size: 0.875rem;
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: all var(--duration) var(--ease);
-    }
-    .btn-danger:hover {
-        background: var(--danger);
-        color: #fff;
-    }
-
-    .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: var(--r-md);
-        background: var(--bg-elevated);
-        color: var(--text-secondary);
-        border: 1px solid var(--border);
-        cursor: pointer;
-        transition: all var(--duration) var(--ease);
-        flex-shrink: 0;
-    }
-    .icon-btn:hover {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-        border-color: var(--border-strong);
-    }
-
-    /* Forms */
-    .form-control {
-        @apply mb-5 space-y-2;
-    }
-
-    .auth-label {
-        display: block;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-    }
-
+    /* auth-input — focus ring uses CSS var, can't do with Tailwind alone */
     .auth-input {
         width: 100%;
         background: var(--bg-input);
@@ -284,10 +170,10 @@ body {
         color: var(--text-primary);
         font-family: "DM Sans", sans-serif;
         font-size: 0.9rem;
+        outline: none;
         transition:
             border-color var(--duration) var(--ease),
             box-shadow var(--duration) var(--ease);
-        outline: none;
     }
     .auth-input:focus {
         border-color: var(--accent);
@@ -297,22 +183,20 @@ body {
         color: var(--text-muted);
     }
 
-    /* Post avatar */
-    .post-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
-    }
-    @media (min-width: 1024px) {
-        .post-avatar {
-            width: 48px;
-            height: 48px;
-        }
+    /* Skeleton shimmer — complex gradient animation */
+    .skeleton {
+        background: linear-gradient(
+            90deg,
+            var(--bg-elevated) 25%,
+            var(--bg-hover) 50%,
+            var(--bg-elevated) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.6s infinite;
+        border-radius: var(--r-md);
     }
 
-    /* Action modal */
+    /* Dropdown — needs CSS var shadow + animation */
     .action-modal-container {
         position: absolute;
         right: 0;
@@ -326,7 +210,6 @@ body {
         z-index: 50;
         animation: slideDown 150ms var(--ease) forwards;
     }
-
     .action-menu-item {
         display: flex;
         width: 100%;
@@ -335,29 +218,19 @@ body {
         padding: 0.65rem 1rem;
         font-size: 0.875rem;
         color: var(--text-secondary);
-        transition: all var(--duration) var(--ease);
+        background: none;
+        border: none;
         cursor: pointer;
+        font-family: "DM Sans", sans-serif;
+        text-align: left;
+        transition: all var(--duration) var(--ease);
     }
     .action-menu-item:hover {
         background: var(--bg-hover);
         color: var(--text-primary);
     }
 
-    /* Dividers */
-    .divider {
-        height: 1px;
-        background: var(--border);
-        margin: 0.75rem 0;
-    }
-
-    /* Glass effect */
-    .glass {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
-    }
-
-    /* Feed filter pills */
+    /* Filter pills — active state uses CSS vars */
     .filter-pill {
         padding: 0.4rem 1rem;
         border-radius: var(--r-full);
@@ -367,6 +240,7 @@ body {
         color: var(--text-secondary);
         background: transparent;
         cursor: pointer;
+        font-family: "DM Sans", sans-serif;
         transition: all var(--duration) var(--ease);
     }
     .filter-pill:hover {
@@ -379,20 +253,46 @@ body {
         color: var(--accent);
     }
 
-    /* Skeleton loading */
-    .skeleton {
-        background: linear-gradient(
-            90deg,
-            var(--bg-elevated) 25%,
-            var(--bg-hover) 50%,
-            var(--bg-elevated) 75%
-        );
-        background-size: 200% 100%;
-        animation: shimmer 1.6s infinite;
-        border-radius: var(--r-md);
+    /* Modal animation wrappers */
+    .modal-overlay {
+        animation: fadeIn 180ms var(--ease) forwards;
+    }
+    .modal-content {
+        animation: slideUp 220ms var(--ease) forwards;
     }
 
-    /* Badge */
+    /* Spinner */
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-strong);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* Notification badge pulse */
+    .notif-badge {
+        animation: pulse-ring 2s ease-out infinite;
+    }
+
+    /* Auth page bg gradient */
+    .auth-bg {
+        background-color: var(--bg-base);
+        background-image:
+            radial-gradient(
+                ellipse 80% 60% at 70% 40%,
+                rgba(0, 217, 145, 0.06) 0%,
+                transparent 60%
+            ),
+            radial-gradient(
+                ellipse 60% 40% at 20% 80%,
+                rgba(0, 130, 85, 0.04) 0%,
+                transparent 50%
+            );
+    }
+
+    /* Badges */
     .badge {
         display: inline-flex;
         align-items: center;
@@ -407,6 +307,11 @@ body {
         color: var(--accent);
         border: 1px solid rgba(0, 217, 145, 0.2);
     }
+
+    /* font-display shorthand */
+    .font-display {
+        font-family: "Playfair Display", serif;
+    }
 }
 
 /* ─── Keyframes ──────────────────────────────────────────────────── */
@@ -418,7 +323,6 @@ body {
         background-position: -200% 0;
     }
 }
-
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -429,7 +333,6 @@ body {
         transform: translateY(0);
     }
 }
-
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -440,7 +343,6 @@ body {
         transform: translateY(0) scale(1);
     }
 }
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -449,7 +351,6 @@ body {
         opacity: 1;
     }
 }
-
 @keyframes pulse-ring {
     0% {
         box-shadow: 0 0 0 0 var(--accent-glow);
@@ -461,22 +362,13 @@ body {
         box-shadow: 0 0 0 0 transparent;
     }
 }
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
 
-/* ─── Modal Animations ───────────────────────────────────────────── */
-.modal-overlay {
-    animation: fadeIn 180ms var(--ease) forwards;
-}
-.modal-content {
-    animation: slideUp 220ms var(--ease) forwards;
-}
-
-/* ─── Toast Override ─────────────────────────────────────────────── */
+/* ─── Toast overrides ────────────────────────────────────────────── */
 .Toastify__toast {
     font-family: "DM Sans", sans-serif !important;
     border-radius: var(--r-md) !important;
@@ -497,61 +389,4 @@ body {
 }
 .Toastify__progress-bar--error {
     background: var(--danger) !important;
-}
-
-/* ─── Auth Page Background Pattern ──────────────────────────────── */
-.auth-bg {
-    background-color: var(--bg-base);
-    background-image:
-        radial-gradient(
-            ellipse 80% 60% at 70% 40%,
-            rgba(0, 217, 145, 0.06) 0%,
-            transparent 60%
-        ),
-        radial-gradient(
-            ellipse 60% 40% at 20% 80%,
-            rgba(0, 130, 85, 0.04) 0%,
-            transparent 50%
-        );
-}
-
-/* ─── Accent glow pulse on notification badge ────────────────────── */
-.notif-badge {
-    animation: pulse-ring 2s ease-out infinite;
-}
-
-/* ─── Profile cover shimmer placeholder ─────────────────────────── */
-.cover-placeholder {
-    background: linear-gradient(
-        135deg,
-        var(--bg-elevated) 0%,
-        var(--bg-hover) 50%,
-        var(--bg-elevated) 100%
-    );
-}
-
-/* ─── Feed layout ────────────────────────────────────────────────── */
-.feed-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 1rem;
-}
-
-@media (min-width: 640px) {
-    .feed-layout {
-        padding: 1.5rem 1rem;
-    }
-}
-
-/* ─── Spinner ────────────────────────────────────────────────────── */
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-strong);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
 }

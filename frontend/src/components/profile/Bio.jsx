@@ -1,4 +1,3 @@
-// Bio.jsx
 import { useProfile } from "../../hooks/useProfile";
 
 const Bio = ({ isMe }) => {
@@ -8,7 +7,7 @@ const Bio = ({ isMe }) => {
     if (!user?.bio && !isMe) return null;
 
     return (
-        <div style={{ marginBottom: "0.5rem" }}>
+        <div className="mt-4 border border-slate-200 dark:border-slate-900 rounded-lg p-4">
             <p
                 style={{
                     fontSize: "0.9rem",

@@ -6,6 +6,8 @@ import ProfilePage from "./pages/ProfilePage";
 import RegistrationPage from "./pages/RegistrationPage";
 
 import ScrollToTop from "./components/common/ScrollToTop";
+import FollowersPage from "./pages/FollowersPage";
+import FollowingPage from "./pages/FollowingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -24,10 +26,19 @@ function App() {
                         path="/users/:username"
                         element={<UserProfilePage />}
                     />
+                    <Route
+                        element={<FollowersPage />}
+                        path="/:username/followers"
+                    />
+                    <Route
+                        element={<FollowingPage />}
+                        path="/:username/following"
+                    />
+                    <Route path="/not-found" element={<NotFoundPage />} />
                 </Route>
                 <Route element={<LoginPage />} path="/login" />
                 <Route element={<RegistrationPage />} path="/register" />
-                <Route element={<NotFoundPage />} path="*" />
+
                 <Route
                     path="/forgot-password"
                     element={<ForgotPasswordPage />}

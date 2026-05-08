@@ -33,12 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{identifier}', [ProfileController::class, 'showUser']);
 
     Route::post('/users/{identifier}/follow', [FollowController::class, 'toggle']);
-    Route::get('/users/{identifier}/followers', [FollowController::class, 'followers']);
-    Route::get('/users/{identifier}/following', [FollowController::class, 'following']);
+    Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
+    Route::get('/{identifier}/following', [FollowController::class, 'following']);
     Route::post('/profile/{identifier}/cover', [ProfileController::class, 'updateCoverPhoto']);
 });
-
-
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
 import { useAuth } from "../../hooks/useAuth";
@@ -118,7 +119,7 @@ const ProfileInfo = () => {
                     <h3 className="text-2xl font-bold text-white lg:text-[28px]">
                         {state?.user?.firstName} {state?.user?.lastName}
                     </h3>
-                    <p className="text-gray-400 text-sm lg:text-base">
+                    <p className="text-gray-400 text-xs lg:text-sm">
                         {state?.user?.email}
                     </p>
                 </div>
@@ -128,21 +129,28 @@ const ProfileInfo = () => {
 
                 {/* Followers / Following */}
                 <div className="flex items-center gap-6 mt-4">
-                    <div className="text-center">
+                    <Link
+                        to={`/${state?.user?.username}/followers`}
+                        className="text-center hover:opacity-80 transition-all"
+                    >
                         <span className="block text-xl font-bold text-white">
                             {state?.user?.followersCount ?? 0}
                         </span>
                         <span className="text-sm text-gray-400">Followers</span>
-                    </div>
-                    <div className="w-px h-8 bg-[#3F3F3F]" />
-                    <div className="text-center">
+                    </Link>
+
+                    <div className="w-px h-8 bg-slate-300 dark:bg-slate-900" />
+                    <Link
+                        to={`/${state?.user?.username}/following`}
+                        className="text-center hover:opacity-80 transition-all"
+                    >
                         <span className="block text-xl font-bold text-white">
                             {state?.user?.followingCount ?? 0}
                         </span>
                         <span className="text-sm text-gray-400">Following</span>
-                    </div>
-                    <div className="w-px h-8 bg-[#3F3F3F]" />
-                    <div className="text-center">
+                    </Link>
+                    <div className="w-px h-8 bg-slate-300 dark:bg-slate-900" />
+                    <div className="text-center hover:opacity-80 transition-all">
                         <span className="block text-xl font-bold text-white">
                             {state?.posts?.length ?? 0}
                         </span>
@@ -150,7 +158,7 @@ const ProfileInfo = () => {
                     </div>
                 </div>
 
-                <div className="border-b border-[#3F3F3F] mt-6" />
+                <div className="border-b border-slate-300 dark:border-slate-900" />
             </div>
 
             {/* Edit Profile Modal */}
