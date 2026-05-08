@@ -59,7 +59,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             // Increment the counter on failure
-            RateLimiter::hit('login:' . $key, decay: 15 * 60); // 15-min window
+            RateLimiter::hit('login:' . $key, 15 * 60);
 
             $attempts = RateLimiter::attempts('login:' . $key);
             $remaining = 5 - $attempts;

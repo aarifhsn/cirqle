@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../../assets/images/logo.svg";
+import LogoDark from "../../assets/cirqle-logo-dark.png"; // 👈 add your dark logo
+import LogoLight from "../../assets/cirqle-logo-light.png";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
@@ -80,12 +81,12 @@ const Header = () => {
                 boxShadow: "var(--shadow-sm)",
             }}
         >
-            <div className="container flex items-center justify-between gap-3 py-3">
+            <div className="container flex items-center justify-between gap-3 p-3">
                 {/* ── Logo ───────────────────────────────────── */}
                 <Link to="/" className="shrink-0 flex items-center gap-2">
                     <img
                         className="max-w-[80px] lg:max-w-[100px]"
-                        src={Logo}
+                        src={theme === "dark" ? LogoLight : LogoDark} // 👈 swap based on theme
                         alt="Cirqle"
                     />
                 </Link>

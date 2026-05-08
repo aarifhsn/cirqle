@@ -45,7 +45,7 @@ class PasswordResetController extends Controller
             . '&email=' . urlencode($request->email);
 
         Mail::to($user->email)->send(
-            new ResetPasswordMail($resetUrl, $user->name)
+            new ResetPasswordMail($resetUrl, $user->firstName ?? $user->email)
         );
 
         return response()->json([

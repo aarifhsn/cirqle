@@ -5,6 +5,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegistrationPage from "./pages/RegistrationPage";
 
+import ScrollToTop from "./components/common/ScrollToTop";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -14,6 +15,7 @@ import PrivateRoutes from "./routes/PrivateRoutes";
 function App() {
     return (
         <>
+            <ScrollToTop />
             <Routes>
                 <Route element={<PrivateRoutes />}>
                     <Route element={<HomePage />} path="/" exact />
