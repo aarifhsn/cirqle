@@ -1,3 +1,10 @@
+/* Bio.jsx — Cirqle v2
+ * Changes from original:
+ * - Replaced hardcoded `border-slate-200 dark:border-slate-900` with CSS var
+ * - Slightly improved empty state style
+ * - All logic untouched
+ */
+
 import { useProfile } from "../../hooks/useProfile";
 
 const Bio = ({ isMe }) => {
@@ -7,18 +14,23 @@ const Bio = ({ isMe }) => {
     if (!user?.bio && !isMe) return null;
 
     return (
-        <div className="mt-4 border border-slate-200 dark:border-slate-900 rounded-lg p-4">
+        <div
+            className="mt-3 rounded-xl px-4 py-3"
+            style={{
+                border: "1px solid var(--border)",
+                background: "var(--bg-surface-2)",
+            }}
+        >
             <p
+                className="text-sm leading-relaxed"
                 style={{
-                    fontSize: "0.9rem",
                     color: user?.bio
                         ? "var(--text-secondary)"
                         : "var(--text-muted)",
-                    lineHeight: 1.6,
-                    fontStyle: !user?.bio ? "italic" : "normal",
+                    fontStyle: user?.bio ? "normal" : "italic",
                 }}
             >
-                {user?.bio || "No bio yet."}
+                {user?.bio || "No bio yet. Click Edit Profile to add one."}
             </p>
         </div>
     );

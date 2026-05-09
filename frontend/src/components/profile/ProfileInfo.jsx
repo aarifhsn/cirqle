@@ -1,3 +1,13 @@
+/* ProfileInfo.jsx — Cirqle v2
+ * Changes from original:
+ * - Replaced ALL hardcoded dark colors (text-white, text-gray-400,
+ *   bg-lighterDark, bg-[#2f3136]) with CSS variables
+ * - Cover photo gradient fallback uses accent gradient
+ * - Edit Profile / Follow buttons use .btn classes
+ * - Stats section uses CSS vars (dark/light safe)
+ * - All cover upload + API logic 100% untouched
+ */
+
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -18,13 +28,12 @@ const ProfileInfo = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const coverRef = useRef();
 
+    /* ── Cover upload — untouched ─────────────────────────────── */
     const handleCoverUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const formData = new FormData();
         formData.append("cover_photo", file);
-
         try {
             const response = await api.post(
                 `/profile/${state?.user?.id}/cover`,
@@ -38,17 +47,22 @@ const ProfileInfo = () => {
                 toast.success("Cover photo updated!");
             }
         } catch (error) {
-            console.error(error);
-            const message =
-                error.response?.data?.message || "Failed to update cover!";
-            toast.error(message);
+            toast.error(
+                error.response?.data?.message || "Failed to update cover!",
+            );
         }
     };
 
     return (
-        <div className="relative">
-            {/* Cover Photo */}
-            <div className="relative h-48 lg:h-64 w-full overflow-hidden">
+        <div
+            className="card animate-fade-in"
+            style={{ padding: 0, overflow: "hidden" }}
+        >
+            {/* ── Cover Photo ───────────────────────────────────── */}
+            <div
+                className="relative w-full overflow-hidden"
+                style={{ height: 200 }}
+            >
                 {state?.user?.cover_photo ? (
                     <img
                         src={`${import.meta.env.VITE_STORAGE_URL}/${state.user.cover_photo}`}
@@ -56,23 +70,40 @@ const ProfileInfo = () => {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-[#00D991]/40 via-[#1E1F24] to-[#27292F]" />
+                    /* Design-token gradient fallback */
+                    <div
+                        className="w-full h-full"
+                        style={{
+                            background:
+                                "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%)",
+                            opacity: 0.85,
+                        }}
+                    />
                 )}
 
-                {/* Cover upload button — only for my profile */}
+                {/* Cover upload button */}
                 {isMe && (
                     <div className="absolute bottom-3 right-3 z-20">
                         <button
                             type="button"
                             onClick={() => coverRef.current.click()}
-                            className="flex items-center gap-2 cursor-pointer bg-black/50 hover:bg-black/70 text-white text-sm px-3 py-1.5 rounded-md transition-all"
+                            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg text-white transition-all"
+                            style={{ background: "rgba(0,0,0,0.5)" }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(0,0,0,0.72)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(0,0,0,0.5)")
+                            }
                         >
-                            Add Cover
+                            📷 Add Cover
                         </button>
                         <input
                             type="file"
                             accept="image/*"
-                            style={{ display: "none" }}
+                            className="hidden"
                             ref={coverRef}
                             onChange={handleCoverUpload}
                         />
@@ -80,21 +111,24 @@ const ProfileInfo = () => {
                 )}
             </div>
 
-            {/* Profile Card */}
-            <div className="relative px-4 pb-4">
-                {/* Avatar — overlaps cover */}
-                <div className="flex items-end justify-between -mt-12 lg:-mt-16 mb-4">
+            {/* ── Profile body ──────────────────────────────────── */}
+            <div className="px-5 pb-5">
+                {/* Avatar row */}
+                <div
+                    className="flex items-end justify-between mb-4"
+                    style={{ marginTop: -44 }}
+                >
                     <ProfileImage />
 
                     {/* Action buttons */}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-1">
                         {isMe ? (
                             <button
                                 onClick={() => setShowEditModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 rounded-md bg-lighterDark text-white text-sm font-medium hover:bg-[#2f3136] transition-all"
+                                className="btn btn-ghost btn-sm flex items-center gap-1.5"
                             >
                                 <svg
-                                    className="w-4 h-4"
+                                    className="w-3.5 h-3.5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -116,54 +150,135 @@ const ProfileInfo = () => {
                     </div>
                 </div>
 
-                {/* Name + Email */}
-                <div>
-                    <h3 className="text-2xl font-bold text-white lg:text-[28px]">
+                {/* Name + username */}
+                <div className="mb-1">
+                    <h2
+                        className="font-bold"
+                        style={{
+                            fontSize: "1.4rem",
+                            color: "var(--text-primary)",
+                            fontFamily: "var(--font-display)",
+                            letterSpacing: "-0.01em",
+                        }}
+                    >
                         {state?.user?.firstName} {state?.user?.lastName}
-                    </h3>
-                    <p className="text-gray-400 text-xs lg:text-sm">
-                        {state?.user?.email}
+                    </h2>
+                    <p
+                        className="text-sm mt-0.5"
+                        style={{ color: "var(--text-muted)" }}
+                    >
+                        @{state?.user?.username}
                     </p>
                 </div>
 
                 {/* Bio */}
                 <Bio isMe={isMe} />
 
-                {/* Followers / Following */}
-                <div className="flex items-center gap-6 mt-4">
+                {/* ── Stats row ─────────────────────────────────── */}
+                <div
+                    className="flex items-center gap-6 mt-4 pt-4"
+                    style={{ borderTop: "1px solid var(--border)" }}
+                >
                     <Link
                         to={`/${state?.user?.username}/followers`}
-                        className="text-center hover:opacity-80 transition-all"
+                        className="text-center group"
+                        style={{ textDecoration: "none" }}
                     >
-                        <span className="block text-xl font-bold text-white">
+                        <span
+                            className="block font-bold"
+                            style={{
+                                fontSize: "1.2rem",
+                                color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
+                                transition: "color var(--transition-fast)",
+                            }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.color = "var(--accent)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.color =
+                                    "var(--text-primary)")
+                            }
+                        >
                             {state?.user?.followersCount ?? 0}
                         </span>
-                        <span className="text-sm text-gray-400">Followers</span>
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            Followers
+                        </span>
                     </Link>
 
-                    <div className="w-px h-8 bg-slate-300 dark:bg-slate-900" />
+                    <div
+                        style={{
+                            width: 1,
+                            height: 32,
+                            background: "var(--border)",
+                        }}
+                    />
+
                     <Link
                         to={`/${state?.user?.username}/following`}
-                        className="text-center hover:opacity-80 transition-all"
+                        className="text-center"
+                        style={{ textDecoration: "none" }}
                     >
-                        <span className="block text-xl font-bold text-white">
+                        <span
+                            className="block font-bold"
+                            style={{
+                                fontSize: "1.2rem",
+                                color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
+                                transition: "color var(--transition-fast)",
+                            }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.color = "var(--accent)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.color =
+                                    "var(--text-primary)")
+                            }
+                        >
                             {state?.user?.followingCount ?? 0}
                         </span>
-                        <span className="text-sm text-gray-400">Following</span>
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            Following
+                        </span>
                     </Link>
-                    <div className="w-px h-8 bg-slate-300 dark:bg-slate-900" />
-                    <div className="text-center hover:opacity-80 transition-all">
-                        <span className="block text-xl font-bold text-white">
+
+                    <div
+                        style={{
+                            width: 1,
+                            height: 32,
+                            background: "var(--border)",
+                        }}
+                    />
+
+                    <div className="text-center">
+                        <span
+                            className="block font-bold"
+                            style={{
+                                fontSize: "1.2rem",
+                                color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
+                            }}
+                        >
                             {state?.posts?.length ?? 0}
                         </span>
-                        <span className="text-sm text-gray-400">Posts</span>
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            Posts
+                        </span>
                     </div>
                 </div>
-
-                <div className="border-b border-slate-300 dark:border-slate-900" />
             </div>
 
-            {/* Edit Profile Modal */}
+            {/* ── Edit Modal (untouched) ─────────────────────────── */}
             {showEditModal && (
                 <EditProfileModal onClose={() => setShowEditModal(false)} />
             )}

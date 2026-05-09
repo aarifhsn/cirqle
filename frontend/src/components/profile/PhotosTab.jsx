@@ -1,3 +1,13 @@
+/* PhotosTab.jsx — Cirqle v2
+ * Changes from original:
+ * - `bg-lighterDark animate-pulse` → `skeleton` class (uses CSS var shimmer)
+ * - `text-lwsGreen`, `bg-lwsGreen/10` → CSS vars
+ * - `border-[#3F3F3F]` → `var(--border)`
+ * - Lightbox overlay uses CSS vars
+ * - Photo grid hover uses scale-105 (kept)
+ * - All API / lightbox nav logic 100% untouched
+ */
+
 import { useEffect, useState } from "react";
 import useAxios from "../../hooks/useAxios";
 
@@ -8,6 +18,7 @@ const PhotosTab = ({ userId }) => {
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
+    /* ── Original fetch logic untouched ──────────────────────── */
     useEffect(() => {
         setLoading(true);
         api.get(
@@ -41,70 +52,95 @@ const PhotosTab = ({ userId }) => {
         setLightbox(`${import.meta.env.VITE_STORAGE_URL}/${photos[i].image}`);
     };
 
+    /* ── Loading skeleton ─────────────────────────────────────── */
     if (loading) {
         return (
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-3 gap-1.5 mt-4">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                         key={i}
-                        className="aspect-square rounded-md bg-lighterDark animate-pulse"
+                        className="skeleton aspect-square"
+                        style={{ borderRadius: 12 }}
                     />
                 ))}
             </div>
         );
     }
 
+    /* ── Empty state ──────────────────────────────────────────── */
     if (photos.length === 0) {
         return (
-            <div className="card flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-12 h-12 rounded-full bg-lwsGreen/10 flex items-center justify-center mb-3">
-                    <svg
-                        className="w-5 h-5 text-lwsGreen"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                    </svg>
+            <div
+                className="card flex-center flex-col mt-4"
+                style={{ padding: "3.5rem 2rem", textAlign: "center" }}
+            >
+                <div
+                    className="flex-center mb-3"
+                    style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: "50%",
+                        background: "var(--accent-soft)",
+                    }}
+                >
+                    <span style={{ fontSize: "1.4rem" }}>🖼️</span>
                 </div>
-                <p className="text-gray-500 text-sm">No photos yet</p>
+                <p
+                    className="font-semibold mb-1"
+                    style={{ color: "var(--text-primary)" }}
+                >
+                    No photos yet
+                </p>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    Photos from posts will appear here.
+                </p>
             </div>
         );
     }
 
+    /* ── Photo grid ───────────────────────────────────────────── */
     return (
         <>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-3 gap-1.5 mt-4">
                 {photos.map((p, index) => (
                     <div
                         key={p.id}
                         onClick={() => openLightbox(index)}
-                        className="aspect-square rounded-md overflow-hidden cursor-pointer group border border-[#3F3F3F]"
+                        className="aspect-square overflow-hidden cursor-pointer group"
+                        style={{
+                            borderRadius: 12,
+                            border: "1px solid var(--border)",
+                        }}
                     >
                         <img
                             src={`${import.meta.env.VITE_STORAGE_URL}/${p.image}`}
-                            className="w-full h-full object-cover group-hover:opacity-80 group-hover:scale-105 transition-all duration-200"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 group-hover:opacity-90"
                             alt="photo"
                         />
                     </div>
                 ))}
             </div>
 
-            {/* Lightbox */}
+            {/* ── Lightbox (logic untouched, styling updated) ───── */}
             {lightbox && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6"
+                    style={{ background: "rgba(0,0,0,0.92)" }}
                     onClick={() => setLightbox(null)}
                 >
                     {photos.length > 1 && (
                         <button
                             onClick={prev}
-                            className="absolute left-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center text-xl transition-all z-10"
+                            className="absolute left-4 w-10 h-10 rounded-full text-white flex items-center justify-center text-xl transition-all z-10"
+                            style={{ background: "rgba(255,255,255,0.15)" }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(255,255,255,0.25)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(255,255,255,0.15)")
+                            }
                         >
                             ‹
                         </button>
@@ -112,7 +148,7 @@ const PhotosTab = ({ userId }) => {
 
                     <img
                         src={lightbox}
-                        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+                        className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                         alt="full size"
                     />
@@ -120,35 +156,47 @@ const PhotosTab = ({ userId }) => {
                     {photos.length > 1 && (
                         <button
                             onClick={next}
-                            className="absolute right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center text-xl transition-all z-10"
+                            className="absolute right-4 w-10 h-10 rounded-full text-white flex items-center justify-center text-xl transition-all z-10"
+                            style={{ background: "rgba(255,255,255,0.15)" }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(255,255,255,0.25)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                    "rgba(255,255,255,0.15)")
+                            }
                         >
                             ›
                         </button>
                     )}
 
                     {photos.length > 1 && (
-                        <span className="absolute bottom-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                        <span
+                            className="absolute bottom-5 text-white text-sm px-3 py-1 rounded-full"
+                            style={{ background: "rgba(0,0,0,0.5)" }}
+                        >
                             {lightboxIndex + 1} / {photos.length}
                         </span>
                     )}
 
                     <button
                         onClick={() => setLightbox(null)}
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all"
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full text-white flex items-center justify-center transition-all"
+                        style={{
+                            background: "rgba(255,255,255,0.15)",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                        }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.25)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.15)")
+                        }
                     >
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2.5}
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
+                        ✕
                     </button>
                 </div>
             )}

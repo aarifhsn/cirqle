@@ -16,7 +16,7 @@ const PrivateRoutes = () => {
                         <ProfileProvider>
                             <Header />
                             <main
-                                className="mx-auto max-w-[1020px] pb-8"
+                                className="mx-auto max-w-full pb-8"
                                 style={{ margin: "0 auto" }}
                             >
                                 <div className="container">

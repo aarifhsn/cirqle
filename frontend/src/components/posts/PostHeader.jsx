@@ -19,6 +19,7 @@ const PostHeader = ({ post }) => {
     const { dispatch } = usePost();
     const { api } = useAxios();
 
+    /* ── All original API logic untouched ────────────────────── */
     const handleDeletePost = async () => {
         if (!window.confirm("Delete this post?")) return;
         dispatch({ type: actions.post.DATA_FETCHING });
@@ -44,42 +45,20 @@ const PostHeader = ({ post }) => {
 
     return (
         <>
-            <header
-                style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: "0.75rem",
-                    marginBottom: "0.75rem",
-                }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                    }}
-                >
-                    <Link to={profileLink}>
+            <header className="flex items-start justify-between gap-3 mb-3">
+                {/* ── Left: Avatar + name + time ────────────────── */}
+                <div className="flex items-center gap-3">
+                    <Link to={profileLink} className="flex-shrink-0">
                         <Avatar user={post?.author} size="md" />
                     </Link>
+
                     <div>
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.4rem",
-                            }}
-                        >
+                        {/* Name + privacy */}
+                        <div className="flex items-center gap-1.5">
                             <Link
                                 to={profileLink}
-                                style={{
-                                    fontWeight: 600,
-                                    fontSize: "0.95rem",
-                                    color: "var(--text-primary)",
-                                    textDecoration: "none",
-                                    transition: "color 150ms ease",
-                                }}
+                                className="font-semibold text-sm transition-colors"
+                                style={{ color: "var(--text-primary)" }}
                                 onMouseEnter={(e) =>
                                     (e.currentTarget.style.color =
                                         "var(--accent)")
@@ -93,21 +72,14 @@ const PostHeader = ({ post }) => {
                             </Link>
                             <PrivacyIcon privacy={post?.privacy} />
                         </div>
+
+                        {/* Timestamp */}
                         <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.3rem",
-                                marginTop: "0.1rem",
-                            }}
+                            className="flex items-center gap-1 mt-0.5"
+                            style={{ color: "var(--text-muted)" }}
                         >
                             <svg
-                                style={{
-                                    width: 12,
-                                    height: 12,
-                                    color: "var(--text-muted)",
-                                    flexShrink: 0,
-                                }}
+                                className="w-3 h-3 flex-shrink-0"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -119,25 +91,20 @@ const PostHeader = ({ post }) => {
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                             </svg>
-                            <span
-                                style={{
-                                    fontSize: "0.78rem",
-                                    color: "var(--text-muted)",
-                                }}
-                            >
+                            <span className="text-xs">
                                 {getDateDifferenceFromNow(post?.createAt)}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Three-dot menu */}
+                {/* ── Right: 3-dot menu (only for own posts) ────── */}
                 {isMe && (
-                    <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div className="relative flex-shrink-0">
                         <button
-                            className="icon-btn"
-                            style={{ width: 32, height: 32 }}
                             onClick={() => setShowAction(!showAction)}
+                            className="btn btn-ghost btn-icon"
+                            aria-label="Post options"
                         >
                             <svg
                                 className="w-4 h-4"
@@ -150,10 +117,32 @@ const PostHeader = ({ post }) => {
                             </svg>
                         </button>
 
+                        {/* Dropdown */}
                         {showAction && (
-                            <div className="action-modal-container">
+                            <div
+                                className="absolute right-0 top-10 z-30 w-44 rounded-2xl overflow-hidden animate-fade-in-scale"
+                                style={{
+                                    background: "var(--bg-elevated)",
+                                    border: "1px solid var(--border-strong)",
+                                    boxShadow: "var(--card-shadow-hover)",
+                                }}
+                            >
+                                {/* Edit */}
                                 <button
-                                    className="action-menu-item"
+                                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium transition-colors"
+                                    style={{ color: "var(--text-secondary)" }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background =
+                                            "var(--hover-bg)";
+                                        e.currentTarget.style.color =
+                                            "var(--accent)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background =
+                                            "transparent";
+                                        e.currentTarget.style.color =
+                                            "var(--text-secondary)";
+                                    }}
                                     onClick={() => {
                                         setShowEditModal(true);
                                         setShowAction(false);
@@ -174,9 +163,24 @@ const PostHeader = ({ post }) => {
                                     </svg>
                                     Edit Post
                                 </button>
+
+                                <div
+                                    className="divider"
+                                    style={{ margin: "0" }}
+                                />
+
+                                {/* Delete */}
                                 <button
-                                    className="action-menu-item"
+                                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium transition-colors"
                                     style={{ color: "var(--danger)" }}
+                                    onMouseEnter={(e) =>
+                                        (e.currentTarget.style.background =
+                                            "var(--danger-soft)")
+                                    }
+                                    onMouseLeave={(e) =>
+                                        (e.currentTarget.style.background =
+                                            "transparent")
+                                    }
                                     onClick={() => {
                                         setShowAction(false);
                                         handleDeletePost();
@@ -203,12 +207,13 @@ const PostHeader = ({ post }) => {
                 )}
             </header>
 
+            {/* ── Edit Modal (unchanged) ─────────────────────────── */}
             {showEditModal && (
                 <div
-                    className="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
-                    style={{ background: "rgba(0,0,0,0.75)" }}
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ background: "var(--bg-overlay)" }}
                 >
-                    <div className="modal-content w-full max-w-xl">
+                    <div className="w-full max-w-xl animate-fade-in-scale">
                         <PostEntry
                             postToEdit={post}
                             onCreate={() => setShowEditModal(false)}

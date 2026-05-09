@@ -1,39 +1,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { actions } from "../actions";
-import PageLayout from "../components/common/PageLayout";
 import NewPost from "../components/posts/NewPost";
 import PostList from "../components/posts/PostList";
 import useAxios from "../hooks/useAxios";
 import { usePost } from "../hooks/usePost";
+import AppLayout from "../layouts/AppLayout";
 
-/* ── Feed skeleton ─────────────────────────────────── */
+/* ── Feed tabs config ─────────────────────────────────────────── */
+const FEED_TABS = [
+    { id: "public", label: "For You", icon: "✨" },
+    { id: "following", label: "Following", icon: "👥" },
+    { id: "nearby", label: "Nearby", icon: "📍" },
+    { id: "circles", label: "Circles", icon: "⭕" },
+    { id: "events", label: "Events", icon: "📅" },
+    { id: "jobs", label: "Jobs", icon: "💼" },
+];
+
+/* ── Feed Skeleton (style only updated) ──────────────────────── */
 const FeedSkeleton = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div className="flex flex-col gap-3">
         {[1, 2, 3].map((i) => (
-            <div key={i} className="card" style={{ padding: "1.25rem 1.5rem" }}>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "0.75rem",
-                        marginBottom: "1rem",
-                    }}
-                >
+            <div key={i} className="card" style={{ padding: "1.25rem 1.4rem" }}>
+                <div className="flex gap-3 mb-4">
                     <div
-                        className="skeleton"
-                        style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "50%",
-                            flexShrink: 0,
-                        }}
+                        className="skeleton flex-shrink-0"
+                        style={{ width: 44, height: 44, borderRadius: "50%" }}
                     />
-                    <div style={{ flex: 1 }}>
+                    <div className="flex-1">
                         <div
-                            className="skeleton"
+                            className="skeleton mb-2"
                             style={{
                                 height: 13,
                                 width: "45%",
-                                marginBottom: 8,
                                 borderRadius: 6,
                             }}
                         />
@@ -48,44 +46,29 @@ const FeedSkeleton = () => (
                     </div>
                 </div>
                 <div
-                    className="skeleton"
-                    style={{
-                        height: 13,
-                        width: "100%",
-                        marginBottom: 8,
-                        borderRadius: 6,
-                    }}
+                    className="skeleton mb-2"
+                    style={{ height: 13, width: "100%", borderRadius: 6 }}
                 />
                 <div
-                    className="skeleton"
-                    style={{
-                        height: 13,
-                        width: "75%",
-                        borderRadius: 6,
-                        marginBottom: 16,
-                    }}
+                    className="skeleton mb-4"
+                    style={{ height: 13, width: "70%", borderRadius: 6 }}
                 />
                 <div
-                    className="skeleton"
-                    style={{ height: 200, borderRadius: 10, marginBottom: 16 }}
+                    className="skeleton mb-4"
+                    style={{ height: 200, borderRadius: 12 }}
                 />
-                <div style={{ display: "flex", gap: "1rem" }}>
+                <div className="flex gap-3">
                     <div
                         className="skeleton"
-                        style={{ height: 32, width: 80, borderRadius: 20 }}
+                        style={{ height: 34, width: 90, borderRadius: 20 }}
                     />
                     <div
                         className="skeleton"
-                        style={{ height: 32, width: 80, borderRadius: 20 }}
+                        style={{ height: 34, width: 90, borderRadius: 20 }}
                     />
                     <div
-                        className="skeleton"
-                        style={{
-                            height: 32,
-                            width: 80,
-                            borderRadius: 20,
-                            marginLeft: "auto",
-                        }}
+                        className="skeleton ml-auto"
+                        style={{ height: 34, width: 90, borderRadius: 20 }}
                     />
                 </div>
             </div>
@@ -93,65 +76,45 @@ const FeedSkeleton = () => (
     </div>
 );
 
-/* ── Empty state ───────────────────────────────────── */
-const EmptyFeed = ({ filter }) => (
+/* ── Empty state ──────────────────────────────────────────────── */
+const EmptyFeed = ({ tab }) => (
     <div
         className="card flex-center flex-col"
         style={{ padding: "4rem 2rem", textAlign: "center" }}
     >
         <div
+            className="flex-center mb-5"
             style={{
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
                 background: "var(--accent-soft)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1.25rem",
             }}
         >
-            <svg
-                style={{ width: 28, height: 28, color: "var(--accent)" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                />
-            </svg>
+            <span style={{ fontSize: "1.75rem" }}>
+                {FEED_TABS.find((t) => t.id === tab)?.icon ?? "📭"}
+            </span>
         </div>
         <h3
-            style={{
-                fontSize: "1.1rem",
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                marginBottom: "0.5rem",
-            }}
+            className="font-semibold mb-1"
+            style={{ fontSize: "1.05rem", color: "var(--text-primary)" }}
         >
-            {filter === "following"
+            {tab === "following"
                 ? "Your following feed is empty"
-                : "No posts yet"}
+                : "Nothing here yet"}
         </h3>
         <p
-            style={{
-                color: "var(--text-muted)",
-                fontSize: "0.875rem",
-                maxWidth: 280,
-            }}
+            className="text-sm"
+            style={{ color: "var(--text-muted)", maxWidth: 260 }}
         >
-            {filter === "following"
-                ? "Follow some people to see their posts here."
-                : "Be the first to share something!"}
+            {tab === "following"
+                ? "Follow people to see their posts here."
+                : "Be the first to post something!"}
         </p>
     </div>
 );
 
-/* ── Error state ───────────────────────────────────── */
+/* ── Error state ──────────────────────────────────────────────── */
 const FeedError = ({ message }) => (
     <div
         className="card"
@@ -159,32 +122,32 @@ const FeedError = ({ message }) => (
             padding: "2rem",
             textAlign: "center",
             background: "var(--danger-soft)",
-            border: "1px solid rgba(255,77,109,0.2)",
+            border: "1px solid rgba(239,68,68,0.2)",
         }}
     >
-        <p style={{ color: "var(--danger)", fontSize: "0.9rem" }}>
+        <p className="text-sm mb-3" style={{ color: "var(--danger)" }}>
             Failed to load posts. {message}
         </p>
         <button
             onClick={() => window.location.reload()}
-            className="btn-ghost"
-            style={{ marginTop: "1rem" }}
+            className="btn btn-ghost btn-sm"
         >
             Try again
         </button>
     </div>
 );
 
-/* ── HomePage ──────────────────────────────────────── */
+/* ── HomePage ─────────────────────────────────────────────────── */
 const HomePage = () => {
     const { state, dispatch } = usePost();
     const { api } = useAxios();
-    const [filter, setFilter] = useState("public");
+    const [activeTab, setActiveTab] = useState("public");
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const sentinelRef = useRef(null);
 
+    /* ── Original fetchPosts logic — untouched ────────────────── */
     const fetchPosts = useCallback(
         async (pageNum, currentFilter, append = false) => {
             if (append) {
@@ -192,7 +155,6 @@ const HomePage = () => {
             } else {
                 dispatch({ type: actions.post.DATA_FETCHING });
             }
-
             try {
                 const response = await api.get(
                     `${import.meta.env.VITE_SERVER_BASE_URL}/posts?filter=${currentFilter}&page=${pageNum}`,
@@ -219,18 +181,15 @@ const HomePage = () => {
         [api],
     );
 
-    // reset on filter change
     useEffect(() => {
         setPage(1);
         setHasMore(true);
-        fetchPosts(1, filter, false);
-    }, [filter]);
+        fetchPosts(1, activeTab, false);
+    }, [activeTab]);
 
-    // intersection observer for infinite scroll
     useEffect(() => {
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
-
         const observer = new IntersectionObserver(
             (entries) => {
                 if (
@@ -241,75 +200,70 @@ const HomePage = () => {
                 ) {
                     setPage((prev) => {
                         const next = prev + 1;
-                        fetchPosts(next, filter, true);
+                        fetchPosts(next, activeTab, true);
                         return next;
                     });
                 }
             },
             { threshold: 0.1 },
         );
-
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [hasMore, loadingMore, state?.loading, filter, fetchPosts]);
+    }, [hasMore, loadingMore, state?.loading, activeTab, fetchPosts]);
 
     return (
-        <PageLayout>
+        <AppLayout>
+            {/* ── Composer ──────────────────────────────────────── */}
             <NewPost />
 
-            {/* Feed filter */}
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    margin: "1rem 0 0.75rem",
-                    justifyContent: "flex-end",
-                }}
-            >
-                <span
-                    style={{
-                        fontSize: "0.8rem",
-                        color: "var(--text-muted)",
-                        marginRight: "auto",
-                    }}
-                >
-                    {!state?.loading && state?.posts?.length > 0
-                        ? `${state.posts.length} posts`
-                        : ""}
-                </span>
-                <button
-                    onClick={() => setFilter("public")}
-                    className={`filter-pill ${filter === "public" ? "active" : ""}`}
-                >
-                    🌐 Public
-                </button>
-                <button
-                    onClick={() => setFilter("following")}
-                    className={`filter-pill ${filter === "following" ? "active" : ""}`}
-                >
-                    👥 Following
-                </button>
+            {/* ── Feed Tabs ─────────────────────────────────────── */}
+            <div className="feed-tabs">
+                {FEED_TABS.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`feed-tab ${activeTab === tab.id ? "active" : ""}`}
+                    >
+                        <span>{tab.icon}</span>
+                        <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                ))}
             </div>
 
-            {/* Feed content */}
+            {/* ── Post count label ──────────────────────────────── */}
+            {!state?.loading && state?.posts?.length > 0 && (
+                <p
+                    className="text-xs px-1"
+                    style={{ color: "var(--text-muted)" }}
+                >
+                    {state.posts.length} posts
+                </p>
+            )}
+
+            {/* ── Feed content ──────────────────────────────────── */}
             {state?.loading && <FeedSkeleton />}
+
             {!state?.loading && state?.error && (
                 <FeedError message={state.error} />
             )}
+
             {!state?.loading && !state?.error && state?.posts?.length === 0 && (
-                <EmptyFeed filter={filter} />
+                <EmptyFeed tab={activeTab} />
             )}
+
             {!state?.loading && !state?.error && state?.posts?.length > 0 && (
                 <PostList posts={state.posts} />
             )}
 
-            {/* Sentinel — watched by IntersectionObserver */}
+            {/* ── Infinite scroll sentinel ──────────────────────── */}
             <div ref={sentinelRef} className="h-4" />
 
-            {/* Loading more spinner */}
+            {/* ── Loading more ──────────────────────────────────── */}
             {loadingMore && (
-                <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-sm">
+                <div
+                    className="flex items-center justify-center gap-2 py-6 text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                >
                     <svg
                         className="w-4 h-4 animate-spin"
                         fill="none"
@@ -333,13 +287,16 @@ const HomePage = () => {
                 </div>
             )}
 
-            {/* End of feed message */}
+            {/* ── End of feed ───────────────────────────────────── */}
             {!hasMore && !loadingMore && state?.posts?.length > 0 && (
-                <p className="text-center text-gray-500 text-sm py-6">
-                    You're all caught up. Happy Reading
+                <p
+                    className="text-center text-sm py-6"
+                    style={{ color: "var(--text-muted)" }}
+                >
+                    You're all caught up ✨
                 </p>
             )}
-        </PageLayout>
+        </AppLayout>
     );
 };
 

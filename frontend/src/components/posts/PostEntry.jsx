@@ -84,7 +84,6 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         type: actions.post.DATA_EDITED,
                         data: response.data,
                     });
-                    toast.success("Post updated!");
                 } else {
                     const message =
                         error.response?.data?.message ||

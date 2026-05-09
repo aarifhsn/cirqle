@@ -3,80 +3,88 @@ import { useAuth } from "../../hooks/useAuth";
 import Avatar from "../common/Avatar";
 import PostEntry from "./PostEntry";
 
+/* ── Composer action buttons config ──────────────────────────── */
+const COMPOSER_ACTIONS = [
+    { icon: "📷", label: "Photo", color: "#6C63FF" },
+    { icon: "📊", label: "Poll", color: "#43CFAA" },
+    { icon: "😊", label: "Mood", color: "#F59E0B" },
+    { icon: "💼", label: "Job", color: "#3B82F6" },
+    { icon: "📅", label: "Event", color: "#EF4444" },
+    { icon: "🛍️", label: "Sell", color: "#EC4899" },
+];
+
 const NewPost = () => {
     const [showPostEntry, setShowPostEntry] = useState(false);
     const { auth } = useAuth();
 
     return (
         <>
-            <div className="card" style={{ padding: "1rem 1.25rem" }}>
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                    }}
-                >
-                    <Avatar user={auth?.user} size="md" />
+            {/* ── Composer Card ─────────────────────────────────── */}
+            <div
+                className="card animate-fade-in"
+                style={{ padding: "1rem 1.25rem" }}
+            >
+                {/* Top row: avatar + prompt input */}
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="relative flex-shrink-0">
+                        <Avatar user={auth?.user} size="md" />
+                        <span className="online-dot" />
+                    </div>
+
                     <button
                         onClick={() => setShowPostEntry(true)}
+                        className="flex-1 text-left px-4 py-2.5 rounded-full text-sm transition-all"
                         style={{
-                            flex: 1,
-                            textAlign: "left",
-                            padding: "0.65rem 1rem",
-                            borderRadius: "var(--r-full)",
-                            background: "var(--bg-input)",
-                            border: "1px solid var(--border-strong)",
+                            background: "var(--input-bg)",
+                            border: "1.5px solid var(--border)",
                             color: "var(--text-muted)",
-                            fontSize: "0.9rem",
-                            cursor: "pointer",
-                            transition: "all var(--duration) var(--ease)",
                         }}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.borderColor = "var(--accent)";
-                            e.currentTarget.style.color =
-                                "var(--text-secondary)";
+                            e.currentTarget.style.background =
+                                "var(--input-bg-focus)";
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor =
-                                "var(--border-strong)";
-                            e.currentTarget.style.color = "var(--text-muted)";
+                            e.currentTarget.style.borderColor = "var(--border)";
+                            e.currentTarget.style.background =
+                                "var(--input-bg)";
                         }}
                     >
-                        What's on your mind?
+                        What's on your mind, {auth?.user?.name?.split(" ")[0]}?
                     </button>
+                </div>
 
-                    {/* Photo shortcut */}
-                    <button
-                        onClick={() => setShowPostEntry(true)}
-                        className="icon-btn"
-                        title="Add photo"
-                        style={{ flexShrink: 0 }}
-                    >
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                {/* Divider */}
+                <div className="divider" />
+
+                {/* Action buttons row */}
+                <div className="flex items-center gap-1 flex-wrap">
+                    {COMPOSER_ACTIONS.map((action) => (
+                        <button
+                            key={action.label}
+                            onClick={() => setShowPostEntry(true)}
+                            className="compose-action flex-1"
+                            style={{ minWidth: "fit-content" }}
+                            title={action.label}
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                    </button>
+                            <span style={{ fontSize: "1rem" }}>
+                                {action.icon}
+                            </span>
+                            <span className="hidden sm:inline text-xs font-medium">
+                                {action.label}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Modal overlay */}
+            {/* ── Modal (unchanged) ─────────────────────────────── */}
             {showPostEntry && (
                 <div
-                    className="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
-                    style={{ background: "rgba(0,0,0,0.75)" }}
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ background: "var(--bg-overlay)" }}
                 >
-                    <div className="modal-content w-full max-w-xl">
+                    <div className="w-full max-w-xl animate-fade-in-scale">
                         <PostEntry
                             onCreate={() => setShowPostEntry(false)}
                             onClose={() => setShowPostEntry(false)}

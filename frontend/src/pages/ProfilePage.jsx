@@ -1,7 +1,15 @@
+/* ProfilePage.jsx — Cirqle v2
+ * Changes from original:
+ * - PageLayout → AppLayout (3-column shell)
+ * - 6 tabs: Posts | Media | About | Circles | Marketplace | Saved
+ * - Tab bar uses .feed-tabs / .feed-tab CSS classes
+ * - Skeleton updated to use CSS vars (dark/light safe)
+ * - All API / notFound logic 100% untouched
+ */
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { actions } from "../actions";
-import PageLayout from "../components/common/PageLayout";
 import NewPost from "../components/posts/NewPost";
 import MyPosts from "../components/profile/MyPosts";
 import PhotosTab from "../components/profile/PhotosTab";
@@ -9,25 +17,29 @@ import ProfileInfo from "../components/profile/ProfileInfo";
 import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 import { useProfile } from "../hooks/useProfile";
+import AppLayout from "../layouts/AppLayout";
 import NotFoundPage from "./NotFoundPage";
 
+/* ── Tab config ───────────────────────────────────────────────── */
+const PROFILE_TABS = [
+    { id: "posts", label: "Posts", icon: "📝" },
+    { id: "media", label: "Media", icon: "🖼️" },
+    { id: "about", label: "About", icon: "👤" },
+    { id: "circles", label: "Circles", icon: "⭕" },
+    { id: "marketplace", label: "Marketplace", icon: "🛍️" },
+    { id: "saved", label: "Saved", icon: "🔖" },
+];
+
+/* ── Skeleton ─────────────────────────────────────────────────── */
 const ProfileSkeleton = () => (
-    <div
-        className="card"
-        style={{ padding: 0, overflow: "hidden", marginBottom: "1rem" }}
-    >
-        {/* cover */}
+    <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        {/* Cover */}
         <div className="skeleton" style={{ height: 200, borderRadius: 0 }} />
         <div style={{ padding: "0 1.5rem 1.5rem" }}>
-            {/* avatar */}
+            {/* Avatar row */}
             <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-end",
-                    marginTop: -40,
-                    marginBottom: "1rem",
-                }}
+                className="flex justify-between items-end mb-4"
+                style={{ marginTop: -44 }}
             >
                 <div
                     className="skeleton"
@@ -35,72 +47,46 @@ const ProfileSkeleton = () => (
                         width: 88,
                         height: 88,
                         borderRadius: "50%",
-                        border: "3px solid var(--bg-card)",
+                        border: "3px solid var(--card-bg)",
                     }}
                 />
                 <div
                     className="skeleton"
-                    style={{
-                        width: 110,
-                        height: 36,
-                        borderRadius: "var(--r-full)",
-                    }}
+                    style={{ width: 110, height: 36, borderRadius: 20 }}
                 />
             </div>
+            {/* Name */}
             <div
-                className="skeleton"
-                style={{
-                    height: 22,
-                    width: "45%",
-                    borderRadius: 6,
-                    marginBottom: 8,
-                }}
+                className="skeleton mb-2"
+                style={{ height: 22, width: "40%", borderRadius: 6 }}
             />
             <div
-                className="skeleton"
-                style={{
-                    height: 13,
-                    width: "30%",
-                    borderRadius: 6,
-                    marginBottom: 16,
-                }}
+                className="skeleton mb-4"
+                style={{ height: 13, width: "28%", borderRadius: 6 }}
+            />
+            {/* Bio */}
+            <div
+                className="skeleton mb-2"
+                style={{ height: 13, width: "100%", borderRadius: 6 }}
             />
             <div
-                className="skeleton"
-                style={{
-                    height: 13,
-                    width: "70%",
-                    borderRadius: 6,
-                    marginBottom: 20,
-                }}
+                className="skeleton mb-5"
+                style={{ height: 13, width: "65%", borderRadius: 6 }}
             />
+            {/* Stats */}
             <div
-                style={{
-                    display: "flex",
-                    gap: "1.5rem",
-                    paddingTop: "0.875rem",
-                    borderTop: "1px solid var(--border)",
-                }}
+                className="flex gap-6 pt-4"
+                style={{ borderTop: "1px solid var(--border)" }}
             >
                 {[1, 2, 3].map((i) => (
-                    <div key={i} style={{ textAlign: "center" }}>
+                    <div key={i} className="text-center">
                         <div
-                            className="skeleton"
-                            style={{
-                                width: 36,
-                                height: 20,
-                                borderRadius: 4,
-                                margin: "0 auto 4px",
-                            }}
+                            className="skeleton mx-auto mb-1"
+                            style={{ width: 36, height: 20, borderRadius: 4 }}
                         />
                         <div
-                            className="skeleton"
-                            style={{
-                                width: 48,
-                                height: 11,
-                                borderRadius: 4,
-                                margin: "0 auto",
-                            }}
+                            className="skeleton mx-auto"
+                            style={{ width: 52, height: 11, borderRadius: 4 }}
                         />
                     </div>
                 ))}
@@ -109,15 +95,38 @@ const ProfileSkeleton = () => (
     </div>
 );
 
+/* ── Coming Soon placeholder for unbuilt tabs ─────────────────── */
+const ComingSoon = ({ tab }) => (
+    <div
+        className="card flex-center flex-col"
+        style={{ padding: "4rem 2rem", textAlign: "center" }}
+    >
+        <span style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>
+            {PROFILE_TABS.find((t) => t.id === tab)?.icon ?? "🚧"}
+        </span>
+        <h4
+            className="font-semibold mb-1"
+            style={{ color: "var(--text-primary)" }}
+        >
+            {PROFILE_TABS.find((t) => t.id === tab)?.label} — Coming Soon
+        </h4>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            This section is under construction.
+        </p>
+    </div>
+);
+
+/* ── ProfilePage ──────────────────────────────────────────────── */
 const ProfilePage = () => {
     const { state, dispatch } = useProfile();
     const { api } = useAxios();
     const { auth } = useAuth();
     const { username } = useParams();
     const [activeTab, setActiveTab] = useState("posts");
-    const isMe = auth?.user?.username === username;
     const [notFound, setNotFound] = useState(false);
+    const isMe = auth?.user?.username === username;
 
+    /* ── Original fetch logic — untouched ────────────────────── */
     useEffect(() => {
         dispatch({ type: actions.profile.DATA_FETCHING });
 
@@ -150,68 +159,51 @@ const ProfilePage = () => {
     if (notFound) return <NotFoundPage />;
 
     return (
-        <PageLayout>
-            {/* Profile card */}
+        <AppLayout>
+            {/* ── Profile info card ─────────────────────────────── */}
             {state?.loading || !state?.user ? (
                 <ProfileSkeleton />
             ) : (
                 <ProfileInfo />
             )}
 
-            {/* New post — own profile only */}
+            {/* ── New post composer (own profile only) ──────────── */}
             {!state?.loading && state?.user && isMe && <NewPost />}
 
-            {/* Tab bar */}
+            {/* ── Tab bar ───────────────────────────────────────── */}
             {!state?.loading && state?.user && (
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "0.25rem",
-                        margin: "1.25rem 0 0.75rem",
-                        borderBottom: "1px solid var(--border)",
-                        paddingBottom: "0",
-                    }}
-                >
-                    {["posts", "photos"].map((tab) => (
+                <div className="feed-tabs">
+                    {PROFILE_TABS.map((tab) => (
                         <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            style={{
-                                padding: "0.5rem 1.1rem 0.75rem",
-                                fontSize: "0.875rem",
-                                fontWeight: 600,
-                                fontFamily: "'DM Sans', sans-serif",
-                                background: "none",
-                                border: "none",
-                                borderBottom:
-                                    activeTab === tab
-                                        ? "2px solid var(--accent)"
-                                        : "2px solid transparent",
-                                color:
-                                    activeTab === tab
-                                        ? "var(--accent)"
-                                        : "var(--text-muted)",
-                                cursor: "pointer",
-                                textTransform: "capitalize",
-                                transition: "all 150ms ease",
-                                marginBottom: "-1px",
-                            }}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`feed-tab ${activeTab === tab.id ? "active" : ""}`}
                         >
-                            {tab}
+                            <span>{tab.icon}</span>
+                            <span className="hidden sm:inline">
+                                {tab.label}
+                            </span>
                         </button>
                     ))}
                 </div>
             )}
 
-            {/* Tab content */}
-            {!state?.loading &&
-                state?.user &&
-                (activeTab === "posts" ? (
-                    <MyPosts />
-                ) : (
-                    <PhotosTab userId={state?.user?.id} />
-                ))}
-        </PageLayout>
+            {/* ── Tab content ───────────────────────────────────── */}
+            {!state?.loading && state?.user && (
+                <div className="animate-fade-in">
+                    {activeTab === "posts" && <MyPosts />}
+                    {activeTab === "media" && (
+                        <PhotosTab userId={state?.user?.id} />
+                    )}
+                    {activeTab === "about" && <ComingSoon tab="about" />}
+                    {activeTab === "circles" && <ComingSoon tab="circles" />}
+                    {activeTab === "marketplace" && (
+                        <ComingSoon tab="marketplace" />
+                    )}
+                    {activeTab === "saved" && <ComingSoon tab="saved" />}
+                </div>
+            )}
+        </AppLayout>
     );
 };
 
