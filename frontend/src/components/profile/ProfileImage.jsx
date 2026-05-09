@@ -37,7 +37,10 @@ const ProfileImage = () => {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update profile photo!");
+            const message =
+                error.response?.data?.message ||
+                "Failed to update profile photo!";
+            toast.error(message);
         }
     };
 

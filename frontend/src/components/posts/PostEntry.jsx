@@ -85,6 +85,11 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         data: response.data,
                     });
                     toast.success("Post updated!");
+                } else {
+                    const message =
+                        error.response?.data?.message ||
+                        "Failed to update post!";
+                    toast.error(message);
                 }
             } else {
                 response = await api.post(
@@ -105,7 +110,10 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             console.error(error);
             if (error.response?.data?.errors)
                 console.error(error.response.data.errors);
-            toast.error("Something went wrong!");
+            const message =
+                error.response?.data?.message || "Something went wrong!";
+            toast.error(message);
+
             dispatch({
                 type: actions.post.DATA_FETCH_ERROR,
                 error: error.message,

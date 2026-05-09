@@ -19,7 +19,7 @@ const RegistrationForm = () => {
                 formData,
             );
             if (response.status === 201) {
-                navigate("/login");
+                navigate("/verify-email");
             }
         } catch (error) {
             console.error(error);

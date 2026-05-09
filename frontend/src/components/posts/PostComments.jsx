@@ -36,7 +36,10 @@ const PostComments = ({ post }) => {
                 setReplyingTo(null);
             }
         } catch (error) {
-            toast.error("Failed to add comment!");
+            console.error(error);
+            const message =
+                error.response?.data?.message || "Failed to add comment!";
+            toast.error(message);
         }
     };
 

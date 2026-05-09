@@ -24,6 +24,8 @@ class AuthController extends Controller
         $validated['username'] = explode('@', $validated['email'])[0];
         $user = User::create($validated);
 
+        $user->sendEmailVerificationNotification();
+
         $authToken = $user->createToken('auth_token')->plainTextToken;
         $refreshToken = $this->createRefreshToken($user);
 
@@ -31,6 +33,7 @@ class AuthController extends Controller
             'user' => $this->formatUser($user),
             'authToken' => $authToken,
             'refreshToken' => $refreshToken,
+            'message' => 'Registration successful. Please verify your email.',
         ], 201);
     }
 

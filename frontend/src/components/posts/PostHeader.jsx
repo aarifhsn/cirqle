@@ -32,7 +32,9 @@ const PostHeader = ({ post }) => {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to delete post!");
+            const message =
+                error.response?.data?.message || "Failed to delete post!";
+            toast.error(message);
             dispatch({
                 type: actions.post.DATA_FETCH_ERROR,
                 error: error.message,

@@ -6,6 +6,7 @@ import ProfilePage from "./pages/ProfilePage";
 import RegistrationPage from "./pages/RegistrationPage";
 
 import ScrollToTop from "./components/common/ScrollToTop";
+import EmailVerifiedPage from "./pages/EmailVerifiedPage";
 import FollowersPage from "./pages/FollowersPage";
 import FollowingPage from "./pages/FollowingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -13,6 +14,7 @@ import GoogleSuccess from "./pages/GoogleSuccess";
 import NotificationsPage from "./pages/NotificationsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import VerifyEmailNoticePage from "./pages/VerifyEmailNoticePage";
 import PrivateRoutes from "./routes/PrivateRoutes";
 
 function App() {
@@ -42,6 +44,12 @@ function App() {
 
                     <Route path="/not-found" element={<NotFoundPage />} />
                 </Route>
+                <Route element={<EmailVerifiedPage />} path="/email-verified" />
+                <Route
+                    element={<VerifyEmailNoticePage />}
+                    path="/verify-email"
+                />
+
                 <Route element={<LoginPage />} path="/login" />
                 <Route element={<RegistrationPage />} path="/register" />
 

@@ -37,7 +37,10 @@ const PostAction = ({ post, commentCount }) => {
                 setLikeCount((prev) => (nowLiked ? prev + 1 : prev - 1));
             }
         } catch (error) {
-            toast.error("Failed to update like!");
+            const message =
+                error.response?.data?.message ||
+                "Failed to update like status.";
+            toast.error(message);
         }
     };
 

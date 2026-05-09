@@ -39,7 +39,9 @@ const ProfileInfo = () => {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update cover photo!");
+            const message =
+                error.response?.data?.message || "Failed to update cover!";
+            toast.error(message);
         }
     };
 

@@ -8,6 +8,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Middleware\EnsureEmailIsVerified;
+use Illuminate\Http\Request;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // 10 attempts per minute
@@ -16,33 +18,71 @@ Route::post('/auth/forgot-password', [PasswordResetController::class, 'sendReset
 Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Check verification status
+    Route::get('/auth/email/status', function (Request $request) {
+        return response()->json([
+            'verified' => $request->user()->hasVerifiedEmail(),
+        ]);
+    });
+
+    // Resend verification email
+    Route::post('/auth/email/resend', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Already verified'], 400);
+        }
+        $request->user()->sendEmailVerificationNotification();
+        return response()->json(['message' => 'Verification email sent']);
+    })->middleware('throttle:3,1');
+
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     Route::get('/posts', [PostController::class, 'index']);
-    Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1');
-    Route::delete('/posts/{id}', [PostController::class, 'destroy']);
-    Route::patch('/posts/{id}', [PostController::class, 'update']);
-    Route::patch('/posts/{id}/like', [PostController::class, 'like']);
-    Route::patch('/posts/{id}/comment', [PostController::class, 'comment']);
 
     Route::get('/profile/{identifier}', [ProfileController::class, 'show']);
-    Route::patch('/profile/{identifier}', [ProfileController::class, 'update']);
-    Route::post('/profile/{identifier}/avatar', [ProfileController::class, 'updateAvatar']);
     Route::get('/profile/{identifier}/photos', [ProfileController::class, 'photos']);
 
     Route::get('/users/search', [ProfileController::class, 'search']);
     Route::get('/users/{identifier}', [ProfileController::class, 'showUser']);
 
-    Route::post('/users/{identifier}/follow', [FollowController::class, 'toggle']);
     Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
     Route::get('/{identifier}/following', [FollowController::class, 'following']);
-    Route::post('/profile/{identifier}/cover', [ProfileController::class, 'updateCoverPhoto']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead']);
+
+    Route::middleware(EnsureEmailIsVerified::class)->group(function () {
+        Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1');
+        Route::delete('/posts/{id}', [PostController::class, 'destroy']);
+        Route::patch('/posts/{id}', [PostController::class, 'update']);
+        Route::patch('/posts/{id}/like', [PostController::class, 'like']);
+        Route::patch('/posts/{id}/comment', [PostController::class, 'comment']);
+
+        Route::patch('/profile/{identifier}', [ProfileController::class, 'update']);
+        Route::post('/profile/{identifier}/avatar', [ProfileController::class, 'updateAvatar']);
+        Route::post('/profile/{identifier}/cover', [ProfileController::class, 'updateCoverPhoto']);
+
+        Route::post('/users/{identifier}/follow', [FollowController::class, 'toggle']);
+    });
 });
+
+// Verify email via signed URL — no sanctum needed, uses id+hash
+Route::get('/auth/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+
+    if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        return response()->json(['message' => 'Invalid verification link'], 403);
+    }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect(config('app.frontend_url') . '/email-verified?already=true');
+    }
+
+    $user->markEmailAsVerified();
+
+    return redirect(config('app.frontend_url') . '/email-verified?verified=true');
+})->name('verification.verify');
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
