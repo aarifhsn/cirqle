@@ -1,6 +1,10 @@
-/* CirclePage.jsx — Cirqle
- * Fetches GET /circles/:id
- * Falls back to mock data if endpoint not ready.
+/* CirclePage.jsx — Cirqle v2 (Step B — real API)
+ * GET  /circles/:id          — { circle, posts, members }
+ * POST /circles/:id/join     — toggle membership
+ *
+ * Expected response shape (GET /circles/:id):
+ * { id, name, emoji, description, category, members_count,
+ *   posts_count, is_member, cover, members: [], posts: [] }
  */
 
 import { useEffect, useState } from "react";
@@ -10,58 +14,6 @@ import Avatar from "../components/common/Avatar";
 import PostList from "../components/posts/PostList";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
-
-/* ── Mock ─────────────────────────────────────────────────────── */
-const MOCK_CIRCLE = {
-    id: 1,
-    name: "Dhaka Circle",
-    emoji: "🏙️",
-    description:
-        "Everything happening in Dhaka city — news, events, jobs, and community updates.",
-    category: "Local",
-    members_count: 12400,
-    posts_count: 342,
-    is_member: true,
-    cover: null,
-    members: [
-        {
-            id: 1,
-            firstName: "Nadia",
-            lastName: "Rahman",
-            username: "nadia_r",
-            avatar: null,
-        },
-        {
-            id: 2,
-            firstName: "Arif",
-            lastName: "Hossain",
-            username: "arifh",
-            avatar: null,
-        },
-        {
-            id: 3,
-            firstName: "Lamia",
-            lastName: "Sultana",
-            username: "lamia_s",
-            avatar: null,
-        },
-        {
-            id: 4,
-            firstName: "Karim",
-            lastName: "Uddin",
-            username: "karim_u",
-            avatar: null,
-        },
-        {
-            id: 5,
-            firstName: "Sadia",
-            lastName: "Islam",
-            username: "sadia_i",
-            avatar: null,
-        },
-    ],
-    posts: [],
-};
 
 const CIRCLE_TABS = [
     { id: "posts", label: "Posts", icon: "📝" },
@@ -95,22 +47,58 @@ const Skeleton = () => (
     </div>
 );
 
+/* ── Error ────────────────────────────────────────────────────── */
+const ErrorState = ({ message, onRetry }) => (
+    <div
+        className="card flex-center flex-col"
+        style={{
+            padding: "3rem 2rem",
+            textAlign: "center",
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
+        }}
+    >
+        <span style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>⚠️</span>
+        <p className="font-semibold mb-3" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button onClick={onRetry} className="btn btn-ghost btn-sm">
+            Try Again
+        </button>
+    </div>
+);
+
 /* ── CirclePage ───────────────────────────────────────────────── */
 const CirclePage = () => {
     const { id } = useParams();
     const { api } = useAxios();
+
     const [circle, setCircle] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [joining, setJoining] = useState(false);
     const [activeTab, setActiveTab] = useState("posts");
     const [memberSearch, setMemberSearch] = useState("");
 
-    useEffect(() => {
+    const fetchCircle = async () => {
         setLoading(true);
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles/${id}`)
-            .then((r) => setCircle(r.data?.data ?? r.data))
-            .catch(() => setCircle(MOCK_CIRCLE))
-            .finally(() => setLoading(false));
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/circles/${id}`,
+            );
+            setCircle(res.data?.data ?? res.data);
+        } catch (e) {
+            setError(
+                e.response?.data?.message ?? "Failed to load this circle.",
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCircle();
     }, [id]);
 
     const handleJoin = async () => {
@@ -119,32 +107,32 @@ const CirclePage = () => {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/circles/${id}/join`,
             );
-            setCircle((c) => ({
-                ...c,
-                is_member: res.data.is_member,
-                members_count:
-                    res.data.members_count ??
-                    (c.is_member ? c.members_count - 1 : c.members_count + 1),
-            }));
-            toast.success(
-                res.data.message ??
-                    (circle.is_member ? "Left circle" : "Joined!"),
+            if (res.status === 200) {
+                setCircle((c) => ({
+                    ...c,
+                    is_member: res.data.is_member,
+                    members_count:
+                        res.data.members_count ??
+                        (c.is_member
+                            ? c.members_count - 1
+                            : c.members_count + 1),
+                }));
+                toast.success(
+                    res.data.message ??
+                        (circle.is_member ? "Left circle" : "Joined!"),
+                );
+            }
+        } catch (e) {
+            toast.error(
+                e.response?.data?.message ?? "Failed to update membership.",
             );
-        } catch {
-            setCircle((c) => ({
-                ...c,
-                is_member: !c.is_member,
-                members_count: c.is_member
-                    ? c.members_count - 1
-                    : c.members_count + 1,
-            }));
-            toast.success(circle.is_member ? "Left circle" : "Joined!");
         } finally {
             setJoining(false);
         }
     };
 
-    const fmtCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n);
+    const fmtCount = (n) =>
+        (n ?? 0) >= 1000 ? `${((n ?? 0) / 1000).toFixed(1)}k` : (n ?? 0);
 
     const filteredMembers = (circle?.members ?? []).filter((m) =>
         `${m.firstName} ${m.lastName} ${m.username}`
@@ -155,10 +143,13 @@ const CirclePage = () => {
     return (
         <AppLayout>
             {loading && <Skeleton />}
+            {!loading && error && (
+                <ErrorState message={error} onRetry={fetchCircle} />
+            )}
 
-            {!loading && circle && (
+            {!loading && !error && circle && (
                 <>
-                    {/* ── Circle hero card ──────────────────────── */}
+                    {/* ── Hero card ─────────────────────────────── */}
                     <div
                         className="card animate-fade-in"
                         style={{ padding: 0, overflow: "hidden" }}
@@ -171,16 +162,14 @@ const CirclePage = () => {
                                 background: circle.cover
                                     ? `url(${import.meta.env.VITE_STORAGE_URL}/${circle.cover}) center/cover`
                                     : "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)",
-                                opacity: 0.9,
                             }}
                         >
                             <span style={{ fontSize: "3rem" }}>
-                                {circle.emoji}
+                                {circle.emoji || "⭕"}
                             </span>
                         </div>
 
                         <div style={{ padding: "1.25rem 1.4rem" }}>
-                            {/* Name + join */}
                             <div className="flex items-start justify-between gap-3 mb-2">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
@@ -208,9 +197,11 @@ const CirclePage = () => {
                                         className="flex items-center gap-3 text-xs"
                                         style={{ color: "var(--text-muted)" }}
                                     >
-                                        <span className="pill pill-muted">
-                                            {circle.category}
-                                        </span>
+                                        {circle.category && (
+                                            <span className="pill pill-muted">
+                                                {circle.category}
+                                            </span>
+                                        )}
                                         <span>
                                             👥 {fmtCount(circle.members_count)}{" "}
                                             members
@@ -244,7 +235,6 @@ const CirclePage = () => {
                                 </button>
                             </div>
 
-                            {/* Description */}
                             <p
                                 className="text-sm leading-relaxed"
                                 style={{ color: "var(--text-secondary)" }}
@@ -332,10 +322,27 @@ const CirclePage = () => {
                                 />
                             </div>
 
+                            {filteredMembers.length === 0 && (
+                                <div
+                                    className="card flex-center"
+                                    style={{
+                                        padding: "2rem",
+                                        textAlign: "center",
+                                    }}
+                                >
+                                    <p
+                                        className="text-sm"
+                                        style={{ color: "var(--text-muted)" }}
+                                    >
+                                        No members found.
+                                    </p>
+                                </div>
+                            )}
+
                             {filteredMembers.map((m) => (
                                 <div
                                     key={m.id}
-                                    className="card flex items-center gap-3 p-4 card-hover"
+                                    className="card card-hover flex items-center gap-3 p-4"
                                 >
                                     <Link
                                         to={`/${m.username}`}
@@ -380,23 +387,6 @@ const CirclePage = () => {
                                     )}
                                 </div>
                             ))}
-
-                            {filteredMembers.length === 0 && (
-                                <div
-                                    className="card flex-center"
-                                    style={{
-                                        padding: "2rem",
-                                        textAlign: "center",
-                                    }}
-                                >
-                                    <p
-                                        className="text-sm"
-                                        style={{ color: "var(--text-muted)" }}
-                                    >
-                                        No members found.
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -426,7 +416,7 @@ const CirclePage = () => {
                                 {[
                                     {
                                         label: "Category",
-                                        value: circle.category,
+                                        value: circle.category ?? "—",
                                     },
                                     {
                                         label: "Members",

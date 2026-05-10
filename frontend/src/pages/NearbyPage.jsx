@@ -1,7 +1,9 @@
-/* NearbyPage.jsx — Cirqle
- * Fetches GET /users/nearby?radius=10
- * Falls back to mock data if endpoint not ready.
- * To go live: remove MOCK_USERS and the catch fallback.
+/* NearbyPage.jsx — Cirqle v2 (Step B — real API)
+ * GET  /users/nearby?radius=10
+ * PATCH /users/location  — saves lat/lng after browser geolocation
+ *
+ * Expected response shape:
+ * [{ id, firstName, lastName, username, avatar, location_name, distance, isFollowing }]
  */
 
 import { useEffect, useState } from "react";
@@ -11,77 +13,7 @@ import Avatar from "../components/common/Avatar";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
 
-/* ── Mock data (remove when backend ready) ────────────────────── */
-const MOCK_USERS = [
-    {
-        id: 1,
-        firstName: "Nadia",
-        lastName: "Rahman",
-        username: "nadia_r",
-        avatar: null,
-        location_name: "Mirpur, Dhaka",
-        distance: 0.8,
-        isFollowing: false,
-    },
-    {
-        id: 2,
-        firstName: "Arif",
-        lastName: "Hossain",
-        username: "arifh",
-        avatar: null,
-        location_name: "Gulshan, Dhaka",
-        distance: 1.4,
-        isFollowing: true,
-    },
-    {
-        id: 3,
-        firstName: "Lamia",
-        lastName: "Sultana",
-        username: "lamia_s",
-        avatar: null,
-        location_name: "Dhanmondi",
-        distance: 2.1,
-        isFollowing: false,
-    },
-    {
-        id: 4,
-        firstName: "Karim",
-        lastName: "Uddin",
-        username: "karim_u",
-        avatar: null,
-        location_name: "Mohammadpur",
-        distance: 3.5,
-        isFollowing: false,
-    },
-    {
-        id: 5,
-        firstName: "Sadia",
-        lastName: "Islam",
-        username: "sadia_i",
-        avatar: null,
-        location_name: "Uttara, Dhaka",
-        distance: 5.2,
-        isFollowing: false,
-    },
-    {
-        id: 6,
-        firstName: "Rahim",
-        lastName: "Ali",
-        username: "rahim_a",
-        avatar: null,
-        location_name: "Banani, Dhaka",
-        distance: 6.8,
-        isFollowing: true,
-    },
-];
-
-const RADIUS_OPTIONS = [
-    { label: "1 km", value: 1 },
-    { label: "5 km", value: 5 },
-    { label: "10 km", value: 10 },
-    { label: "25 km", value: 25 },
-    { label: "50 km", value: 50 },
-];
+const RADIUS_OPTIONS = [1, 5, 10, 25, 50];
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
 const Skeleton = () => (
@@ -111,8 +43,29 @@ const Skeleton = () => (
     </div>
 );
 
-/* ── User Card ────────────────────────────────────────────────── */
-const NearbyUserCard = ({ person, onFollowToggle }) => {
+/* ── Error banner ─────────────────────────────────────────────── */
+const ErrorBanner = ({ message, onRetry }) => (
+    <div
+        className="card flex items-center justify-between gap-3 p-4"
+        style={{
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
+        }}
+    >
+        <p className="text-sm" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button
+            onClick={onRetry}
+            className="btn btn-ghost btn-sm flex-shrink-0"
+        >
+            Retry
+        </button>
+    </div>
+);
+
+/* ── Nearby User Card ─────────────────────────────────────────── */
+const NearbyUserCard = ({ person }) => {
     const [following, setFollowing] = useState(person.isFollowing);
     const [hovered, setHovered] = useState(false);
     const { api } = useAxios();
@@ -130,6 +83,11 @@ const NearbyUserCard = ({ person, onFollowToggle }) => {
             toast.error("Failed to update follow.");
         }
     };
+
+    const distLabel =
+        person.distance < 1
+            ? `${Math.round(person.distance * 1000)}m`
+            : `${Number(person.distance).toFixed(1)}km`;
 
     return (
         <div className="card card-hover flex items-center gap-3 p-4">
@@ -151,22 +109,20 @@ const NearbyUserCard = ({ person, onFollowToggle }) => {
                 >
                     {person.firstName} {person.lastName}
                 </Link>
-                <p
-                    className="text-xs mt-0.5 flex items-center gap-1"
-                    style={{ color: "var(--text-muted)" }}
-                >
-                    <span>📍</span> {person.location_name}
-                </p>
+                {person.location_name && (
+                    <p
+                        className="text-xs mt-0.5 flex items-center gap-1"
+                        style={{ color: "var(--text-muted)" }}
+                    >
+                        📍 {person.location_name}
+                    </p>
+                )}
             </div>
 
-            {/* Distance badge */}
             <span className="pill pill-accent flex-shrink-0 text-xs">
-                {person.distance < 1
-                    ? `${Math.round(person.distance * 1000)}m`
-                    : `${person.distance.toFixed(1)}km`}
+                {distLabel}
             </span>
 
-            {/* Follow button */}
             <button
                 onClick={handleFollow}
                 onMouseEnter={() => setHovered(true)}
@@ -195,35 +151,24 @@ const NearbyUserCard = ({ person, onFollowToggle }) => {
 /* ── NearbyPage ───────────────────────────────────────────────── */
 const NearbyPage = () => {
     const { api } = useAxios();
+
     const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [radius, setRadius] = useState(10);
     const [locating, setLocating] = useState(false);
-    const [locationOk, setLocationOk] = useState(false);
+    const [locationSet, setLocationSet] = useState(false);
     const [search, setSearch] = useState("");
 
-    const fetchNearby = async (r) => {
-        setLoading(true);
-        try {
-            const res = await api.get(
-                `${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby?radius=${r}`,
-            );
-            setUsers(res.data?.data ?? res.data ?? []);
-        } catch {
-            // ── MOCK fallback — remove when backend ready ──
-            setUsers(MOCK_USERS.filter((u) => u.distance <= r));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    /* Request geolocation then fetch */
+    /* ── Step 1: request browser location, save to backend ─────── */
     const requestLocation = () => {
         if (!navigator.geolocation) {
-            toast.error("Geolocation not supported by your browser.");
+            setError("Geolocation is not supported by your browser.");
             return;
         }
         setLocating(true);
+        setError(null);
+
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 try {
@@ -235,27 +180,53 @@ const NearbyPage = () => {
                         },
                     );
                 } catch {
-                    /* silent */
+                    /* location save failed — fetch anyway using server-stored coords */
                 }
-                setLocationOk(true);
+                setLocationSet(true);
                 setLocating(false);
-                fetchNearby(radius);
             },
-            () => {
-                toast.error("Location access denied. Using mock data.");
+            (err) => {
                 setLocating(false);
-                setLocationOk(true);
-                fetchNearby(radius);
+                if (err.code === 1) {
+                    setError(
+                        "Location access denied. Please allow location in your browser settings.",
+                    );
+                } else {
+                    setError("Could not get your location. Please try again.");
+                }
             },
+            { timeout: 10000 },
         );
     };
 
+    /* ── Step 2: fetch nearby users once location is set ────────── */
+    const fetchNearby = async (r) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby?radius=${r}`,
+            );
+            setUsers(res.data?.data ?? res.data ?? []);
+        } catch (e) {
+            const msg =
+                e.response?.data?.message ?? "Failed to load nearby people.";
+            setError(msg);
+            setUsers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /* On mount — request location */
     useEffect(() => {
         requestLocation();
     }, []);
+
+    /* When location confirmed or radius changes — fetch */
     useEffect(() => {
-        if (locationOk) fetchNearby(radius);
-    }, [radius]);
+        if (locationSet) fetchNearby(radius);
+    }, [locationSet, radius]);
 
     const filtered = users.filter((u) =>
         `${u.firstName} ${u.lastName} ${u.username}`
@@ -266,7 +237,7 @@ const NearbyPage = () => {
     return (
         <AppLayout>
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h1
                         className="font-bold"
@@ -286,15 +257,15 @@ const NearbyPage = () => {
                     </p>
                 </div>
 
-                {/* Radius selector */}
-                <div className="flex items-center gap-2">
-                    {RADIUS_OPTIONS.map((opt) => (
+                {/* Radius pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {RADIUS_OPTIONS.map((r) => (
                         <button
-                            key={opt.value}
-                            onClick={() => setRadius(opt.value)}
-                            className="btn btn-sm"
+                            key={r}
+                            onClick={() => setRadius(r)}
+                            className="btn btn-sm btn-round"
                             style={
-                                radius === opt.value
+                                radius === r
                                     ? {
                                           background: "var(--accent)",
                                           color: "#fff",
@@ -306,7 +277,7 @@ const NearbyPage = () => {
                                       }
                             }
                         >
-                            {opt.label}
+                            {r}km
                         </button>
                     ))}
                 </div>
@@ -368,8 +339,20 @@ const NearbyPage = () => {
                 </div>
             )}
 
+            {/* Error */}
+            {error && (
+                <ErrorBanner
+                    message={error}
+                    onRetry={
+                        locationSet
+                            ? () => fetchNearby(radius)
+                            : requestLocation
+                    }
+                />
+            )}
+
             {/* Count */}
-            {!loading && filtered.length > 0 && (
+            {!loading && !error && filtered.length > 0 && (
                 <p
                     className="text-xs px-1"
                     style={{ color: "var(--text-muted)" }}
@@ -380,10 +363,11 @@ const NearbyPage = () => {
                 </p>
             )}
 
-            {/* Content */}
+            {/* Skeleton */}
             {loading && <Skeleton />}
 
-            {!loading && filtered.length === 0 && (
+            {/* Empty */}
+            {!loading && !error && filtered.length === 0 && locationSet && (
                 <div
                     className="card flex-center flex-col"
                     style={{ padding: "4rem 2rem", textAlign: "center" }}
@@ -401,7 +385,7 @@ const NearbyPage = () => {
                         className="text-sm mb-4"
                         style={{ color: "var(--text-muted)", maxWidth: 260 }}
                     >
-                        Try increasing the radius or check back later.
+                        Try increasing the search radius.
                     </p>
                     <button
                         onClick={() => setRadius(50)}
@@ -412,7 +396,8 @@ const NearbyPage = () => {
                 </div>
             )}
 
-            {!loading && filtered.length > 0 && (
+            {/* Results */}
+            {!loading && !error && filtered.length > 0 && (
                 <div className="flex flex-col gap-2 animate-fade-in">
                     {filtered.map((u) => (
                         <NearbyUserCard key={u.id} person={u} />

@@ -1,6 +1,10 @@
-/* CirclesPage.jsx — Cirqle
- * Fetches GET /circles?category=&search=
- * Falls back to mock data if endpoint not ready.
+/* CirclesPage.jsx — Cirqle v2 (Step B — real API)
+ * GET  /circles              — list all circles
+ * POST /circles              — create a circle
+ * POST /circles/:id/join     — join or leave
+ *
+ * Expected response shape (GET /circles):
+ * [{ id, name, emoji, description, category, members_count, posts_count, is_member }]
  */
 
 import { useEffect, useState } from "react";
@@ -8,110 +12,6 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
-
-/* ── Mock data ────────────────────────────────────────────────── */
-const MOCK_CIRCLES = [
-    {
-        id: 1,
-        name: "Dhaka Circle",
-        emoji: "🏙️",
-        description: "Everything happening in Dhaka city",
-        category: "Local",
-        members_count: 12400,
-        is_member: true,
-        posts_count: 342,
-    },
-    {
-        id: 2,
-        name: "Kaliganj Circle",
-        emoji: "🌿",
-        description: "Kaliganj neighborhood community",
-        category: "Local",
-        members_count: 3200,
-        is_member: false,
-        posts_count: 89,
-    },
-    {
-        id: 3,
-        name: "Job Seekers",
-        emoji: "💼",
-        description: "Find jobs and career opportunities",
-        category: "Career",
-        members_count: 8200,
-        is_member: true,
-        posts_count: 215,
-    },
-    {
-        id: 4,
-        name: "Students Circle",
-        emoji: "🎓",
-        description: "University students of Dhaka",
-        category: "Education",
-        members_count: 5600,
-        is_member: false,
-        posts_count: 178,
-    },
-    {
-        id: 5,
-        name: "Food Lovers",
-        emoji: "🍜",
-        description: "Best food spots, recipes & reviews",
-        category: "Lifestyle",
-        members_count: 3100,
-        is_member: false,
-        posts_count: 134,
-    },
-    {
-        id: 6,
-        name: "Fitness Circle",
-        emoji: "💪",
-        description: "Workouts, health tips & motivation",
-        category: "Health",
-        members_count: 2400,
-        is_member: false,
-        posts_count: 97,
-    },
-    {
-        id: 7,
-        name: "Tech Dhaka",
-        emoji: "💻",
-        description: "Developers, startups & tech news",
-        category: "Tech",
-        members_count: 6800,
-        is_member: false,
-        posts_count: 203,
-    },
-    {
-        id: 8,
-        name: "Photography BD",
-        emoji: "📷",
-        description: "Share your shots from Bangladesh",
-        category: "Art",
-        members_count: 1900,
-        is_member: false,
-        posts_count: 156,
-    },
-    {
-        id: 9,
-        name: "Neighborhood Help",
-        emoji: "🤝",
-        description: "Local help & community support",
-        category: "Local",
-        members_count: 4500,
-        is_member: false,
-        posts_count: 67,
-    },
-    {
-        id: 10,
-        name: "Startups BD",
-        emoji: "🚀",
-        description: "Bangladesh startup ecosystem",
-        category: "Tech",
-        members_count: 3700,
-        is_member: false,
-        posts_count: 88,
-    },
-];
 
 const CATEGORIES = [
     "All",
@@ -122,6 +22,24 @@ const CATEGORIES = [
     "Health",
     "Tech",
     "Art",
+];
+const CIRCLE_EMOJIS = [
+    "⭕",
+    "🏙️",
+    "🌿",
+    "💼",
+    "🎓",
+    "🍜",
+    "💪",
+    "💻",
+    "📷",
+    "🤝",
+    "🚀",
+    "🎵",
+    "📚",
+    "🎮",
+    "✈️",
+    "🏠",
 ];
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
@@ -169,14 +87,37 @@ const Skeleton = () => (
     </div>
 );
 
+/* ── Error banner ─────────────────────────────────────────────── */
+const ErrorBanner = ({ message, onRetry }) => (
+    <div
+        className="card flex items-center justify-between gap-3 p-4"
+        style={{
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
+        }}
+    >
+        <p className="text-sm" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button
+            onClick={onRetry}
+            className="btn btn-ghost btn-sm flex-shrink-0"
+        >
+            Retry
+        </button>
+    </div>
+);
+
 /* ── Circle Card ──────────────────────────────────────────────── */
 const CircleCard = ({ circle: initial }) => {
     const [circle, setCircle] = useState(initial);
-    const [loading, setLoading] = useState(false);
+    const [joining, setJoining] = useState(false);
     const { api } = useAxios();
 
+    const fmtCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n);
+
     const handleJoin = async () => {
-        setLoading(true);
+        setJoining(true);
         try {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/circles/${circle.id}/join`,
@@ -193,32 +134,23 @@ const CircleCard = ({ circle: initial }) => {
                 }));
                 toast.success(
                     res.data.message ??
-                        (circle.is_member ? "Left circle" : "Joined circle!"),
+                        (circle.is_member ? "Left circle" : "Joined!"),
                 );
             }
-        } catch {
-            /* Mock toggle */
-            setCircle((c) => ({
-                ...c,
-                is_member: !c.is_member,
-                members_count: c.is_member
-                    ? c.members_count - 1
-                    : c.members_count + 1,
-            }));
-            toast.success(circle.is_member ? "Left circle" : "Joined circle!");
+        } catch (e) {
+            toast.error(
+                e.response?.data?.message ?? "Failed to update membership.",
+            );
         } finally {
-            setLoading(false);
+            setJoining(false);
         }
     };
-
-    const fmtCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n);
 
     return (
         <div
             className="card card-hover flex flex-col"
             style={{ padding: "1.25rem" }}
         >
-            {/* Top row */}
             <div className="flex items-start gap-3 mb-3">
                 <div
                     className="flex-center flex-shrink-0"
@@ -230,7 +162,7 @@ const CircleCard = ({ circle: initial }) => {
                         fontSize: "1.5rem",
                     }}
                 >
-                    {circle.emoji}
+                    {circle.emoji || "⭕"}
                 </div>
                 <div className="flex-1 min-w-0">
                     <Link
@@ -251,17 +183,19 @@ const CircleCard = ({ circle: initial }) => {
                         {circle.name}
                     </Link>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <span
-                            className="pill pill-muted"
-                            style={{ fontSize: "0.68rem" }}
-                        >
-                            {circle.category}
-                        </span>
+                        {circle.category && (
+                            <span
+                                className="pill pill-muted"
+                                style={{ fontSize: "0.68rem" }}
+                            >
+                                {circle.category}
+                            </span>
+                        )}
                         <span
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
-                            {fmtCount(circle.members_count)} members
+                            {fmtCount(circle.members_count ?? 0)} members
                         </span>
                     </div>
                 </div>
@@ -275,26 +209,22 @@ const CircleCard = ({ circle: initial }) => {
                 )}
             </div>
 
-            {/* Description */}
             <p
                 className="text-xs mb-4 leading-relaxed"
                 style={{ color: "var(--text-secondary)", flex: 1 }}
             >
-                {circle.description}
+                {circle.description || "No description."}
             </p>
 
-            {/* Stats row */}
-            <div
-                className="flex items-center gap-3 mb-3 text-xs"
-                style={{ color: "var(--text-muted)" }}
-            >
-                <span>👥 {fmtCount(circle.members_count)}</span>
-                {circle.posts_count > 0 && (
-                    <span>📝 {circle.posts_count} posts</span>
-                )}
-            </div>
+            {circle.posts_count > 0 && (
+                <p
+                    className="text-xs mb-3"
+                    style={{ color: "var(--text-muted)" }}
+                >
+                    📝 {circle.posts_count} posts
+                </p>
+            )}
 
-            {/* Action row */}
             <div className="flex gap-2">
                 <Link
                     to={`/circles/${circle.id}`}
@@ -304,7 +234,7 @@ const CircleCard = ({ circle: initial }) => {
                 </Link>
                 <button
                     onClick={handleJoin}
-                    disabled={loading}
+                    disabled={joining}
                     className={`btn btn-sm flex-1 ${circle.is_member ? "btn-ghost" : "btn-primary"}`}
                     style={
                         circle.is_member
@@ -315,7 +245,7 @@ const CircleCard = ({ circle: initial }) => {
                             : {}
                     }
                 >
-                    {loading ? (
+                    {joining ? (
                         <svg
                             className="w-4 h-4 animate-spin"
                             fill="none"
@@ -346,219 +276,7 @@ const CircleCard = ({ circle: initial }) => {
     );
 };
 
-/* ── CirclesPage ──────────────────────────────────────────────── */
-const CirclesPage = () => {
-    const { api } = useAxios();
-    const [circles, setCircles] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [category, setCategory] = useState("All");
-    const [showCreate, setShowCreate] = useState(false);
-
-    useEffect(() => {
-        setLoading(true);
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles`)
-            .then((r) => setCircles(r.data?.data ?? r.data ?? []))
-            .catch(() => setCircles(MOCK_CIRCLES))
-            .finally(() => setLoading(false));
-    }, []);
-
-    const filtered = circles.filter((c) => {
-        const matchSearch = `${c.name} ${c.description}`
-            .toLowerCase()
-            .includes(search.toLowerCase());
-        const matchCategory = category === "All" || c.category === category;
-        return matchSearch && matchCategory;
-    });
-
-    const myCircles = filtered.filter((c) => c.is_member);
-    const otherCircles = filtered.filter((c) => !c.is_member);
-
-    return (
-        <AppLayout>
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1
-                        className="font-bold"
-                        style={{
-                            fontSize: "1.3rem",
-                            color: "var(--text-primary)",
-                            fontFamily: "var(--font-display)",
-                        }}
-                    >
-                        ⭕ Circles
-                    </h1>
-                    <p
-                        className="text-xs mt-0.5"
-                        style={{ color: "var(--text-muted)" }}
-                    >
-                        Communities around you
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowCreate(true)}
-                    className="btn btn-primary btn-sm"
-                >
-                    + Create Circle
-                </button>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-                <span
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
-                    style={{ color: "var(--text-muted)" }}
-                >
-                    🔍
-                </span>
-                <input
-                    type="text"
-                    className="input"
-                    style={{ paddingLeft: "2.25rem" }}
-                    placeholder="Search circles…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </div>
-
-            {/* Category filter */}
-            <div className="flex gap-2 flex-wrap">
-                {CATEGORIES.map((cat) => (
-                    <button
-                        key={cat}
-                        onClick={() => setCategory(cat)}
-                        className="btn btn-sm btn-round"
-                        style={
-                            category === cat
-                                ? {
-                                      background: "var(--accent)",
-                                      color: "#fff",
-                                  }
-                                : {
-                                      background: "var(--bg-surface-2)",
-                                      color: "var(--text-muted)",
-                                      border: "1px solid var(--border)",
-                                  }
-                        }
-                    >
-                        {cat}
-                    </button>
-                ))}
-            </div>
-
-            {loading && <Skeleton />}
-
-            {!loading && (
-                <>
-                    {/* My Circles */}
-                    {myCircles.length > 0 && (
-                        <div>
-                            <p className="section-label mb-3">My Circles</p>
-                            <div
-                                className="grid gap-3"
-                                style={{
-                                    gridTemplateColumns:
-                                        "repeat(auto-fill, minmax(280px, 1fr))",
-                                }}
-                            >
-                                {myCircles.map((c) => (
-                                    <CircleCard key={c.id} circle={c} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Discover */}
-                    {otherCircles.length > 0 && (
-                        <div>
-                            <p className="section-label mb-3">Discover</p>
-                            <div
-                                className="grid gap-3"
-                                style={{
-                                    gridTemplateColumns:
-                                        "repeat(auto-fill, minmax(280px, 1fr))",
-                                }}
-                            >
-                                {otherCircles.map((c) => (
-                                    <CircleCard key={c.id} circle={c} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {filtered.length === 0 && (
-                        <div
-                            className="card flex-center flex-col"
-                            style={{
-                                padding: "4rem 2rem",
-                                textAlign: "center",
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontSize: "2.5rem",
-                                    marginBottom: "1rem",
-                                }}
-                            >
-                                ⭕
-                            </span>
-                            <h3
-                                className="font-semibold mb-1"
-                                style={{ color: "var(--text-primary)" }}
-                            >
-                                No circles found
-                            </h3>
-                            <p
-                                className="text-sm mb-4"
-                                style={{ color: "var(--text-muted)" }}
-                            >
-                                Try a different search or category.
-                            </p>
-                            <button
-                                onClick={() => setShowCreate(true)}
-                                className="btn btn-primary btn-sm"
-                            >
-                                Create one
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* Create Circle Modal */}
-            {showCreate && (
-                <CreateCircleModal
-                    onClose={() => setShowCreate(false)}
-                    onCreated={(c) => {
-                        setCircles((prev) => [c, ...prev]);
-                        setShowCreate(false);
-                    }}
-                />
-            )}
-        </AppLayout>
-    );
-};
-
 /* ── Create Circle Modal ──────────────────────────────────────── */
-const CIRCLE_EMOJIS = [
-    "🏙️",
-    "🌿",
-    "💼",
-    "🎓",
-    "🍜",
-    "💪",
-    "💻",
-    "📷",
-    "🤝",
-    "🚀",
-    "🎵",
-    "📚",
-    "🎮",
-    "✈️",
-    "🏠",
-];
-
 const CreateCircleModal = ({ onClose, onCreated }) => {
     const { api } = useAxios();
     const [form, setForm] = useState({
@@ -568,10 +286,12 @@ const CreateCircleModal = ({ onClose, onCreated }) => {
         category: "Local",
     });
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
         try {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/circles`,
@@ -579,10 +299,10 @@ const CreateCircleModal = ({ onClose, onCreated }) => {
             );
             if (res.status === 200 || res.status === 201) {
                 toast.success("Circle created!");
-                onCreated(res.data);
+                onCreated(res.data?.data ?? res.data);
             }
-        } catch {
-            toast.error("Failed to create circle.");
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to create circle.");
         } finally {
             setSaving(false);
         }
@@ -619,8 +339,19 @@ const CreateCircleModal = ({ onClose, onCreated }) => {
                     </button>
                 </div>
 
+                {error && (
+                    <div
+                        className="mb-3 px-3 py-2 rounded-xl text-sm"
+                        style={{
+                            background: "var(--danger-soft)",
+                            color: "var(--danger)",
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
-                    {/* Emoji picker */}
                     <div className="mb-4">
                         <label
                             className="block text-xs font-semibold mb-2"
@@ -737,6 +468,212 @@ const CreateCircleModal = ({ onClose, onCreated }) => {
                 </form>
             </div>
         </div>
+    );
+};
+
+/* ── CirclesPage ──────────────────────────────────────────────── */
+const CirclesPage = () => {
+    const { api } = useAxios();
+
+    const [circles, setCircles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState("All");
+    const [showCreate, setShowCreate] = useState(false);
+
+    const fetchCircles = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/circles`,
+            );
+            setCircles(res.data?.data ?? res.data ?? []);
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to load circles.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCircles();
+    }, []);
+
+    const filtered = circles.filter((c) => {
+        const matchSearch = `${c.name} ${c.description ?? ""}`
+            .toLowerCase()
+            .includes(search.toLowerCase());
+        const matchCategory = category === "All" || c.category === category;
+        return matchSearch && matchCategory;
+    });
+
+    const myCircles = filtered.filter((c) => c.is_member);
+    const otherCircles = filtered.filter((c) => !c.is_member);
+
+    return (
+        <AppLayout>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1
+                        className="font-bold"
+                        style={{
+                            fontSize: "1.3rem",
+                            color: "var(--text-primary)",
+                            fontFamily: "var(--font-display)",
+                        }}
+                    >
+                        ⭕ Circles
+                    </h1>
+                    <p
+                        className="text-xs mt-0.5"
+                        style={{ color: "var(--text-muted)" }}
+                    >
+                        Communities around you
+                    </p>
+                </div>
+                <button
+                    onClick={() => setShowCreate(true)}
+                    className="btn btn-primary btn-sm"
+                >
+                    + Create Circle
+                </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+                <span
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                >
+                    🔍
+                </span>
+                <input
+                    type="text"
+                    className="input"
+                    style={{ paddingLeft: "2.25rem" }}
+                    placeholder="Search circles…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+
+            {/* Category filter */}
+            <div className="flex gap-2 flex-wrap">
+                {CATEGORIES.map((cat) => (
+                    <button
+                        key={cat}
+                        onClick={() => setCategory(cat)}
+                        className="btn btn-sm btn-round"
+                        style={
+                            category === cat
+                                ? { background: "var(--accent)", color: "#fff" }
+                                : {
+                                      background: "var(--bg-surface-2)",
+                                      color: "var(--text-muted)",
+                                      border: "1px solid var(--border)",
+                                  }
+                        }
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+
+            {/* Error */}
+            {error && <ErrorBanner message={error} onRetry={fetchCircles} />}
+
+            {/* Skeleton */}
+            {loading && <Skeleton />}
+
+            {/* Content */}
+            {!loading && !error && (
+                <>
+                    {myCircles.length > 0 && (
+                        <div>
+                            <p className="section-label mb-3">My Circles</p>
+                            <div
+                                className="grid gap-3"
+                                style={{
+                                    gridTemplateColumns:
+                                        "repeat(auto-fill, minmax(280px, 1fr))",
+                                }}
+                            >
+                                {myCircles.map((c) => (
+                                    <CircleCard key={c.id} circle={c} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {otherCircles.length > 0 && (
+                        <div>
+                            <p className="section-label mb-3">Discover</p>
+                            <div
+                                className="grid gap-3"
+                                style={{
+                                    gridTemplateColumns:
+                                        "repeat(auto-fill, minmax(280px, 1fr))",
+                                }}
+                            >
+                                {otherCircles.map((c) => (
+                                    <CircleCard key={c.id} circle={c} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {filtered.length === 0 && (
+                        <div
+                            className="card flex-center flex-col"
+                            style={{
+                                padding: "4rem 2rem",
+                                textAlign: "center",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: "2.5rem",
+                                    marginBottom: "1rem",
+                                }}
+                            >
+                                ⭕
+                            </span>
+                            <h3
+                                className="font-semibold mb-1"
+                                style={{ color: "var(--text-primary)" }}
+                            >
+                                No circles found
+                            </h3>
+                            <p
+                                className="text-sm mb-4"
+                                style={{ color: "var(--text-muted)" }}
+                            >
+                                Try a different search or create one.
+                            </p>
+                            <button
+                                onClick={() => setShowCreate(true)}
+                                className="btn btn-primary btn-sm"
+                            >
+                                Create Circle
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {showCreate && (
+                <CreateCircleModal
+                    onClose={() => setShowCreate(false)}
+                    onCreated={(c) => {
+                        setCircles((prev) => [c, ...prev]);
+                        setShowCreate(false);
+                    }}
+                />
+            )}
+        </AppLayout>
     );
 };
 
