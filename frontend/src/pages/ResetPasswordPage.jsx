@@ -1,4 +1,11 @@
-// src/pages/ResetPasswordPage.jsx
+/* ResetPasswordPage.jsx — Cirqle v2
+ * Changes:
+ * - btn-primary → .btn.btn-primary
+ * - var(--r-md) → border-radius 10px
+ * - SVG spinner instead of .spinner class
+ * - All form/API/redirect logic 100% untouched
+ */
+
 import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -21,6 +28,7 @@ const ResetPasswordPage = () => {
         setError,
     } = useForm();
 
+    /* ── Original submit logic untouched ─────────────────────── */
     const onSubmit = async (data) => {
         try {
             await axios.post(
@@ -33,7 +41,7 @@ const ResetPasswordPage = () => {
                 },
             );
             setSuccess(true);
-            setTimeout(() => navigate("/login"), 3000); // redirect after 3s
+            setTimeout(() => navigate("/login"), 3000);
         } catch (error) {
             setError("root.random", {
                 type: "random",
@@ -43,21 +51,24 @@ const ResetPasswordPage = () => {
         }
     };
 
-    // Guard: invalid link
+    /* ── Invalid link guard ───────────────────────────────────── */
     if (!token || !email) {
         return (
             <main className="auth-bg flex min-h-screen items-center justify-center px-4">
                 <div
-                    className="card"
+                    className="card animate-fade-in"
                     style={{ padding: "2rem", maxWidth: 400 }}
                 >
-                    <p style={{ color: "var(--danger)", fontWeight: 600 }}>
-                        Invalid reset link. Please request a new one.
+                    <p
+                        className="font-semibold mb-3"
+                        style={{ color: "var(--danger)" }}
+                    >
+                        ⚠️ Invalid reset link. Please request a new one.
                     </p>
                     <Link
                         to="/forgot-password"
-                        className="hover:underline"
-                        style={{ color: "var(--accent)", fontSize: "0.875rem" }}
+                        className="text-sm hover:underline"
+                        style={{ color: "var(--accent)" }}
                     >
                         Request new link →
                     </Link>
@@ -69,23 +80,24 @@ const ResetPasswordPage = () => {
     return (
         <main className="auth-bg flex min-h-screen items-center justify-center py-8 px-4">
             <div className="w-full max-w-md">
-                <div className="card" style={{ padding: "2rem" }}>
+                <div
+                    className="card animate-fade-in"
+                    style={{ padding: "2rem" }}
+                >
                     <div className="mb-6">
                         <h2
+                            className="font-bold"
                             style={{
                                 fontSize: "1.4rem",
-                                fontWeight: 700,
                                 color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
                             }}
                         >
                             Set new password
                         </h2>
                         <p
-                            style={{
-                                color: "var(--text-muted)",
-                                fontSize: "0.875rem",
-                                marginTop: "0.3rem",
-                            }}
+                            className="text-sm mt-0.5"
+                            style={{ color: "var(--text-muted)" }}
                         >
                             Choose a strong password for your account.
                         </p>
@@ -93,13 +105,11 @@ const ResetPasswordPage = () => {
 
                     {success ? (
                         <div
+                            className="rounded-xl px-4 py-3 text-sm"
                             style={{
-                                background: "var(--success-soft, #d1fae5)",
-                                border: "1px solid rgba(16,185,129,0.3)",
-                                borderRadius: "var(--r-md)",
-                                padding: "1rem 1.25rem",
-                                color: "var(--success, #065f46)",
-                                fontSize: "0.875rem",
+                                background: "var(--success-soft)",
+                                border: "1px solid rgba(34,197,94,0.3)",
+                                color: "var(--success)",
                             }}
                         >
                             ✅ <strong>Password updated!</strong> Redirecting
@@ -147,12 +157,11 @@ const ResetPasswordPage = () => {
 
                             {errors?.root?.random?.message && (
                                 <div
-                                    className="mb-4 px-3 py-2.5 rounded-lg flex items-center gap-2"
+                                    className="mb-4 px-3 py-2.5 rounded-xl flex items-center gap-2 text-sm"
                                     style={{
                                         background: "var(--danger-soft)",
-                                        border: "1px solid rgba(255,77,109,0.25)",
+                                        border: "1px solid rgba(239,68,68,0.25)",
                                         color: "var(--danger)",
-                                        fontSize: "0.85rem",
                                     }}
                                 >
                                     {errors.root.random.message}
@@ -161,11 +170,8 @@ const ResetPasswordPage = () => {
                                     ) && (
                                         <Link
                                             to="/forgot-password"
-                                            style={{
-                                                color: "var(--accent)",
-                                                marginLeft: "0.4rem",
-                                                fontWeight: 600,
-                                            }}
+                                            className="font-semibold ml-1"
+                                            style={{ color: "var(--accent)" }}
                                         >
                                             Request new link
                                         </Link>
@@ -176,14 +182,38 @@ const ResetPasswordPage = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="btn-primary w-full mt-1"
+                                className="btn btn-primary w-full"
                                 style={{
-                                    padding: "0.8rem",
+                                    padding: "0.75rem",
                                     fontSize: "0.95rem",
-                                    borderRadius: "var(--r-md)",
                                 }}
                             >
-                                {isSubmitting ? "Updating…" : "Reset Password"}
+                                {isSubmitting ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg
+                                            className="w-4 h-4 animate-spin"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8z"
+                                            />
+                                        </svg>
+                                        Updating…
+                                    </span>
+                                ) : (
+                                    "Reset Password"
+                                )}
                             </button>
                         </form>
                     )}

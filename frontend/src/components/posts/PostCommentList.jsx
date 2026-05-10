@@ -1,3 +1,12 @@
+/* PostCommentList.jsx — Cirqle v2
+ * Changes:
+ * - hover:text-lwsGreen → CSS var via onMouseEnter/Leave
+ * - divide-lighterDark → border CSS var
+ * - border-[#3F3F3F] → var(--border) on reply indent
+ * - text color uses var(--text-primary/secondary/muted)
+ * - All comment tree / reply logic 100% untouched
+ */
+
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getDateDifferenceFromNow } from "../../utils";
@@ -14,27 +23,44 @@ const PostCommentList = ({ comments, onReply }) => {
 
         return (
             <div
-                className={`flex items-start gap-3 pt-3 ${isReply ? "ml-8 pl-3 border-l border-[#3F3F3F]" : ""}`}
+                className={`flex items-start gap-3 pt-3 ${isReply ? "ml-8 pl-3" : ""}`}
+                style={isReply ? { borderLeft: "2px solid var(--border)" } : {}}
             >
-                <Link to={profileLink}>
-                    <Avatar
-                        user={comment?.author}
-                        size="sm"
-                        className="mt-0.5"
-                    />
+                <Link to={profileLink} className="flex-shrink-0 mt-0.5">
+                    <Avatar user={comment?.author} size="sm" />
                 </Link>
-                <div className="flex-1">
-                    <div className="flex gap-1 text-xs lg:text-sm">
+
+                <div className="flex-1 min-w-0">
+                    {/* Name + comment text */}
+                    <div
+                        className="flex flex-wrap gap-1 text-xs"
+                        style={{ color: "var(--text-primary)" }}
+                    >
                         <Link
                             to={profileLink}
-                            className="font-semibold hover:underline hover:text-lwsGreen"
+                            className="font-semibold transition-colors"
+                            style={{ color: "var(--text-primary)" }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.color = "var(--accent)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.color =
+                                    "var(--text-primary)")
+                            }
                         >
                             {comment?.author?.name}:
                         </Link>
-                        <span>{comment.comment}</span>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                            {comment.comment}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-[11px] text-gray-500">
+
+                    {/* Meta: time + reply */}
+                    <div className="flex items-center gap-3 mt-1">
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
                             {getDateDifferenceFromNow(comment?.createdAt)} ago
                         </span>
                         {!isReply && (
@@ -42,7 +68,16 @@ const PostCommentList = ({ comments, onReply }) => {
                                 onClick={() =>
                                     onReply(comment.id, comment.author.name)
                                 }
-                                className="text-[11px] text-gray-500 hover:text-lwsGreen transition-all"
+                                className="text-xs font-medium transition-colors"
+                                style={{ color: "var(--text-muted)" }}
+                                onMouseEnter={(e) =>
+                                    (e.currentTarget.style.color =
+                                        "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                    (e.currentTarget.style.color =
+                                        "var(--text-muted)")
+                                }
                             >
                                 Reply
                             </button>
@@ -51,12 +86,12 @@ const PostCommentList = ({ comments, onReply }) => {
 
                     {/* Nested replies */}
                     {!isReply && comment.replies?.length > 0 && (
-                        <div className="mt-2 space-y-2">
+                        <div className="mt-2 flex flex-col gap-2">
                             {comment.replies.map((reply) => (
                                 <CommentItem
                                     key={reply.id}
                                     comment={reply}
-                                    isReply={true}
+                                    isReply
                                 />
                             ))}
                         </div>
@@ -67,7 +102,10 @@ const PostCommentList = ({ comments, onReply }) => {
     };
 
     return (
-        <div className="space-y-2 divide-y divide-lighterDark">
+        <div
+            className="flex flex-col"
+            style={{ gap: 0, divideColor: "var(--border)" }}
+        >
             {comments?.map((comment) => (
                 <CommentItem key={comment.id} comment={comment} />
             ))}

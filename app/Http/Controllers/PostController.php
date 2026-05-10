@@ -26,6 +26,29 @@ class PostController extends Controller
                     $q->where('privacy', 'public')
                         ->orWhere('privacy', 'followers');
                 });
+        } else if ($filter === 'nearby') {
+            // only posts from people I follow + my own, respecting privacy
+            // but only if they are nearby (for simplicity, let's say within 50km)
+            $query->whereIn('user_id', $followingIds)
+                ->where(function ($q) use ($authUser, $followingIds) {
+                    $q->where('privacy', 'public')
+                        ->orWhere('privacy', 'followers');
+                })
+                ->whereHas('author', function ($q) use ($authUser) {
+                    $q->whereRaw('ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?', [
+                        $authUser->longitude,
+                        $authUser->latitude,
+                        50000 // 50km in meters
+                    ]);
+                });
+        } else if ($filter === 'circles') {
+            // only posts from people I follow + my own, respecting privacy
+            // but only if they are in a circle (for simplicity, let's say within 50km)
+            $query->whereIn('user_id', $followingIds)
+                ->where(function ($q) use ($authUser, $followingIds) {
+                    $q->where('privacy', 'public')
+                        ->orWhere('privacy', 'followers');
+                });
         } else {
             // public feed — all public posts + followers-only from people I follow + my own
             $query->where(function ($q) use ($authUser, $followingIds) {

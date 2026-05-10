@@ -129,7 +129,6 @@ const MobileBottomNav = ({ onOpenPanel }) => {
                 height: 64,
                 background: "var(--sidebar-bg)",
                 borderTop: "1px solid var(--border)",
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "space-around",
                 zIndex: 110,

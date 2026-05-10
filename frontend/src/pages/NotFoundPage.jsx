@@ -1,46 +1,72 @@
+/* NotFoundPage.jsx — Cirqle v2
+ * Changes:
+ * - bg-deepDark → var(--bg-base) via body (already set)
+ * - text-lwsGreen/10, bg-lwsGreen/10, text-lwsGreen → CSS vars
+ * - bg-lighterDark → var(--bg-surface-2)
+ * - text-white → var(--text-primary)
+ * - text-gray-500 → var(--text-muted)
+ * - bg-lwsGreen text-deepDark → .btn.btn-primary
+ */
+
 import { Link, useNavigate } from "react-router-dom";
 
 const NotFoundPage = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-deepDark flex items-center justify-center px-4">
-            <div className="text-center max-w-md">
+        <div
+            className="min-h-screen flex items-center justify-center px-4"
+            style={{ background: "var(--bg-base)" }}
+        >
+            <div className="text-center max-w-md animate-fade-in">
                 {/* 404 graphic */}
                 <div className="relative mb-8">
-                    <p className="text-[8rem] font-black text-lwsGreen/10 leading-none select-none">
+                    <p
+                        className="font-black leading-none select-none"
+                        style={{
+                            fontSize: "8rem",
+                            color: "var(--accent-soft-2)",
+                            fontFamily: "var(--font-display)",
+                        }}
+                    >
                         404
                     </p>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-20 h-20 rounded-full bg-lwsGreen/10 flex items-center justify-center">
-                            <svg
-                                className="w-9 h-9 text-lwsGreen"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={1.5}
-                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
+                    <div className="absolute inset-0 flex-center">
+                        <div
+                            className="flex-center"
+                            style={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: "50%",
+                                background: "var(--accent-soft)",
+                            }}
+                        >
+                            <span style={{ fontSize: "2rem" }}>😕</span>
                         </div>
                     </div>
                 </div>
 
-                <h1 className="text-2xl font-bold text-white mb-2">
+                <h1
+                    className="font-bold mb-2"
+                    style={{
+                        fontSize: "1.5rem",
+                        color: "var(--text-primary)",
+                        fontFamily: "var(--font-display)",
+                    }}
+                >
                     Page not found
                 </h1>
-                <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                <p
+                    className="text-sm mb-8 leading-relaxed"
+                    style={{ color: "var(--text-muted)" }}
+                >
                     The page you're looking for doesn't exist or has been moved.
                 </p>
 
                 <div className="flex items-center justify-center gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-lighterDark text-gray-300 text-sm font-medium hover:bg-[#3F3F3F] transition-all"
+                        className="btn btn-ghost"
                     >
                         <svg
                             className="w-4 h-4"
@@ -57,10 +83,7 @@ const NotFoundPage = () => {
                         </svg>
                         Go Back
                     </button>
-                    <Link
-                        to="/"
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-lwsGreen text-deepDark text-sm font-bold hover:opacity-90 transition-all"
-                    >
+                    <Link to="/" className="btn btn-primary">
                         <svg
                             className="w-4 h-4"
                             fill="none"

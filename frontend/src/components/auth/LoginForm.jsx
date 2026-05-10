@@ -20,12 +20,10 @@ const LoginForm = () => {
         clearErrors,
     } = useForm();
 
+    /* ── Original submit + rate-limit logic untouched ────────── */
     const submitForm = async (formData) => {
-        // Block submit if still rate limited
         if (rateLimitSeconds > 0) return;
-
         clearErrors();
-
         try {
             const response = await axios.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/auth/login`,
@@ -43,11 +41,8 @@ const LoginForm = () => {
             const data = error.response?.data;
 
             if (status === 429) {
-                // ── Too many attempts ──
                 const seconds = data?.retry_after || 15 * 60;
                 setRateLimitSeconds(seconds);
-
-                // Countdown timer
                 const interval = setInterval(() => {
                     setRateLimitSeconds((prev) => {
                         if (prev <= 1) {
@@ -57,13 +52,11 @@ const LoginForm = () => {
                         return prev - 1;
                     });
                 }, 1000);
-
                 setError("root.random", {
                     type: "rateLimit",
                     message: data?.message || "Too many attempts. Please wait.",
                 });
             } else if (status === 401) {
-                // ── Wrong credentials — show remaining attempts ──
                 setError("root.random", {
                     type: "random",
                     message: data?.message || "Invalid email or password.",
@@ -84,7 +77,6 @@ const LoginForm = () => {
         }
     };
 
-    // Format seconds → "14:32"
     const formatCountdown = (secs) => {
         const m = Math.floor(secs / 60)
             .toString()
@@ -111,23 +103,19 @@ const LoginForm = () => {
                     />
                 </Field>
 
-                {/* ── Password field with inline "Forgot password?" link ── */}
                 <Field
-                    label="Password"
                     error={errors.password}
                     label={
-                        <Link
-                            to="/forgot-password"
-                            style={{
-                                fontSize: "0.78rem",
-                                color: "var(--accent)",
-                                fontWeight: 600,
-                                textDecoration: "none",
-                            }}
-                            className="hover:underline"
-                        >
-                            Forgot password?
-                        </Link>
+                        <div className="flex items-center justify-between w-full">
+                            <span>Password</span>
+                            <Link
+                                to="/forgot-password"
+                                className="text-xs font-semibold hover:underline"
+                                style={{ color: "var(--accent)" }}
+                            >
+                                Forgot password?
+                            </Link>
+                        </div>
                     }
                 >
                     <input
@@ -146,25 +134,24 @@ const LoginForm = () => {
                     />
                 </Field>
 
-                {/* ── Error / Rate-limit banner ── */}
+                {/* Error / rate-limit banner */}
                 {errors?.root?.random?.message && (
                     <div
-                        className="mb-4 px-3 py-2.5 rounded-lg flex items-center gap-2"
+                        className="mb-4 px-3 py-2.5 rounded-xl flex items-center gap-2 text-sm"
                         style={{
                             background: isRateLimited
-                                ? "var(--warning-soft, #fef3c7)"
+                                ? "var(--warning-soft)"
                                 : "var(--danger-soft)",
                             border: isRateLimited
                                 ? "1px solid rgba(245,158,11,0.35)"
-                                : "1px solid rgba(255,77,109,0.25)",
+                                : "1px solid rgba(239,68,68,0.25)",
                             color: isRateLimited
-                                ? "var(--warning, #92400e)"
+                                ? "var(--warning)"
                                 : "var(--danger)",
-                            fontSize: "0.85rem",
                         }}
                     >
                         <svg
-                            className="w-4 h-4 shrink-0"
+                            className="w-4 h-4 flex-shrink-0"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                         >
@@ -176,7 +163,6 @@ const LoginForm = () => {
                         </svg>
                         <span>
                             {errors.root.random.message}
-                            {/* Live countdown */}
                             {isRateLimited && (
                                 <strong>
                                     {" "}
@@ -191,11 +177,10 @@ const LoginForm = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting || isRateLimited}
-                    className="btn-primary w-full mt-1"
+                    className="btn btn-primary w-full mt-4"
                     style={{
-                        padding: "0.8rem",
+                        padding: "0.75rem",
                         fontSize: "0.95rem",
-                        borderRadius: "var(--r-md)",
                         opacity: isRateLimited ? 0.5 : 1,
                         cursor: isRateLimited ? "not-allowed" : "pointer",
                     }}
@@ -203,68 +188,73 @@ const LoginForm = () => {
                     {isRateLimited ? (
                         `Locked · ${formatCountdown(rateLimitSeconds)}`
                     ) : isSubmitting ? (
-                        <>
-                            <span
-                                className="spinner"
-                                style={{ width: 18, height: 18 }}
-                            />{" "}
+                        <span className="flex items-center justify-center gap-2">
+                            <svg
+                                className="w-4 h-4 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                />
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v8z"
+                                />
+                            </svg>
                             Signing in…
-                        </>
+                        </span>
                     ) : (
                         "Sign In"
                     )}
                 </button>
             </form>
 
-            {/* ── Divider ── */}
+            {/* Divider */}
             <div className="flex items-center gap-3 my-5">
                 <div
-                    style={{
-                        flex: 1,
-                        height: "1px",
-                        background: "var(--border)",
-                    }}
+                    style={{ flex: 1, height: 1, background: "var(--border)" }}
                 />
                 <span
-                    style={{
-                        fontSize: "0.78rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 500,
-                    }}
+                    className="text-xs font-medium"
+                    style={{ color: "var(--text-muted)" }}
                 >
                     or continue with
                 </span>
                 <div
-                    style={{
-                        flex: 1,
-                        height: "1px",
-                        background: "var(--border)",
-                    }}
+                    style={{ flex: 1, height: 1, background: "var(--border)" }}
                 />
             </div>
 
-            {/* ── Google OAuth button ── */}
+            {/* Google OAuth */}
             <a
                 href={GOOGLE_AUTH_URL}
-                className="flex items-center justify-center gap-2 w-full"
+                className="flex items-center justify-center gap-2 w-full transition-all"
                 style={{
                     border: "1.5px solid var(--border)",
-                    borderRadius: "var(--r-md)",
-                    padding: "0.75rem",
+                    borderRadius: 10,
+                    padding: "0.7rem",
                     fontSize: "0.9rem",
                     fontWeight: 600,
                     color: "var(--text-primary)",
                     textDecoration: "none",
-                    transition: "border-color 0.15s, box-shadow 0.15s",
+                    background: "var(--input-bg)",
                 }}
-                onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "#aaa")
-                }
-                onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--border)")
-                }
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.background = "var(--hover-bg)";
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.background = "var(--input-bg)";
+                }}
             >
-                {/* Google "G" SVG */}
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

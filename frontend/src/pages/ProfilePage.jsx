@@ -1,10 +1,7 @@
-/* ProfilePage.jsx — Cirqle v2
- * Changes from original:
- * - PageLayout → AppLayout (3-column shell)
- * - 6 tabs: Posts | Media | About | Circles | Marketplace | Saved
- * - Tab bar uses .feed-tabs / .feed-tab CSS classes
- * - Skeleton updated to use CSS vars (dark/light safe)
- * - All API / notFound logic 100% untouched
+/* ProfilePage.jsx — Cirqle v2 (flicker fix)
+ * Fix: resets notFound + activeTab + dispatches DATA_FETCHING
+ * whenever the username param changes, preventing stale user
+ * data from the previous profile briefly showing.
  */
 
 import { useEffect, useState } from "react";
@@ -20,7 +17,6 @@ import { useProfile } from "../hooks/useProfile";
 import AppLayout from "../layouts/AppLayout";
 import NotFoundPage from "./NotFoundPage";
 
-/* ── Tab config ───────────────────────────────────────────────── */
 const PROFILE_TABS = [
     { id: "posts", label: "Posts", icon: "📝" },
     { id: "media", label: "Media", icon: "🖼️" },
@@ -30,13 +26,10 @@ const PROFILE_TABS = [
     { id: "saved", label: "Saved", icon: "🔖" },
 ];
 
-/* ── Skeleton ─────────────────────────────────────────────────── */
 const ProfileSkeleton = () => (
     <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        {/* Cover */}
         <div className="skeleton" style={{ height: 200, borderRadius: 0 }} />
         <div style={{ padding: "0 1.5rem 1.5rem" }}>
-            {/* Avatar row */}
             <div
                 className="flex justify-between items-end mb-4"
                 style={{ marginTop: -44 }}
@@ -55,7 +48,6 @@ const ProfileSkeleton = () => (
                     style={{ width: 110, height: 36, borderRadius: 20 }}
                 />
             </div>
-            {/* Name */}
             <div
                 className="skeleton mb-2"
                 style={{ height: 22, width: "40%", borderRadius: 6 }}
@@ -64,7 +56,6 @@ const ProfileSkeleton = () => (
                 className="skeleton mb-4"
                 style={{ height: 13, width: "28%", borderRadius: 6 }}
             />
-            {/* Bio */}
             <div
                 className="skeleton mb-2"
                 style={{ height: 13, width: "100%", borderRadius: 6 }}
@@ -73,7 +64,6 @@ const ProfileSkeleton = () => (
                 className="skeleton mb-5"
                 style={{ height: 13, width: "65%", borderRadius: 6 }}
             />
-            {/* Stats */}
             <div
                 className="flex gap-6 pt-4"
                 style={{ borderTop: "1px solid var(--border)" }}
@@ -95,7 +85,6 @@ const ProfileSkeleton = () => (
     </div>
 );
 
-/* ── Coming Soon placeholder for unbuilt tabs ─────────────────── */
 const ComingSoon = ({ tab }) => (
     <div
         className="card flex-center flex-col"
@@ -116,7 +105,6 @@ const ComingSoon = ({ tab }) => (
     </div>
 );
 
-/* ── ProfilePage ──────────────────────────────────────────────── */
 const ProfilePage = () => {
     const { state, dispatch } = useProfile();
     const { api } = useAxios();
@@ -126,8 +114,10 @@ const ProfilePage = () => {
     const [notFound, setNotFound] = useState(false);
     const isMe = auth?.user?.username === username;
 
-    /* ── Original fetch logic — untouched ────────────────────── */
     useEffect(() => {
+        // Reset page state for new username
+        setNotFound(false);
+        setActiveTab("posts");
         dispatch({ type: actions.profile.DATA_FETCHING });
 
         const fetchProfile = async () => {
@@ -154,23 +144,20 @@ const ProfilePage = () => {
         };
 
         fetchProfile();
-    }, [username]);
+    }, [username]); // ← key fix: re-runs on every username change
 
     if (notFound) return <NotFoundPage />;
 
     return (
         <AppLayout>
-            {/* ── Profile info card ─────────────────────────────── */}
             {state?.loading || !state?.user ? (
                 <ProfileSkeleton />
             ) : (
                 <ProfileInfo />
             )}
 
-            {/* ── New post composer (own profile only) ──────────── */}
             {!state?.loading && state?.user && isMe && <NewPost />}
 
-            {/* ── Tab bar ───────────────────────────────────────── */}
             {!state?.loading && state?.user && (
                 <div className="feed-tabs">
                     {PROFILE_TABS.map((tab) => (
@@ -188,7 +175,6 @@ const ProfilePage = () => {
                 </div>
             )}
 
-            {/* ── Tab content ───────────────────────────────────── */}
             {!state?.loading && state?.user && (
                 <div className="animate-fade-in">
                     {activeTab === "posts" && <MyPosts />}

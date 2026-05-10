@@ -7,7 +7,12 @@ use App\Http\Controllers\FollowController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\CircleController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\JobController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Http\Request;
 
@@ -64,7 +69,36 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/profile/{identifier}/cover', [ProfileController::class, 'updateCoverPhoto']);
 
         Route::post('/users/{identifier}/follow', [FollowController::class, 'toggle']);
+
+        Route::post('/circles/{circle}/join', [CircleController::class, 'join']);
+        Route::post('/circles', [CircleController::class, 'store']);
+        Route::post('/events', [EventController::class, 'store']);
+        Route::post('/listings', [ListingController::class, 'store']);
+        Route::post('/jobs', [JobController::class, 'store']);
+
     });
+
+    // Location update
+    Route::patch('/users/location', [UserController::class, 'updateLocation']);
+
+    // Nearby users
+    Route::get('/users/nearby', [UserController::class, 'nearby']);
+
+    // Circles
+    Route::get('/circles', [CircleController::class, 'index']);
+    Route::get('/circles/{circle}', [CircleController::class, 'show']);
+    Route::post('/circles/{circle}/leave', [CircleController::class, 'leave']);
+
+    // Events
+    Route::get('/events', [EventController::class, 'index']);
+
+    Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp']);
+
+    // Marketplace
+    Route::get('/listings', [ListingController::class, 'index']);
+
+    // jobs
+    Route::get('/jobs', [JobController::class, 'index']);
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash

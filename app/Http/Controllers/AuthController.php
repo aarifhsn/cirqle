@@ -21,7 +21,9 @@ class AuthController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        $validated['username'] = explode('@', $validated['email'])[0];
+        $validated['username'] = $this->generateUniqueUsername(
+            explode('@', $validated['email'])[0]
+        );
         $user = User::create($validated);
 
         $user->sendEmailVerificationNotification();
@@ -148,5 +150,14 @@ class AuthController extends Controller
             'avatar' => $user->avatar,
             'bio' => $user->bio,
         ];
+    }
+
+    private function generateUniqueUsername($base)
+    {
+        do {
+            $username = Str::slug($base, '') . rand(100, 999);
+        } while (User::where('username', $username)->exists());
+
+        return $username;
     }
 }

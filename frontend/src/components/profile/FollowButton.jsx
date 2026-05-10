@@ -1,3 +1,10 @@
+/* FollowButton.jsx — Cirqle v2
+ * Changes from original:
+ * - `btn-ghost` / `btn-primary` → `.btn .btn-ghost` / `.btn .btn-primary`
+ * - Hover state for "Unfollow" uses CSS vars instead of hardcoded colors
+ * - All follow/unfollow API logic 100% untouched
+ */
+
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
@@ -10,6 +17,7 @@ const FollowButton = ({ userId }) => {
     const [isHovered, setIsHovered] = useState(false);
     const { api } = useAxios();
 
+    /* ── Original API logic untouched ────────────────────────── */
     const handleFollow = async () => {
         try {
             const response = await api.post(
@@ -24,7 +32,6 @@ const FollowButton = ({ userId }) => {
                 toast.success(response.data.message);
             }
         } catch (error) {
-            console.error(error);
             toast.error(
                 error.response?.data?.message ?? "Failed to update follow!",
             );
@@ -37,29 +44,24 @@ const FollowButton = ({ userId }) => {
                 onClick={handleFollow}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="btn-ghost"
+                className="btn btn-ghost btn-sm"
                 style={{
-                    fontSize: "0.85rem",
                     borderColor: isHovered
                         ? "var(--danger)"
                         : "var(--border-strong)",
                     color: isHovered
                         ? "var(--danger)"
                         : "var(--text-secondary)",
-                    transition: "all 150ms ease",
+                    transition: "all var(--transition-fast)",
                 }}
             >
-                {isHovered ? "Unfollow" : "Following ✓"}
+                {isHovered ? "✕ Unfollow" : "✓ Following"}
             </button>
         );
     }
 
     return (
-        <button
-            onClick={handleFollow}
-            className="btn-primary"
-            style={{ fontSize: "0.85rem" }}
-        >
+        <button onClick={handleFollow} className="btn btn-primary btn-sm">
             + Follow
         </button>
     );

@@ -3,7 +3,7 @@ import React from "react";
 const Field = ({ label, children, hideLabel = false, htmlFor, error }) => {
     const id = htmlFor || getChildId(children);
     return (
-        <div className="form-control">
+        <div className="form-control mt-6">
             {!hideLabel && label && (
                 <label
                     htmlFor={id}

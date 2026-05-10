@@ -6,11 +6,17 @@ import ProfilePage from "./pages/ProfilePage";
 import RegistrationPage from "./pages/RegistrationPage";
 
 import ScrollToTop from "./components/common/ScrollToTop";
+import CirclePage from "./pages/CirclePage";
+import CirclesPage from "./pages/CirclesPage";
 import EmailVerifiedPage from "./pages/EmailVerifiedPage";
+import EventsPage from "./pages/EventsPage";
 import FollowersPage from "./pages/FollowersPage";
 import FollowingPage from "./pages/FollowingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GoogleSuccess from "./pages/GoogleSuccess";
+import JobsPage from "./pages/JobsPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import NearbyPage from "./pages/NearbyPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserProfilePage from "./pages/UserProfilePage";
@@ -43,6 +49,13 @@ function App() {
                     />
 
                     <Route path="/not-found" element={<NotFoundPage />} />
+
+                    <Route path="/nearby" element={<NearbyPage />} />
+                    <Route path="/circles" element={<CirclesPage />} />
+                    <Route path="/circles/:id" element={<CirclePage />} />
+                    <Route path="/events" element={<EventsPage />} />
+                    <Route path="/marketplace" element={<MarketplacePage />} />
+                    <Route path="/jobs" element={<JobsPage />} />
                 </Route>
                 <Route element={<EmailVerifiedPage />} path="/email-verified" />
                 <Route

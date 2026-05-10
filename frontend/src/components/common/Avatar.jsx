@@ -1,3 +1,11 @@
+/* Avatar.jsx — Cirqle v2
+ * Changes:
+ * - Initials fallback border: hardcoded rgba(0,217,145,0.25) → var(--border)
+ * - background: var(--accent-soft) (already was, kept)
+ * - color: var(--accent) (already was, kept)
+ * - All logic (hasAvatar, getInitials, onError) 100% untouched
+ */
+
 const Avatar = ({ user, size = "md", className = "" }) => {
     const sizes = {
         sm: { px: 32, text: "0.75rem" },
@@ -16,7 +24,6 @@ const Avatar = ({ user, size = "md", className = "" }) => {
         flexShrink: 0,
     };
 
-    // check avatar is a valid non-empty string
     const hasAvatar =
         user?.avatar && user.avatar.trim() !== "" && user.avatar !== "null";
 
@@ -26,7 +33,6 @@ const Avatar = ({ user, size = "md", className = "" }) => {
             : `${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`
         : null;
 
-    // derive initials from firstName/lastName or full name string
     const getInitials = () => {
         if (user?.firstName || user?.lastName) {
             return `${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`;
@@ -46,7 +52,6 @@ const Avatar = ({ user, size = "md", className = "" }) => {
                 className={className}
                 alt={user?.firstName || user?.name || "avatar"}
                 onError={(e) => {
-                    // if image fails to load, swap to initials div
                     e.target.style.display = "none";
                     e.target.nextSibling?.style.removeProperty("display");
                 }}
@@ -61,7 +66,7 @@ const Avatar = ({ user, size = "md", className = "" }) => {
             style={{
                 ...style,
                 background: "var(--accent-soft)",
-                border: "1px solid rgba(0,217,145,0.25)",
+                border: "1px solid var(--border)" /* ← fixed: was hardcoded rgba green */,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

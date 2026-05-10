@@ -50,7 +50,7 @@ const NewPost = () => {
                                 "var(--input-bg)";
                         }}
                     >
-                        What's on your mind, {auth?.user?.name?.split(" ")[0]}?
+                        Share something with your circle...
                     </button>
                 </div>
 

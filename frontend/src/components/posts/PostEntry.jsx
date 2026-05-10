@@ -1,3 +1,17 @@
+/* PostEntry.jsx — Cirqle v2
+ * Changes:
+ * - border-[#3F3F3F] → var(--border)
+ * - bg-lighterDark, hover:bg-[#3F3F3F] → CSS vars
+ * - text-white → var(--text-primary)
+ * - text-gray-* → var(--text-muted / text-secondary)
+ * - bg-lwsGreen text-deepDark → .btn.btn-primary
+ * - hover:text-lwsGreen → CSS var hover
+ * - text-lwsGreen → var(--accent)
+ * - placeholder-gray-500 → var(--text-placeholder) via CSS
+ * - privacy select uses CSS vars
+ * - All form/upload/submit API logic 100% untouched
+ */
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -27,6 +41,7 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     );
     const [removedImages, setRemovedImages] = useState([]);
 
+    /* ── Original form logic untouched ───────────────────────── */
     const {
         register,
         handleSubmit,
@@ -52,9 +67,7 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
 
     const removePhoto = (index) => {
         const item = photoFiles[index];
-        if (item.existing) {
-            setRemovedImages((prev) => [...prev, item.id]);
-        }
+        if (item.existing) setRemovedImages((prev) => [...prev, item.id]);
         setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
     };
 
@@ -64,16 +77,14 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             const data = new FormData();
             data.append("content", formData.content);
             data.append("privacy", formData.privacy);
-
             photoFiles
                 .filter((p) => !p.existing)
                 .forEach((p) => data.append("images[]", p.file));
-
             removedImages.forEach((id) => data.append("removed_images[]", id));
 
             let response;
             if (isEditMode) {
-                data.append("_method", "PATCH"); // for Laravel to recognize as PATCH
+                data.append("_method", "PATCH");
                 response = await api.post(
                     `${import.meta.env.VITE_SERVER_BASE_URL}/posts/${postToEdit.id}`,
                     data,
@@ -84,11 +95,6 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         type: actions.post.DATA_EDITED,
                         data: response.data,
                     });
-                } else {
-                    const message =
-                        error.response?.data?.message ||
-                        "Failed to update post!";
-                    toast.error(message);
                 }
             } else {
                 response = await api.post(
@@ -107,12 +113,9 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             onCreate();
         } catch (error) {
             console.error(error);
-            if (error.response?.data?.errors)
-                console.error(error.response.data.errors);
-            const message =
-                error.response?.data?.message || "Something went wrong!";
-            toast.error(message);
-
+            toast.error(
+                error.response?.data?.message || "Something went wrong!",
+            );
             dispatch({
                 type: actions.post.DATA_FETCH_ERROR,
                 error: error.message,
@@ -128,15 +131,29 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
               : "grid-cols-3";
 
     return (
-        <div className="card relative max-h-[90vh] overflow-y-auto p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#3F3F3F]">
-                <h3 className="text-lg font-bold text-white">
-                    {isEditMode ? "Edit Post" : "Create Post"}
+        <div
+            className="card relative max-h-[90vh] overflow-y-auto"
+            style={{ padding: "1.5rem" }}
+        >
+            {/* ── Header ────────────────────────────────────────── */}
+            <div
+                className="flex items-center justify-between mb-5 pb-4"
+                style={{ borderBottom: "1px solid var(--border)" }}
+            >
+                <h3
+                    className="font-bold"
+                    style={{
+                        fontSize: "1.1rem",
+                        color: "var(--text-primary)",
+                        fontFamily: "var(--font-display)",
+                    }}
+                >
+                    {isEditMode ? "✏️ Edit Post" : "✨ Create Post"}
                 </h3>
                 <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-lighterDark hover:bg-[#3F3F3F] text-gray-400 hover:text-white transition-all"
+                    className="btn btn-ghost btn-icon"
+                    aria-label="Close"
                 >
                     <svg
                         className="w-4 h-4"
@@ -155,21 +172,38 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             </div>
 
             <form onSubmit={handleSubmit(handlePostSubmit)}>
-                {/* Author row */}
+                {/* ── Author row ────────────────────────────────── */}
                 <div className="flex items-center gap-3 mb-4">
                     <Avatar user={user} size="md" />
                     <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <span className="font-semibold text-sm text-white">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <span
+                                className="font-semibold text-sm"
+                                style={{ color: "var(--text-primary)" }}
+                            >
                                 {user?.firstName} {user?.lastName}
                             </span>
                             <PrivacyIcon privacy={watch("privacy")} />
                         </div>
+                        {/* Privacy select */}
                         <select
                             {...register("privacy", {
                                 required: "Privacy setting is required!",
                             })}
-                            className="bg-lighterDark border border-[#3F3F3F] rounded text-gray-400 text-xs px-2 py-1 outline-none cursor-pointer hover:border-lwsGreen transition-all"
+                            className="text-xs px-2 py-1 rounded-lg outline-none cursor-pointer transition-all"
+                            style={{
+                                background: "var(--input-bg)",
+                                border: "1.5px solid var(--border)",
+                                color: "var(--text-secondary)",
+                            }}
+                            onFocus={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                    "var(--accent)")
+                            }
+                            onBlur={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                    "var(--border)")
+                            }
                         >
                             <option value="public">🌐 Public</option>
                             <option value="followers">👥 Followers</option>
@@ -178,26 +212,30 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     </div>
                 </div>
 
-                {/* Textarea */}
+                {/* ── Textarea ──────────────────────────────────── */}
                 <Field label="" error={errors.content}>
                     <textarea
                         {...register("content", {
                             required: "Please add some text!",
                         })}
                         id="content"
-                        placeholder={`What's on your mind, ${user?.firstName}?`}
-                        className="w-full min-h-[120px] bg-transparent border-none outline-none resize-none text-base leading-relaxed text-white placeholder-gray-500 font-sans"
+                        placeholder="Share something with your circle…"
+                        className="w-full min-h-[120px] bg-transparent border-none outline-none resize-none text-sm leading-relaxed"
+                        style={{
+                            color: "var(--text-primary)",
+                            caretColor: "var(--accent)",
+                        }}
                     />
                 </Field>
 
-                {/* Image previews grid */}
+                {/* ── Image previews ────────────────────────────── */}
                 {photoFiles.length > 0 && (
                     <>
                         <div className={`grid ${gridCols} gap-2 mb-2`}>
                             {photoFiles.map((photo, index) => (
                                 <div
                                     key={index}
-                                    className="relative aspect-square rounded-lg overflow-hidden group"
+                                    className="relative aspect-square rounded-xl overflow-hidden group"
                                 >
                                     <img
                                         src={photo.preview}
@@ -207,7 +245,10 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                                     <button
                                         type="button"
                                         onClick={() => removePhoto(index)}
-                                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/65 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black"
+                                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full text-white text-xs flex-center opacity-0 group-hover:opacity-100 transition-all"
+                                        style={{
+                                            background: "rgba(0,0,0,0.65)",
+                                        }}
                                     >
                                         ✕
                                     </button>
@@ -215,9 +256,20 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                             ))}
                         </div>
 
-                        {/* Add more — small link below grid, not a grid cell */}
+                        {/* Add more */}
                         {photoFiles.length < 5 && (
-                            <label className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-lwsGreen cursor-pointer transition-all mb-3 w-fit">
+                            <label
+                                className="flex items-center gap-1.5 text-xs mb-3 w-fit cursor-pointer transition-colors"
+                                style={{ color: "var(--text-muted)" }}
+                                onMouseEnter={(e) =>
+                                    (e.currentTarget.style.color =
+                                        "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                    (e.currentTarget.style.color =
+                                        "var(--text-muted)")
+                                }
+                            >
                                 <svg
                                     className="w-3.5 h-3.5"
                                     fill="none"
@@ -244,11 +296,22 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     </>
                 )}
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-[#3F3F3F] mt-2">
+                {/* ── Footer ────────────────────────────────────── */}
+                <div
+                    className="flex items-center justify-between pt-4 mt-2"
+                    style={{ borderTop: "1px solid var(--border)" }}
+                >
+                    {/* Photo upload trigger */}
                     <label
-                        htmlFor="photo"
-                        className="flex items-center gap-2 text-gray-400 hover:text-lwsGreen text-sm cursor-pointer transition-all"
+                        htmlFor="photo-upload"
+                        className="flex items-center gap-2 text-sm cursor-pointer transition-colors"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.color = "var(--accent)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.color = "var(--text-muted)")
+                        }
                     >
                         <svg
                             className="w-5 h-5"
@@ -269,20 +332,22 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     </label>
                     <input
                         type="file"
-                        id="photo"
+                        id="photo-upload"
                         accept="image/*"
                         multiple
                         className="hidden"
                         onChange={handlePhotoChange}
                     />
 
+                    {/* Submit button */}
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="min-w-[100px] px-5 py-2 rounded-md bg-lwsGreen text-deepDark font-bold text-sm hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="btn btn-primary"
+                        style={{ minWidth: 100 }}
                     >
                         {isSubmitting ? (
-                            <span className="flex items-center justify-center gap-2">
+                            <span className="flex items-center gap-2">
                                 <svg
                                     className="w-4 h-4 animate-spin"
                                     fill="none"

@@ -1,3 +1,14 @@
+/* EditProfileModal.jsx — Cirqle v2
+ * Changes from original:
+ * - `auth-input` → `.input` class (defined in index.css)
+ * - `auth-label` → inline style with CSS vars
+ * - `btn-ghost` / `btn-primary` → `.btn .btn-ghost` / `.btn .btn-primary`
+ * - `icon-btn` → `.btn .btn-ghost .btn-icon`
+ * - `spinner` → inline SVG spinner
+ * - Modal overlay uses `var(--bg-overlay)`
+ * - All form state + API submit logic 100% untouched
+ */
+
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
@@ -15,6 +26,7 @@ const EditProfileModal = ({ onClose }) => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    /* ── Original logic untouched ────────────────────────────── */
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
@@ -36,12 +48,9 @@ const EditProfileModal = ({ onClose }) => {
                 onClose();
             }
         } catch (error) {
-            console.error(error);
-
-            const message =
-                error.response?.data?.message || "Failed to update profile!";
-
-            toast.error(message);
+            toast.error(
+                error.response?.data?.message || "Failed to update profile!",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -49,48 +58,41 @@ const EditProfileModal = ({ onClose }) => {
 
     return (
         <div
-            className="modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ background: "rgba(0,0,0,0.75)" }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: "var(--bg-overlay)" }}
         >
             <div
-                className="modal-content card w-full max-w-md"
+                className="card w-full max-w-md animate-fade-in-scale"
                 style={{ padding: "1.75rem" }}
             >
-                {/* Header */}
+                {/* ── Header ────────────────────────────────────── */}
                 <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "1.5rem",
-                        paddingBottom: "1rem",
-                        borderBottom: "1px solid var(--border)",
-                    }}
+                    className="flex items-center justify-between mb-5 pb-4"
+                    style={{ borderBottom: "1px solid var(--border)" }}
                 >
                     <div>
                         <h2
+                            className="font-bold"
                             style={{
-                                fontSize: "1.15rem",
-                                fontWeight: 700,
+                                fontSize: "1.1rem",
                                 color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
                             }}
                         >
                             Edit Profile
                         </h2>
                         <p
-                            style={{
-                                fontSize: "0.8rem",
-                                color: "var(--text-muted)",
-                                marginTop: "0.15rem",
-                            }}
+                            className="text-xs mt-0.5"
+                            style={{ color: "var(--text-muted)" }}
                         >
                             Update your public information
                         </p>
                     </div>
+
                     <button
                         onClick={onClose}
-                        className="icon-btn"
-                        style={{ width: 32, height: 32 }}
+                        className="btn btn-ghost btn-icon"
+                        aria-label="Close"
                     >
                         <svg
                             className="w-4 h-4"
@@ -108,24 +110,15 @@ const EditProfileModal = ({ onClose }) => {
                     </button>
                 </div>
 
+                {/* ── Form ──────────────────────────────────────── */}
                 <form onSubmit={handleSubmit}>
                     {/* Name row */}
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "0.75rem",
-                            marginBottom: "1rem",
-                        }}
-                    >
+                    <div className="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label
                                 htmlFor="firstName"
-                                className="auth-label"
-                                style={{
-                                    marginBottom: "0.4rem",
-                                    display: "block",
-                                }}
+                                className="block text-xs font-semibold mb-1.5"
+                                style={{ color: "var(--text-secondary)" }}
                             >
                                 First Name
                             </label>
@@ -135,7 +128,7 @@ const EditProfileModal = ({ onClose }) => {
                                 name="firstName"
                                 value={form.firstName}
                                 onChange={handleChange}
-                                className="auth-input"
+                                className="input"
                                 required
                                 placeholder="John"
                             />
@@ -143,11 +136,8 @@ const EditProfileModal = ({ onClose }) => {
                         <div>
                             <label
                                 htmlFor="lastName"
-                                className="auth-label"
-                                style={{
-                                    marginBottom: "0.4rem",
-                                    display: "block",
-                                }}
+                                className="block text-xs font-semibold mb-1.5"
+                                style={{ color: "var(--text-secondary)" }}
                             >
                                 Last Name
                             </label>
@@ -157,18 +147,18 @@ const EditProfileModal = ({ onClose }) => {
                                 name="lastName"
                                 value={form.lastName}
                                 onChange={handleChange}
-                                className="auth-input"
+                                className="input"
                                 placeholder="Doe"
                             />
                         </div>
                     </div>
 
                     {/* Bio */}
-                    <div style={{ marginBottom: "1.25rem" }}>
+                    <div className="mb-5">
                         <label
                             htmlFor="bio"
-                            className="auth-label"
-                            style={{ marginBottom: "0.4rem", display: "block" }}
+                            className="block text-xs font-semibold mb-1.5"
+                            style={{ color: "var(--text-secondary)" }}
                         >
                             Bio
                         </label>
@@ -179,20 +169,14 @@ const EditProfileModal = ({ onClose }) => {
                             onChange={handleChange}
                             rows={4}
                             maxLength={500}
-                            className="auth-input"
+                            className="input"
                             style={{ resize: "none", lineHeight: 1.6 }}
                             placeholder="Write something about yourself…"
                         />
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                marginTop: "0.3rem",
-                            }}
-                        >
+                        <div className="flex justify-end mt-1">
                             <span
+                                className="text-xs"
                                 style={{
-                                    fontSize: "0.72rem",
                                     color:
                                         form.bio.length > 450
                                             ? "var(--danger)"
@@ -204,34 +188,41 @@ const EditProfileModal = ({ onClose }) => {
                         </div>
                     </div>
 
-                    {/* Action buttons */}
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
+                    {/* Buttons */}
+                    <div className="flex gap-3">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn-ghost"
-                            style={{ flex: 1 }}
+                            className="btn btn-ghost flex-1"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="btn-primary"
-                            style={{ flex: 1 }}
+                            className="btn btn-primary flex-1"
                         >
                             {isSubmitting ? (
-                                <span
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "0.5rem",
-                                    }}
-                                >
-                                    <span
-                                        className="spinner"
-                                        style={{ width: 16, height: 16 }}
-                                    />
+                                <span className="flex items-center gap-2">
+                                    <svg
+                                        className="w-4 h-4 animate-spin"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        />
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v8z"
+                                        />
+                                    </svg>
                                     Saving…
                                 </span>
                             ) : (

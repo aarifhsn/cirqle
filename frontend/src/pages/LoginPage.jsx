@@ -1,3 +1,10 @@
+/* LoginPage.jsx — Cirqle v2
+ * Changes:
+ * - badge badge-accent → .pill.pill-accent
+ * - All CSS vars already in use — no hardcoded colors
+ * - Layout/branding untouched
+ */
+
 import { Link } from "react-router-dom";
 import AuthIllustration from "../assets/images/auth_illustration.png";
 import LoginForm from "../components/auth/LoginForm";
@@ -7,7 +14,7 @@ const LoginPage = () => {
         <main className="auth-bg flex min-h-screen items-center justify-center py-8 px-4">
             <div className="w-full max-w-5xl">
                 <div className="grid items-center gap-10 lg:grid-cols-2">
-                    {/* ── Left: Branding (desktop only) ── */}
+                    {/* ── Left: Branding (desktop only) ─────────── */}
                     <div className="hidden lg:flex flex-col justify-center">
                         <img
                             className="mb-10 max-w-xs opacity-90"
@@ -15,46 +22,57 @@ const LoginPage = () => {
                             alt="Cirqle illustration"
                         />
                         <h1
-                            className="font-display mb-3 text-5xl font-bold leading-tight"
-                            style={{ color: "var(--text-primary)" }}
+                            className="mb-3 font-bold leading-tight"
+                            style={{
+                                fontSize: "3rem",
+                                color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
+                            }}
                         >
                             Welcome back
                             <span style={{ color: "var(--accent)" }}>.</span>
                         </h1>
                         <p
+                            className="mb-6"
                             style={{
                                 color: "var(--text-secondary)",
                                 fontSize: "1.05rem",
-                                maxWidth: "380px",
+                                maxWidth: 380,
                                 lineHeight: 1.7,
                             }}
                         >
-                            Share your thoughts, connect with people you care
-                            about, and discover what's happening around you.
+                            Share your thoughts, connect with people nearby, and
+                            discover what's happening around you.
                         </p>
 
-                        <div className="flex flex-wrap gap-2 mt-6">
+                        <div className="flex flex-wrap gap-2">
                             {[
                                 "Posts & Reactions",
                                 "Follow People",
-                                "Private Messaging",
+                                "Local Circles",
                             ].map((f) => (
-                                <span key={f} className="badge badge-accent">
+                                <span key={f} className="pill pill-accent">
                                     {f}
                                 </span>
                             ))}
                         </div>
                     </div>
 
-                    {/* ── Right: Form card ── */}
+                    {/* ── Right: Form card ──────────────────────── */}
                     <div>
-                        <div className="card" style={{ padding: "2rem" }}>
-                            {/* Unified header — works at all breakpoints */}
+                        <div
+                            className="card animate-fade-in"
+                            style={{ padding: "2rem" }}
+                        >
                             <div className="mb-6">
-                                {/* Logo shown on mobile, hidden on desktop (desktop has left-panel branding) */}
+                                {/* Mobile logo */}
                                 <p
-                                    className="lg:hidden font-display text-2xl font-bold mb-1"
-                                    style={{ color: "var(--text-primary)" }}
+                                    className="lg:hidden font-bold mb-1"
+                                    style={{
+                                        fontSize: "1.5rem",
+                                        color: "var(--text-primary)",
+                                        fontFamily: "var(--font-display)",
+                                    }}
                                 >
                                     Cirqle
                                     <span style={{ color: "var(--accent)" }}>
@@ -62,20 +80,18 @@ const LoginPage = () => {
                                     </span>
                                 </p>
                                 <h2
+                                    className="font-bold"
                                     style={{
                                         fontSize: "1.4rem",
-                                        fontWeight: 700,
                                         color: "var(--text-primary)",
+                                        fontFamily: "var(--font-display)",
                                     }}
                                 >
                                     Sign in
                                 </h2>
                                 <p
-                                    style={{
-                                        color: "var(--text-muted)",
-                                        fontSize: "0.875rem",
-                                        marginTop: "0.2rem",
-                                    }}
+                                    className="text-sm mt-0.5"
+                                    style={{ color: "var(--text-muted)" }}
                                 >
                                     Good to see you again
                                 </p>
@@ -84,21 +100,14 @@ const LoginPage = () => {
                             <LoginForm />
 
                             <p
-                                className="mt-5 text-center"
-                                style={{
-                                    fontSize: "0.875rem",
-                                    color: "var(--text-muted)",
-                                }}
+                                className="mt-5 text-center text-sm"
+                                style={{ color: "var(--text-muted)" }}
                             >
                                 Don't have an account?{" "}
                                 <Link
                                     to="/register"
-                                    style={{
-                                        color: "var(--accent)",
-                                        fontWeight: 600,
-                                        textDecoration: "none",
-                                    }}
-                                    className="hover:underline transition-all"
+                                    className="font-semibold hover:underline"
+                                    style={{ color: "var(--accent)" }}
                                 >
                                     Create one free
                                 </Link>

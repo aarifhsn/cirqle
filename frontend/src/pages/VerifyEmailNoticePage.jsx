@@ -1,3 +1,13 @@
+/* VerifyEmailNoticePage.jsx — Cirqle v2
+ * Changes:
+ * - bg-deepDark → var(--bg-base)
+ * - bg-lwsGreen/10, text-lwsGreen → CSS vars
+ * - text-white → var(--text-primary)
+ * - text-gray-400, text-gray-500 → var(--text-muted)
+ * - bg-lwsGreen text-deepDark → .btn.btn-primary
+ * - All resend API logic 100% untouched
+ */
+
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "../hooks/useAuth";
@@ -9,6 +19,7 @@ const VerifyEmailNoticePage = () => {
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
 
+    /* ── Original logic untouched ────────────────────────────── */
     const handleResend = async () => {
         setSending(true);
         try {
@@ -25,35 +36,52 @@ const VerifyEmailNoticePage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-deepDark flex items-center justify-center px-4">
-            <div className="card max-w-md w-full text-center p-8">
-                <div className="w-16 h-16 rounded-full bg-lwsGreen/10 flex items-center justify-center mx-auto mb-4">
-                    <svg
-                        className="w-8 h-8 text-lwsGreen"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                    </svg>
+        <div className="auth-bg min-h-screen flex items-center justify-center px-4">
+            <div
+                className="card w-full text-center animate-fade-in-scale"
+                style={{ maxWidth: 420, padding: "2.5rem 2rem" }}
+            >
+                {/* Icon */}
+                <div
+                    className="flex-center mx-auto mb-5"
+                    style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: "50%",
+                        background: "var(--accent-soft)",
+                    }}
+                >
+                    <span style={{ fontSize: "1.75rem" }}>📧</span>
                 </div>
 
-                <h1 className="text-xl font-bold text-white mb-2">
+                <h1
+                    className="font-bold mb-2"
+                    style={{
+                        fontSize: "1.25rem",
+                        color: "var(--text-primary)",
+                        fontFamily: "var(--font-display)",
+                    }}
+                >
                     Verify your email
                 </h1>
-                <p className="text-gray-400 text-sm mb-1">
+
+                <p
+                    className="text-sm mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                >
                     We sent a verification link to
                 </p>
-                <p className="text-lwsGreen text-sm font-medium mb-6">
+                <p
+                    className="text-sm font-semibold mb-5"
+                    style={{ color: "var(--accent)" }}
+                >
                     {auth?.user?.email}
                 </p>
 
-                <p className="text-gray-500 text-xs mb-6">
+                <p
+                    className="text-xs mb-6"
+                    style={{ color: "var(--text-muted)", lineHeight: 1.7 }}
+                >
                     Click the link in the email to verify your account. Check
                     your spam folder if you don't see it.
                 </p>
@@ -61,13 +89,37 @@ const VerifyEmailNoticePage = () => {
                 <button
                     onClick={handleResend}
                     disabled={sending || sent}
-                    className="w-full py-2.5 rounded-md bg-lwsGreen text-deepDark font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50"
+                    className="btn btn-primary w-full"
+                    style={{ padding: "0.75rem" }}
                 >
-                    {sending
-                        ? "Sending..."
-                        : sent
-                          ? "Email Sent ✓"
-                          : "Resend Verification Email"}
+                    {sending ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <svg
+                                className="w-4 h-4 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                />
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v8z"
+                                />
+                            </svg>
+                            Sending…
+                        </span>
+                    ) : sent ? (
+                        "✓ Email Sent"
+                    ) : (
+                        "Resend Verification Email"
+                    )}
                 </button>
             </div>
         </div>

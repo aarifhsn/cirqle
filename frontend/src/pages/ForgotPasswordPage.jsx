@@ -1,4 +1,10 @@
-// src/pages/ForgotPasswordPage.jsx
+/* ForgotPasswordPage.jsx — Cirqle v2
+ * Changes:
+ * - btn-primary → .btn.btn-primary.w-full
+ * - var(--r-md) → 10px (token not defined, use hardcoded border-radius)
+ * - All form/API logic 100% untouched
+ */
+
 import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +21,7 @@ const ForgotPasswordPage = () => {
         setError,
     } = useForm();
 
+    /* ── Original submit logic untouched ─────────────────────── */
     const onSubmit = async (data) => {
         try {
             await axios.post(
@@ -34,56 +41,52 @@ const ForgotPasswordPage = () => {
     return (
         <main className="auth-bg flex min-h-screen items-center justify-center py-8 px-4">
             <div className="w-full max-w-md">
-                <div className="card" style={{ padding: "2rem" }}>
+                <div
+                    className="card animate-fade-in"
+                    style={{ padding: "2rem" }}
+                >
                     {/* Back link */}
                     <Link
                         to="/login"
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "0.3rem",
-                            fontSize: "0.82rem",
-                            color: "var(--text-muted)",
-                            textDecoration: "none",
-                            marginBottom: "1.25rem",
-                        }}
-                        className="hover:underline"
+                        className="inline-flex items-center gap-1 text-xs hover:underline mb-5"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.color = "var(--accent)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.color = "var(--text-muted)")
+                        }
                     >
                         ← Back to Sign In
                     </Link>
 
                     <div className="mb-6">
                         <h2
+                            className="font-bold"
                             style={{
                                 fontSize: "1.4rem",
-                                fontWeight: 700,
                                 color: "var(--text-primary)",
+                                fontFamily: "var(--font-display)",
                             }}
                         >
                             Forgot password?
                         </h2>
                         <p
-                            style={{
-                                color: "var(--text-muted)",
-                                fontSize: "0.875rem",
-                                marginTop: "0.3rem",
-                            }}
+                            className="text-sm mt-0.5"
+                            style={{ color: "var(--text-muted)" }}
                         >
                             Enter your email and we'll send a reset link.
                         </p>
                     </div>
 
                     {submitted ? (
-                        /* ── Success state ── */
+                        /* ── Success state ────────────────────────── */
                         <div
+                            className="rounded-xl px-4 py-3 text-sm leading-relaxed"
                             style={{
-                                background: "var(--success-soft, #d1fae5)",
-                                border: "1px solid rgba(16,185,129,0.3)",
-                                borderRadius: "var(--r-md)",
-                                padding: "1rem 1.25rem",
-                                color: "var(--success, #065f46)",
-                                fontSize: "0.875rem",
-                                lineHeight: 1.6,
+                                background: "var(--success-soft)",
+                                border: "1px solid rgba(34,197,94,0.3)",
+                                color: "var(--success)",
                             }}
                         >
                             ✅ <strong>Check your inbox.</strong>
@@ -109,12 +112,11 @@ const ForgotPasswordPage = () => {
 
                             {errors?.root?.random?.message && (
                                 <div
-                                    className="mb-4 px-3 py-2.5 rounded-lg flex items-center gap-2"
+                                    className="mb-4 px-3 py-2.5 rounded-xl flex items-center gap-2 text-sm"
                                     style={{
                                         background: "var(--danger-soft)",
-                                        border: "1px solid rgba(255,77,109,0.25)",
+                                        border: "1px solid rgba(239,68,68,0.25)",
                                         color: "var(--danger)",
-                                        fontSize: "0.85rem",
                                     }}
                                 >
                                     {errors.root.random.message}
@@ -124,14 +126,38 @@ const ForgotPasswordPage = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="btn-primary w-full mt-1"
+                                className="btn btn-primary w-full"
                                 style={{
-                                    padding: "0.8rem",
+                                    padding: "0.75rem",
                                     fontSize: "0.95rem",
-                                    borderRadius: "var(--r-md)",
                                 }}
                             >
-                                {isSubmitting ? "Sending…" : "Send Reset Link"}
+                                {isSubmitting ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg
+                                            className="w-4 h-4 animate-spin"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8z"
+                                            />
+                                        </svg>
+                                        Sending…
+                                    </span>
+                                ) : (
+                                    "Send Reset Link"
+                                )}
                             </button>
                         </form>
                     )}

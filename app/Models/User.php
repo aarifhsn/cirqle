@@ -29,6 +29,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'bio',
         'cover_photo',
         'email_verified_at',
+        'latitude',
+        'longitude',
+        'location_name',
     ];
 
     /**
@@ -41,6 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
         ];
     }
 
@@ -95,5 +99,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new VerifyEmailNotification());
+    }
+
+    public function circles()
+    {
+        return $this->belongsToMany(Circle::class)
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
+
+    public function listings()
+    {
+        return $this->hasMany(Listing::class);
+    }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
     }
 }
