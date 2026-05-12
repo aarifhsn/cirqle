@@ -9,12 +9,12 @@ import AppLayout from "../layouts/AppLayout";
 
 /* ── Feed tabs ────────────────────────────────────────────────── */
 const FEED_TABS = [
-    { id: "public", label: "For You", icon: "✨", usesPostFeed: true },
-    { id: "following", label: "Following", icon: "👥", usesPostFeed: true },
-    { id: "nearby", label: "Nearby", icon: "📍", usesPostFeed: true },
-    { id: "circles", label: "Circles", icon: "⭕", usesPostFeed: true },
-    { id: "events", label: "Events", icon: "📅", usesPostFeed: false },
-    { id: "jobs", label: "Jobs", icon: "💼", usesPostFeed: false },
+    { id: "public", label: "For You", icon: "✦", usesPostFeed: true },
+    { id: "following", label: "Following", icon: "◯", usesPostFeed: true },
+    { id: "nearby", label: "Nearby", icon: "⌖", usesPostFeed: true },
+    { id: "circles", label: "Circles", icon: "◎", usesPostFeed: true },
+    { id: "events", label: "Events", icon: "◷", usesPostFeed: false },
+    { id: "jobs", label: "Jobs", icon: "◧", usesPostFeed: false },
 ];
 
 /* ── Shared skeleton ──────────────────────────────────────────── */

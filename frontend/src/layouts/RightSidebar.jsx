@@ -31,10 +31,10 @@ const SUGGESTED_USERS = [
 ];
 
 const TRENDING_CIRCLES = [
-    { emoji: "🏙️", name: "Dhaka Circle", members: "12.4k", active: true },
-    { emoji: "💼", name: "Job Seekers", members: "8.2k", active: false },
-    { emoji: "🍜", name: "Food Lovers", members: "3.1k", active: true },
-    { emoji: "💪", name: "Fitness Circle", members: "2.4k", active: false },
+    { emoji: "⌂", name: "Dhaka Circle", members: "12.4k", active: true },
+    { emoji: "◧", name: "Job Seekers", members: "8.2k", active: false },
+    { emoji: "◌", name: "Food Lovers", members: "3.1k", active: true },
+    { emoji: "▲", name: "Fitness Circle", members: "2.4k", active: false },
 ];
 
 const UPCOMING_EVENTS = [
@@ -52,14 +52,6 @@ const UPCOMING_EVENTS = [
         emoji: "📷",
         attendees: 18,
     },
-];
-
-const ONLINE_USERS = [
-    { id: 1, name: "Arif", avatar: null },
-    { id: 2, name: "Nadia", avatar: null },
-    { id: 3, name: "Karim", avatar: null },
-    { id: 4, name: "Sadia", avatar: null },
-    { id: 5, name: "Rahim", avatar: null },
 ];
 
 /* ── Initials avatar fallback ─────────────────────────────────── */
@@ -258,60 +250,6 @@ const RightSidebar = () => {
                         </div>
                     </div>
                 ))}
-            </div>
-
-            {/* ── 4. Who's Online ───────────────────────────────── */}
-            <div
-                className="widget animate-fade-in"
-                style={{ animationDelay: "240ms" }}
-            >
-                <div className="widget-title">
-                    <span>🟢 Online Now</span>
-                </div>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "-8px",
-                        flexWrap: "wrap",
-                        gap: "0.5rem",
-                    }}
-                >
-                    {ONLINE_USERS.map((u) => (
-                        <div
-                            key={u.id}
-                            style={{ position: "relative" }}
-                            title={u.name}
-                        >
-                            <InitialsAvatar
-                                name={u.name}
-                                size={34}
-                                fontSize="0.7rem"
-                            />
-                            <span
-                                style={{
-                                    position: "absolute",
-                                    bottom: 0,
-                                    right: 0,
-                                    width: 9,
-                                    height: 9,
-                                    background: "var(--online)",
-                                    borderRadius: "50%",
-                                    border: "2px solid var(--card-bg)",
-                                }}
-                            />
-                        </div>
-                    ))}
-                    <div
-                        style={{
-                            fontSize: "0.75rem",
-                            color: "var(--text-muted)",
-                            alignSelf: "center",
-                            marginLeft: 4,
-                        }}
-                    >
-                        +18 more
-                    </div>
-                </div>
             </div>
 
             {/* ── Footer ────────────────────────────────────────── */}

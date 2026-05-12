@@ -17,6 +17,9 @@ export const PostCard = ({ post }) => {
                 content={post?.content}
                 images={post?.images ?? []}
                 poster={post?.image}
+                type={post?.type}
+                pollOptions={post?.poll_options ?? []}
+                postId={post?.id}
             />
             <PostAction post={post} commentCount={comments?.length} />
             <PostComments

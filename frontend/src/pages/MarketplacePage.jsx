@@ -1,124 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Avatar from "../components/common/Avatar";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
-
-/* ── Mock data ────────────────────────────────────────────────── */
-const MOCK_LISTINGS = [
-    {
-        id: 1,
-        title: "iPhone 13 Pro",
-        price: 65000,
-        category: "Electronics",
-        location: "Gulshan, Dhaka",
-        description:
-            "Excellent condition, 128GB, Pacific Blue. Minor scratches on back.",
-        images: [],
-        status: "active",
-        user: {
-            id: 1,
-            firstName: "Arif",
-            lastName: "Hossain",
-            username: "arifh",
-            avatar: null,
-        },
-        created_at: "2025-06-01",
-    },
-    {
-        id: 2,
-        title: "Study Table & Chair",
-        price: 4500,
-        category: "Furniture",
-        location: "Mirpur, Dhaka",
-        description: "Solid wood study table with matching chair. 2 years old.",
-        images: [],
-        status: "active",
-        user: {
-            id: 2,
-            firstName: "Nadia",
-            lastName: "Rahman",
-            username: "nadia_r",
-            avatar: null,
-        },
-        created_at: "2025-06-02",
-    },
-    {
-        id: 3,
-        title: 'Samsung 32" Monitor',
-        price: 12000,
-        category: "Electronics",
-        location: "Dhanmondi, Dhaka",
-        description: "Full HD IPS panel, HDMI+VGA, works perfectly.",
-        images: [],
-        status: "active",
-        user: {
-            id: 3,
-            firstName: "Karim",
-            lastName: "Uddin",
-            username: "karim_u",
-            avatar: null,
-        },
-        created_at: "2025-06-03",
-    },
-    {
-        id: 4,
-        title: "Bicycle — Hero Sprint",
-        price: 8000,
-        category: "Sports",
-        location: "Uttara, Dhaka",
-        description:
-            "21-speed mountain bike. Good condition, needs minor tune-up.",
-        images: [],
-        status: "active",
-        user: {
-            id: 4,
-            firstName: "Sadia",
-            lastName: "Islam",
-            username: "sadia_i",
-            avatar: null,
-        },
-        created_at: "2025-06-04",
-    },
-    {
-        id: 5,
-        title: "Books — HSC 2024 Set",
-        price: 600,
-        category: "Books",
-        location: "Mohammadpur, Dhaka",
-        description: "Complete HSC science group books. Used one year.",
-        images: [],
-        status: "active",
-        user: {
-            id: 5,
-            firstName: "Rahim",
-            lastName: "Ali",
-            username: "rahim_a",
-            avatar: null,
-        },
-        created_at: "2025-06-05",
-    },
-    {
-        id: 6,
-        title: "Air Cooler",
-        price: 5500,
-        category: "Home",
-        location: "Banani, Dhaka",
-        description:
-            "Symphony Ninja cooler, 3-speed, used 1 season. With warranty card.",
-        images: [],
-        status: "active",
-        user: {
-            id: 1,
-            firstName: "Arif",
-            lastName: "Hossain",
-            username: "arifh",
-            avatar: null,
-        },
-        created_at: "2025-06-06",
-    },
-];
 
 const CATEGORIES = [
     "All",
@@ -138,6 +23,8 @@ const SORT_OPTIONS = [
 ];
 
 const fmtPrice = (p) => `৳ ${Number(p).toLocaleString()}`;
+const fmtDate = (d) =>
+    new Date(d).toLocaleDateString("en", { month: "short", day: "numeric" });
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
 const Skeleton = () => (
@@ -174,120 +61,153 @@ const Skeleton = () => (
     </div>
 );
 
-/* ── Listing Card ─────────────────────────────────────────────── */
-const ListingCard = ({ listing }) => (
+/* ── Error banner ─────────────────────────────────────────────── */
+const ErrorBanner = ({ message, onRetry }) => (
     <div
-        className="card card-hover animate-fade-in"
+        className="card flex items-center justify-between gap-3 p-4"
         style={{
-            padding: 0,
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
         }}
     >
-        {/* Image */}
-        <div
-            className="flex-center flex-shrink-0"
-            style={{
-                height: 160,
-                background: listing.images?.[0]
-                    ? `url(${import.meta.env.VITE_STORAGE_URL}/${listing.images[0]}) center/cover`
-                    : "var(--bg-surface-2)",
-                borderBottom: "1px solid var(--border)",
-                position: "relative",
-            }}
+        <p className="text-sm" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button
+            onClick={onRetry}
+            className="btn btn-ghost btn-sm flex-shrink-0"
         >
-            {!listing.images?.[0] && (
-                <span style={{ fontSize: "2.5rem", opacity: 0.4 }}>🛍️</span>
-            )}
-            {listing.status === "sold" && (
-                <div
-                    className="absolute inset-0 flex-center"
-                    style={{ background: "rgba(0,0,0,0.55)" }}
-                >
-                    <span
-                        className="pill pill-danger"
-                        style={{ fontSize: "0.8rem", fontWeight: 700 }}
-                    >
-                        SOLD
-                    </span>
-                </div>
-            )}
-            <span
-                className="absolute top-2 left-2 pill pill-muted"
-                style={{ fontSize: "0.68rem" }}
-            >
-                {listing.category}
-            </span>
-        </div>
+            Retry
+        </button>
+    </div>
+);
 
-        {/* Info */}
+/* ── Listing Card ─────────────────────────────────────────────── */
+const ListingCard = ({ listing }) => {
+    const firstImage = listing.images?.[0]
+        ? `${import.meta.env.VITE_STORAGE_URL}/${listing.images[0]}`
+        : null;
+
+    return (
         <div
+            className="card card-hover animate-fade-in"
             style={{
-                padding: "0.9rem 1rem",
-                flex: 1,
+                padding: 0,
+                overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
             }}
         >
-            <h4
-                className="font-semibold mb-1 truncate"
-                style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}
-            >
-                {listing.title}
-            </h4>
-            <p
-                className="font-bold mb-1"
+            {/* Image */}
+            <div
+                className="flex-center flex-shrink-0"
                 style={{
-                    color: "var(--accent)",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "1.05rem",
+                    height: 160,
+                    background: firstImage
+                        ? `url(${firstImage}) center/cover`
+                        : "var(--bg-surface-2)",
+                    borderBottom: "1px solid var(--border)",
+                    position: "relative",
                 }}
             >
-                {fmtPrice(listing.price)}
-            </p>
-            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
-                📍 {listing.location}
-            </p>
-
-            {/* Seller row */}
-            <div
-                className="flex items-center gap-2 mt-auto pt-2"
-                style={{ borderTop: "1px solid var(--border)" }}
-            >
-                <Link
-                    to={`/${listing.user?.username}`}
-                    className="flex-shrink-0"
-                >
-                    <Avatar user={listing.user} size="sm" />
-                </Link>
-                <div className="flex-1 min-w-0">
-                    <p
-                        className="text-xs font-medium truncate"
-                        style={{ color: "var(--text-secondary)" }}
+                {!firstImage && (
+                    <span style={{ fontSize: "2.5rem", opacity: 0.3 }}>🛍️</span>
+                )}
+                {listing.status === "sold" && (
+                    <div
+                        className="absolute inset-0 flex-center"
+                        style={{ background: "rgba(0,0,0,0.55)" }}
                     >
-                        {listing.user?.firstName} {listing.user?.lastName}
-                    </p>
+                        <span
+                            className="pill pill-danger"
+                            style={{ fontWeight: 700 }}
+                        >
+                            SOLD
+                        </span>
+                    </div>
+                )}
+                {listing.category && (
+                    <span
+                        className="absolute top-2 left-2 pill pill-muted"
+                        style={{ fontSize: "0.68rem" }}
+                    >
+                        {listing.category}
+                    </span>
+                )}
+            </div>
+
+            {/* Info */}
+            <div
+                style={{
+                    padding: "0.9rem 1rem",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
+                <h4
+                    className="font-semibold mb-1 truncate"
+                    style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}
+                >
+                    {listing.title}
+                </h4>
+                <p
+                    className="font-bold mb-1"
+                    style={{
+                        color: "var(--accent)",
+                        fontFamily: "var(--font-display)",
+                        fontSize: "1.05rem",
+                    }}
+                >
+                    {fmtPrice(listing.price)}
+                </p>
+                {listing.location && (
                     <p
-                        className="text-xs"
+                        className="text-xs mb-3"
                         style={{ color: "var(--text-muted)" }}
                     >
-                        {new Date(listing.created_at).toLocaleDateString("en", {
-                            month: "short",
-                            day: "numeric",
-                        })}
+                        📍 {listing.location}
                     </p>
-                </div>
-                <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => toast.info("Messaging coming soon!")}
+                )}
+
+                {/* Seller */}
+                <div
+                    className="flex items-center gap-2 mt-auto pt-2"
+                    style={{ borderTop: "1px solid var(--border)" }}
                 >
-                    Message
-                </button>
+                    <Link
+                        to={`/${listing.user?.username}`}
+                        className="flex-shrink-0"
+                    >
+                        <Avatar user={listing.user} size="sm" />
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                        <p
+                            className="text-xs font-medium truncate"
+                            style={{ color: "var(--text-secondary)" }}
+                        >
+                            {listing.user?.firstName} {listing.user?.lastName}
+                        </p>
+                        {listing.created_at && (
+                            <p
+                                className="text-xs"
+                                style={{ color: "var(--text-muted)" }}
+                            >
+                                {fmtDate(listing.created_at)}
+                            </p>
+                        )}
+                    </div>
+                    <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => toast.info("Messaging coming soon!")}
+                    >
+                        Message
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 /* ── Create Listing Modal ─────────────────────────────────────── */
 const CreateListingModal = ({ onClose, onCreated }) => {
@@ -302,6 +222,7 @@ const CreateListingModal = ({ onClose, onCreated }) => {
     });
     const [images, setImages] = useState([]);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
 
     const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -315,6 +236,7 @@ const CreateListingModal = ({ onClose, onCreated }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
         try {
             const data = new FormData();
             Object.entries(form).forEach(([k, v]) => data.append(k, v));
@@ -322,14 +244,12 @@ const CreateListingModal = ({ onClose, onCreated }) => {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/listings`,
                 data,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                },
+                { headers: { "Content-Type": "multipart/form-data" } },
             );
-            toast.success("Listing created!");
+            toast.success("Listing posted!");
             onCreated(res.data?.data ?? res.data);
-        } catch {
-            toast.error("Failed to create listing.");
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to post listing.");
         } finally {
             setSaving(false);
         }
@@ -370,6 +290,18 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                     </button>
                 </div>
 
+                {error && (
+                    <div
+                        className="mb-3 px-3 py-2 rounded-xl text-sm"
+                        style={{
+                            background: "var(--danger-soft)",
+                            color: "var(--danger)",
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     {/* Photo upload */}
                     <div className="mb-4">
@@ -380,24 +312,34 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                             Photos (up to 5)
                         </label>
                         {images.length > 0 ? (
-                            <div className="grid grid-cols-3 gap-2 mb-2">
-                                {images.map((img, i) => (
-                                    <div
-                                        key={i}
-                                        className="aspect-square overflow-hidden"
-                                        style={{
-                                            borderRadius: 10,
-                                            border: "1px solid var(--border)",
-                                        }}
-                                    >
-                                        <img
-                                            src={img.preview}
-                                            className="w-full h-full object-cover"
-                                            alt=""
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                            <>
+                                <div className="grid grid-cols-3 gap-2 mb-2">
+                                    {images.map((img, i) => (
+                                        <div
+                                            key={i}
+                                            className="aspect-square overflow-hidden"
+                                            style={{
+                                                borderRadius: 10,
+                                                border: "1px solid var(--border)",
+                                            }}
+                                        >
+                                            <img
+                                                src={img.preview}
+                                                className="w-full h-full object-cover"
+                                                alt=""
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => fileRef.current.click()}
+                                    className="text-xs"
+                                    style={{ color: "var(--accent)" }}
+                                >
+                                    Change photos
+                                </button>
+                            </>
                         ) : (
                             <div
                                 onClick={() => fileRef.current.click()}
@@ -425,16 +367,6 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                             className="hidden"
                             onChange={handleFiles}
                         />
-                        {images.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => fileRef.current.click()}
-                                className="text-xs"
-                                style={{ color: "var(--accent)" }}
-                            >
-                                Change photos
-                            </button>
-                        )}
                     </div>
 
                     {[
@@ -443,18 +375,21 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                             key: "title",
                             type: "text",
                             placeholder: "What are you selling?",
+                            required: true,
                         },
                         {
                             label: "Price (৳)",
                             key: "price",
                             type: "number",
                             placeholder: "0",
+                            required: true,
                         },
                         {
                             label: "Location",
                             key: "location",
                             type: "text",
                             placeholder: "Your area",
+                            required: false,
                         },
                     ].map((f) => (
                         <div key={f.key} className="mb-3">
@@ -465,10 +400,10 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                                 {f.label}
                             </label>
                             <input
-                                required
                                 type={f.type}
                                 className="input"
                                 placeholder={f.placeholder}
+                                required={f.required}
                                 value={form[f.key]}
                                 onChange={(e) => set(f.key, e.target.value)}
                             />
@@ -535,27 +470,45 @@ const CreateListingModal = ({ onClose, onCreated }) => {
 /* ── MarketplacePage ──────────────────────────────────────────── */
 const MarketplacePage = () => {
     const { api } = useAxios();
+
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [category, setCategory] = useState("All");
     const [sort, setSort] = useState("newest");
     const [search, setSearch] = useState("");
     const [showCreate, setShowCreate] = useState(false);
+    const [searchParams] = useSearchParams();
+    useEffect(() => {
+        if (searchParams.get("create") === "true") setShowCreate(true);
+    }, []);
+
+    const fetchListings = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/listings`,
+            );
+            setListings(res.data?.data ?? res.data ?? []);
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to load listings.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setLoading(true);
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/listings`)
-            .then((r) => setListings(r.data?.data ?? r.data ?? []))
-            .catch(() => setListings(MOCK_LISTINGS))
-            .finally(() => setLoading(false));
+        fetchListings();
     }, []);
 
     const filtered = listings
         .filter((l) => {
             const matchCat = category === "All" || l.category === category;
-            const matchSearch = `${l.title} ${l.description} ${l.location}`
-                .toLowerCase()
-                .includes(search.toLowerCase());
+            const matchSearch =
+                `${l.title} ${l.description ?? ""} ${l.location ?? ""}`
+                    .toLowerCase()
+                    .includes(search.toLowerCase());
             return matchCat && matchSearch && l.status !== "sold";
         })
         .sort((a, b) => {
@@ -648,19 +601,25 @@ const MarketplacePage = () => {
                 ))}
             </div>
 
+            {/* Error */}
+            {error && <ErrorBanner message={error} onRetry={fetchListings} />}
+
             {/* Count */}
-            {!loading && filtered.length > 0 && (
+            {!loading && !error && filtered.length > 0 && (
                 <p
                     className="text-xs px-1"
                     style={{ color: "var(--text-muted)" }}
                 >
-                    {filtered.length} listings
+                    {filtered.length}{" "}
+                    {filtered.length === 1 ? "listing" : "listings"}
                 </p>
             )}
 
+            {/* Skeleton */}
             {loading && <Skeleton />}
 
-            {!loading && filtered.length === 0 && (
+            {/* Empty */}
+            {!loading && !error && filtered.length === 0 && (
                 <div
                     className="card flex-center flex-col"
                     style={{ padding: "4rem 2rem", textAlign: "center" }}
@@ -689,7 +648,8 @@ const MarketplacePage = () => {
                 </div>
             )}
 
-            {!loading && filtered.length > 0 && (
+            {/* Grid */}
+            {!loading && !error && filtered.length > 0 && (
                 <div
                     className="grid gap-3 animate-fade-in"
                     style={{

@@ -6,42 +6,47 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 
 const NAV_ITEMS = [
-    { icon: "🏠", label: "Home", href: "/" },
-    { icon: "📅", label: "Events", href: "/events" },
-    { icon: "📍", label: "Nearby", href: "/nearby" },
-    { icon: "⭕", label: "Circles", href: "/circles" },
-    { icon: "🛍️", label: "Marketplace", href: "/marketplace" },
-    { icon: "💬", label: "Messages", panel: "messages" },
-    { icon: "🔔", label: "Notifications", panel: "notifications" },
-    { icon: "🔖", label: "Saved", href: "/saved" },
+    { icon: "⌂", label: "Home", href: "/" },
+    { icon: "◷", label: "Events", href: "/events" },
+    { icon: "⌖", label: "Nearby", href: "/nearby" },
+    { icon: "◎", label: "Circles", href: "/circles" },
+    { icon: "◫", label: "Marketplace", href: "/marketplace" },
+    { icon: "✉", label: "Messages", panel: "messages" },
+    { icon: "◉", label: "Notifications", panel: "notifications" },
+    { icon: "⌑", label: "Saved", href: "/saved" },
 ];
 
 const CIRCLES = [
     {
-        emoji: "🏙️",
+        emoji: "⌂",
         name: "Dhaka Circle",
         href: "/circles/dhaka",
         members: "12.4k",
     },
     {
-        emoji: "💼",
+        emoji: "◧",
         name: "Job Seekers",
         href: "/circles/jobs",
         members: "8.2k",
     },
     {
-        emoji: "🎓",
+        emoji: "⌘",
         name: "Students",
         href: "/circles/students",
         members: "5.6k",
     },
     {
-        emoji: "🍜",
+        emoji: "◌",
         name: "Food Lovers",
         href: "/circles/food",
         members: "3.1k",
     },
-    { emoji: "💪", name: "Fitness", href: "/circles/fitness", members: "2.4k" },
+    {
+        emoji: "▲",
+        name: "Fitness",
+        href: "/circles/fitness",
+        members: "2.4k",
+    },
 ];
 
 const LeftSidebar = ({ onOpenPanel, activePanel }) => {

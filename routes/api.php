@@ -99,6 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // jobs
     Route::get('/jobs', [JobController::class, 'index']);
+
+    Route::post('/posts/{post}/poll/vote', [PostController::class, 'vote']);
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash

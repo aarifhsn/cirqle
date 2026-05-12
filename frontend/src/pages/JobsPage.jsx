@@ -1,127 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Avatar from "../components/common/Avatar";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
-
-/* ── Mock data ────────────────────────────────────────────────── */
-const MOCK_JOBS = [
-    {
-        id: 1,
-        title: "React Developer",
-        company: "TechBD Ltd",
-        location: "Gulshan, Dhaka",
-        type: "Full-time",
-        salary: "৳40k–60k",
-        description:
-            "We're looking for a skilled React developer with 2+ years experience. Must know hooks, Redux, and REST APIs.",
-        tags: ["React", "JavaScript", "Redux"],
-        poster: {
-            id: 1,
-            firstName: "Arif",
-            lastName: "Hossain",
-            username: "arifh",
-            avatar: null,
-        },
-        created_at: "2025-06-01",
-    },
-    {
-        id: 2,
-        title: "UI/UX Designer",
-        company: "Creative Studio",
-        location: "Dhanmondi, Dhaka",
-        type: "Full-time",
-        salary: "৳30k–45k",
-        description:
-            "Join our creative team. Figma expertise required. Portfolio must be submitted with application.",
-        tags: ["Figma", "UI", "UX", "Design"],
-        poster: {
-            id: 2,
-            firstName: "Nadia",
-            lastName: "Rahman",
-            username: "nadia_r",
-            avatar: null,
-        },
-        created_at: "2025-06-02",
-    },
-    {
-        id: 3,
-        title: "Laravel Backend Dev",
-        company: "StartupX",
-        location: "Remote",
-        type: "Remote",
-        salary: "৳35k–55k",
-        description:
-            "Build scalable REST APIs using Laravel. Experience with MySQL and Redis required.",
-        tags: ["Laravel", "PHP", "MySQL"],
-        poster: {
-            id: 3,
-            firstName: "Karim",
-            lastName: "Uddin",
-            username: "karim_u",
-            avatar: null,
-        },
-        created_at: "2025-06-03",
-    },
-    {
-        id: 4,
-        title: "Content Writer",
-        company: "MediaHouse BD",
-        location: "Mirpur, Dhaka",
-        type: "Part-time",
-        salary: "৳15k–20k",
-        description:
-            "Write engaging articles, blog posts, and social media content in English and Bengali.",
-        tags: ["Writing", "SEO", "Bengali"],
-        poster: {
-            id: 4,
-            firstName: "Sadia",
-            lastName: "Islam",
-            username: "sadia_i",
-            avatar: null,
-        },
-        created_at: "2025-06-04",
-    },
-    {
-        id: 5,
-        title: "Digital Marketing Exec",
-        company: "GrowthAgency",
-        location: "Uttara, Dhaka",
-        type: "Full-time",
-        salary: "৳25k–35k",
-        description:
-            "Run Facebook/Google ad campaigns. Experience with Meta Ads Manager required.",
-        tags: ["Marketing", "Facebook Ads", "SEO"],
-        poster: {
-            id: 5,
-            firstName: "Rahim",
-            lastName: "Ali",
-            username: "rahim_a",
-            avatar: null,
-        },
-        created_at: "2025-06-05",
-    },
-    {
-        id: 6,
-        title: "Flutter Developer",
-        company: "AppFactory",
-        location: "Banani, Dhaka",
-        type: "Full-time",
-        salary: "৳45k–65k",
-        description:
-            "Develop cross-platform mobile apps with Flutter. Must have published apps on Play Store / App Store.",
-        tags: ["Flutter", "Dart", "Mobile"],
-        poster: {
-            id: 1,
-            firstName: "Arif",
-            lastName: "Hossain",
-            username: "arifh",
-            avatar: null,
-        },
-        created_at: "2025-06-06",
-    },
-];
 
 const JOB_TYPES = [
     "All",
@@ -131,16 +13,9 @@ const JOB_TYPES = [
     "Internship",
     "Freelance",
 ];
-const JOB_CATEGORIES = [
-    "All",
-    "Tech",
-    "Design",
-    "Marketing",
-    "Writing",
-    "Finance",
-    "Operations",
-    "Other",
-];
+
+const fmtDate = (d) =>
+    new Date(d).toLocaleDateString("en", { month: "short", day: "numeric" });
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
 const Skeleton = () => (
@@ -184,6 +59,27 @@ const Skeleton = () => (
     </div>
 );
 
+/* ── Error banner ─────────────────────────────────────────────── */
+const ErrorBanner = ({ message, onRetry }) => (
+    <div
+        className="card flex items-center justify-between gap-3 p-4"
+        style={{
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
+        }}
+    >
+        <p className="text-sm" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button
+            onClick={onRetry}
+            className="btn btn-ghost btn-sm flex-shrink-0"
+        >
+            Retry
+        </button>
+    </div>
+);
+
 /* ── Job Card ─────────────────────────────────────────────────── */
 const JobCard = ({ job, onSelect }) => (
     <div
@@ -192,7 +88,6 @@ const JobCard = ({ job, onSelect }) => (
         onClick={() => onSelect(job)}
     >
         <div className="flex items-start gap-3">
-            {/* Company icon */}
             <div
                 className="flex-center flex-shrink-0"
                 style={{
@@ -202,7 +97,6 @@ const JobCard = ({ job, onSelect }) => (
                     background: "var(--accent-soft)",
                     fontSize: "1.4rem",
                     border: "1px solid var(--border)",
-                    flexShrink: 0,
                 }}
             >
                 💼
@@ -220,22 +114,24 @@ const JobCard = ({ job, onSelect }) => (
                     >
                         {job.title}
                     </h4>
-                    <span
-                        className="pill flex-shrink-0"
-                        style={{
-                            fontSize: "0.68rem",
-                            background:
-                                job.type === "Remote"
-                                    ? "var(--success-soft)"
-                                    : "var(--accent-soft)",
-                            color:
-                                job.type === "Remote"
-                                    ? "var(--success)"
-                                    : "var(--accent)",
-                        }}
-                    >
-                        {job.type}
-                    </span>
+                    {job.type && (
+                        <span
+                            className="pill flex-shrink-0"
+                            style={{
+                                fontSize: "0.68rem",
+                                background:
+                                    job.type === "Remote"
+                                        ? "var(--success-soft)"
+                                        : "var(--accent-soft)",
+                                color:
+                                    job.type === "Remote"
+                                        ? "var(--success)"
+                                        : "var(--accent)",
+                            }}
+                        >
+                            {job.type}
+                        </span>
+                    )}
                 </div>
 
                 <p
@@ -246,45 +142,47 @@ const JobCard = ({ job, onSelect }) => (
                 </p>
 
                 <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                    <span
-                        className="text-xs flex items-center gap-1"
-                        style={{ color: "var(--text-muted)" }}
-                    >
-                        📍 {job.location}
-                    </span>
+                    {job.location && (
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            📍 {job.location}
+                        </span>
+                    )}
                     {job.salary && (
                         <span
-                            className="text-xs flex items-center gap-1"
+                            className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
                             💵 {job.salary}
                         </span>
                     )}
-                    <span
-                        className="text-xs"
-                        style={{ color: "var(--text-muted)" }}
-                    >
-                        {new Date(job.created_at).toLocaleDateString("en", {
-                            month: "short",
-                            day: "numeric",
-                        })}
-                    </span>
+                    {job.created_at && (
+                        <span
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            {fmtDate(job.created_at)}
+                        </span>
+                    )}
                 </div>
 
-                <p
-                    className="text-xs leading-relaxed mb-3"
-                    style={{
-                        color: "var(--text-secondary)",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                    }}
-                >
-                    {job.description}
-                </p>
+                {job.description && (
+                    <p
+                        className="text-xs leading-relaxed mb-3"
+                        style={{
+                            color: "var(--text-secondary)",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                        }}
+                    >
+                        {job.description}
+                    </p>
+                )}
 
-                {/* Tags */}
                 {job.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
                         {job.tags.slice(0, 4).map((tag) => (
@@ -299,7 +197,6 @@ const JobCard = ({ job, onSelect }) => (
                     </div>
                 )}
 
-                {/* Footer */}
                 <div
                     className="flex items-center justify-between pt-2"
                     style={{ borderTop: "1px solid var(--border)" }}
@@ -310,14 +207,14 @@ const JobCard = ({ job, onSelect }) => (
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
-                            Posted by{" "}
+                            by{" "}
                             <Link
                                 to={`/${job.poster?.username}`}
                                 className="font-medium transition-colors"
                                 style={{ color: "var(--accent)" }}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                {job.poster?.firstName}
+                                {job.poster?.firstName ?? job.poster?.name}
                             </Link>
                         </p>
                     </div>
@@ -398,39 +295,41 @@ const JobModal = ({ job, onClose }) => {
                     </button>
                 </div>
 
-                {/* Meta */}
+                {/* Meta pills */}
                 <div className="flex flex-wrap gap-2 mb-4">
                     {[
-                        { icon: "📍", val: job.location },
-                        { icon: "⏱️", val: job.type },
-                        ...(job.salary
-                            ? [{ icon: "💵", val: job.salary }]
-                            : []),
-                    ].map((m) => (
-                        <span key={m.val} className="pill pill-muted">
-                            {m.icon} {m.val}
-                        </span>
-                    ))}
+                        job.location && { icon: "📍", val: job.location },
+                        job.type && { icon: "⏱️", val: job.type },
+                        job.salary && { icon: "💵", val: job.salary },
+                    ]
+                        .filter(Boolean)
+                        .map((m) => (
+                            <span key={m.val} className="pill pill-muted">
+                                {m.icon} {m.val}
+                            </span>
+                        ))}
                 </div>
 
                 {/* Description */}
-                <div className="mb-4">
-                    <h4
-                        className="font-semibold mb-2"
-                        style={{
-                            color: "var(--text-primary)",
-                            fontSize: "0.9rem",
-                        }}
-                    >
-                        Job Description
-                    </h4>
-                    <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "var(--text-secondary)" }}
-                    >
-                        {job.description}
-                    </p>
-                </div>
+                {job.description && (
+                    <div className="mb-4">
+                        <h4
+                            className="font-semibold mb-2"
+                            style={{
+                                color: "var(--text-primary)",
+                                fontSize: "0.9rem",
+                            }}
+                        >
+                            Job Description
+                        </h4>
+                        <p
+                            className="text-sm leading-relaxed"
+                            style={{ color: "var(--text-secondary)" }}
+                        >
+                            {job.description}
+                        </p>
+                    </div>
+                )}
 
                 {/* Tags */}
                 {job.tags?.length > 0 && (
@@ -455,45 +354,46 @@ const JobModal = ({ job, onClose }) => {
                 )}
 
                 {/* Posted by */}
-                <div
-                    className="flex items-center gap-3 mb-5 p-3 rounded-xl"
-                    style={{
-                        background: "var(--bg-surface-2)",
-                        border: "1px solid var(--border)",
-                    }}
-                >
-                    <Avatar user={job.poster} size="md" />
-                    <div>
-                        <p
-                            className="text-sm font-semibold"
-                            style={{ color: "var(--text-primary)" }}
-                        >
-                            {job.poster?.firstName} {job.poster?.lastName}
-                        </p>
-                        <p
-                            className="text-xs"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            Posted this job
-                        </p>
-                    </div>
-                    <Link
-                        to={`/${job.poster?.username}`}
-                        onClick={onClose}
-                        className="btn btn-ghost btn-sm ml-auto"
+                {job.poster && (
+                    <div
+                        className="flex items-center gap-3 mb-5 p-3 rounded-xl"
+                        style={{
+                            background: "var(--bg-surface-2)",
+                            border: "1px solid var(--border)",
+                        }}
                     >
-                        View Profile
-                    </Link>
-                </div>
+                        <Avatar user={job.poster} size="md" />
+                        <div>
+                            <p
+                                className="text-sm font-semibold"
+                                style={{ color: "var(--text-primary)" }}
+                            >
+                                {job.poster.firstName} {job.poster.lastName}
+                            </p>
+                            <p
+                                className="text-xs"
+                                style={{ color: "var(--text-muted)" }}
+                            >
+                                Posted this job
+                            </p>
+                        </div>
+                        <Link
+                            to={`/${job.poster.username}`}
+                            onClick={onClose}
+                            className="btn btn-ghost btn-sm ml-auto"
+                        >
+                            View Profile
+                        </Link>
+                    </div>
+                )}
 
-                {/* Apply button */}
+                {/* Apply */}
                 {applied ? (
                     <div
-                        className="flex-center gap-2 py-3 rounded-xl"
+                        className="flex-center gap-2 py-3 rounded-xl font-semibold"
                         style={{
                             background: "var(--success-soft)",
                             color: "var(--success)",
-                            fontWeight: 600,
                             fontSize: "0.9rem",
                         }}
                     >
@@ -529,12 +429,14 @@ const PostJobModal = ({ onClose, onCreated }) => {
         tags: "",
     });
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
 
     const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
         try {
             const payload = {
                 ...form,
@@ -549,8 +451,8 @@ const PostJobModal = ({ onClose, onCreated }) => {
             );
             toast.success("Job posted!");
             onCreated(res.data?.data ?? res.data);
-        } catch {
-            toast.error("Failed to post job.");
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to post job.");
         } finally {
             setSaving(false);
         }
@@ -590,27 +492,44 @@ const PostJobModal = ({ onClose, onCreated }) => {
                         ✕
                     </button>
                 </div>
+
+                {error && (
+                    <div
+                        className="mb-3 px-3 py-2 rounded-xl text-sm"
+                        style={{
+                            background: "var(--danger-soft)",
+                            color: "var(--danger)",
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     {[
                         {
                             label: "Job Title",
                             key: "title",
                             placeholder: "e.g. React Developer",
+                            required: true,
                         },
                         {
                             label: "Company",
                             key: "company",
                             placeholder: "Company name",
+                            required: true,
                         },
                         {
                             label: "Location",
                             key: "location",
                             placeholder: "City or Remote",
+                            required: false,
                         },
                         {
                             label: "Salary",
                             key: "salary",
-                            placeholder: "e.g. ৳40k–60k (optional)",
+                            placeholder: "e.g. ৳40k–60k",
+                            required: false,
                         },
                     ].map((f) => (
                         <div key={f.key} className="mb-3">
@@ -624,7 +543,7 @@ const PostJobModal = ({ onClose, onCreated }) => {
                                 type="text"
                                 className="input"
                                 placeholder={f.placeholder}
-                                required={f.key !== "salary"}
+                                required={f.required}
                                 value={form[f.key]}
                                 onChange={(e) => set(f.key, e.target.value)}
                             />
@@ -708,25 +627,42 @@ const PostJobModal = ({ onClose, onCreated }) => {
 /* ── JobsPage ─────────────────────────────────────────────────── */
 const JobsPage = () => {
     const { api } = useAxios();
+
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [type, setType] = useState("All");
     const [search, setSearch] = useState("");
     const [selectedJob, setSelectedJob] = useState(null);
     const [showPost, setShowPost] = useState(false);
+    const [searchParams] = useSearchParams();
+    useEffect(() => {
+        if (searchParams.get("create") === "true") setShowCreate(true);
+    }, []);
+
+    const fetchJobs = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/jobs`,
+            );
+            setJobs(res.data?.data ?? res.data ?? []);
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to load jobs.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setLoading(true);
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/jobs`)
-            .then((r) => setJobs(r.data?.data ?? r.data ?? []))
-            .catch(() => setJobs(MOCK_JOBS))
-            .finally(() => setLoading(false));
+        fetchJobs();
     }, []);
 
     const filtered = jobs.filter((j) => {
         const matchType = type === "All" || j.type === type;
         const matchSearch =
-            `${j.title} ${j.company} ${j.location} ${j.tags?.join(" ")}`
+            `${j.title} ${j.company ?? ""} ${j.location ?? ""} ${j.tags?.join(" ") ?? ""}`
                 .toLowerCase()
                 .includes(search.toLowerCase());
         return matchType && matchSearch;
@@ -802,19 +738,25 @@ const JobsPage = () => {
                 ))}
             </div>
 
+            {/* Error */}
+            {error && <ErrorBanner message={error} onRetry={fetchJobs} />}
+
             {/* Count */}
-            {!loading && filtered.length > 0 && (
+            {!loading && !error && filtered.length > 0 && (
                 <p
                     className="text-xs px-1"
                     style={{ color: "var(--text-muted)" }}
                 >
-                    {filtered.length} jobs found
+                    {filtered.length} {filtered.length === 1 ? "job" : "jobs"}{" "}
+                    found
                 </p>
             )}
 
+            {/* Skeleton */}
             {loading && <Skeleton />}
 
-            {!loading && filtered.length === 0 && (
+            {/* Empty */}
+            {!loading && !error && filtered.length === 0 && (
                 <div
                     className="card flex-center flex-col"
                     style={{ padding: "4rem 2rem", textAlign: "center" }}
@@ -843,7 +785,8 @@ const JobsPage = () => {
                 </div>
             )}
 
-            {!loading && filtered.length > 0 && (
+            {/* List */}
+            {!loading && !error && filtered.length > 0 && (
                 <div className="flex flex-col gap-3">
                     {filtered.map((j) => (
                         <JobCard key={j.id} job={j} onSelect={setSelectedJob} />

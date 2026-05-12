@@ -1,84 +1,8 @@
-/* EventsPage.jsx — Cirqle
- * Fetches GET /events
- * POST /events/:id/rsvp  — toggle RSVP
- * POST /events           — create event
- */
-
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
-
-/* ── Mock data ────────────────────────────────────────────────── */
-const MOCK_EVENTS = [
-    {
-        id: 1,
-        title: "Tech Meetup Dhaka",
-        description:
-            "Monthly gathering for developers and tech enthusiasts in Dhaka.",
-        location: "Banani, Dhaka",
-        start_date: "2025-06-14T18:00:00",
-        category: "Tech",
-        attendees_count: 42,
-        is_attending: false,
-        cover_image: null,
-    },
-    {
-        id: 2,
-        title: "Photography Walk",
-        description: "Explore Old Dhaka with your camera. All levels welcome!",
-        location: "Old Dhaka",
-        start_date: "2025-06-15T08:00:00",
-        category: "Art",
-        attendees_count: 18,
-        is_attending: true,
-        cover_image: null,
-    },
-    {
-        id: 3,
-        title: "Startup Pitch Night",
-        description: "Pitch your startup idea to investors and get feedback.",
-        location: "Gulshan, Dhaka",
-        start_date: "2025-06-20T19:00:00",
-        category: "Business",
-        attendees_count: 65,
-        is_attending: false,
-        cover_image: null,
-    },
-    {
-        id: 4,
-        title: "Community Clean-up",
-        description: "Join us to keep our neighborhood clean and green.",
-        location: "Mirpur, Dhaka",
-        start_date: "2025-06-21T07:00:00",
-        category: "Community",
-        attendees_count: 31,
-        is_attending: false,
-        cover_image: null,
-    },
-    {
-        id: 5,
-        title: "Food Festival",
-        description: "Taste dishes from all over Bangladesh in one place.",
-        location: "Dhanmondi, Dhaka",
-        start_date: "2025-06-28T12:00:00",
-        category: "Food",
-        attendees_count: 120,
-        is_attending: false,
-        cover_image: null,
-    },
-    {
-        id: 6,
-        title: "Fitness Bootcamp",
-        description: "Free outdoor bootcamp session for all fitness levels.",
-        location: "Suhrawardy Udyan",
-        start_date: "2025-07-05T06:30:00",
-        category: "Health",
-        attendees_count: 27,
-        is_attending: false,
-        cover_image: null,
-    },
-];
 
 const CATEGORIES = [
     "All",
@@ -92,6 +16,9 @@ const CATEGORIES = [
     "Music",
 ];
 
+const fmtMonth = (d) =>
+    new Date(d).toLocaleString("en", { month: "short" }).toUpperCase();
+const fmtDay = (d) => new Date(d).getDate();
 const fmtDate = (d) =>
     new Date(d).toLocaleDateString("en", {
         weekday: "short",
@@ -103,19 +30,16 @@ const fmtTime = (d) =>
         hour: "2-digit",
         minute: "2-digit",
     });
-const fmtMonth = (d) =>
-    new Date(d).toLocaleString("en", { month: "short" }).toUpperCase();
-const fmtDay = (d) => new Date(d).getDate();
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
 const Skeleton = () => (
     <div className="flex flex-col gap-3">
         {[1, 2, 3].map((i) => (
             <div key={i} className="card" style={{ padding: "1.25rem 1.4rem" }}>
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                     <div
                         className="skeleton flex-shrink-0"
-                        style={{ width: 52, height: 58, borderRadius: 10 }}
+                        style={{ width: 52, height: 58, borderRadius: 12 }}
                     />
                     <div className="flex-1">
                         <div
@@ -149,6 +73,27 @@ const Skeleton = () => (
     </div>
 );
 
+/* ── Error banner ─────────────────────────────────────────────── */
+const ErrorBanner = ({ message, onRetry }) => (
+    <div
+        className="card flex items-center justify-between gap-3 p-4"
+        style={{
+            background: "var(--danger-soft)",
+            border: "1px solid rgba(239,68,68,0.2)",
+        }}
+    >
+        <p className="text-sm" style={{ color: "var(--danger)" }}>
+            {message}
+        </p>
+        <button
+            onClick={onRetry}
+            className="btn btn-ghost btn-sm flex-shrink-0"
+        >
+            Retry
+        </button>
+    </div>
+);
+
 /* ── Event Card ───────────────────────────────────────────────── */
 const EventCard = ({ event: initial }) => {
     const [event, setEvent] = useState(initial);
@@ -161,30 +106,25 @@ const EventCard = ({ event: initial }) => {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/events/${event.id}/rsvp`,
             );
-            setEvent((e) => ({
-                ...e,
-                is_attending: res.data.is_attending,
-                attendees_count:
-                    res.data.attendees_count ??
-                    (e.is_attending
-                        ? e.attendees_count - 1
-                        : e.attendees_count + 1),
-            }));
-            toast.success(
-                res.data.message ??
-                    (event.is_attending ? "Cancelled RSVP" : "You're going!"),
-            );
-        } catch {
-            setEvent((e) => ({
-                ...e,
-                is_attending: !e.is_attending,
-                attendees_count: e.is_attending
-                    ? e.attendees_count - 1
-                    : e.attendees_count + 1,
-            }));
-            toast.success(
-                event.is_attending ? "Cancelled RSVP" : "You're going! 🎉",
-            );
+            if (res.status === 200) {
+                setEvent((e) => ({
+                    ...e,
+                    is_attending: res.data.is_attending,
+                    attendees_count:
+                        res.data.attendees_count ??
+                        (e.is_attending
+                            ? e.attendees_count - 1
+                            : e.attendees_count + 1),
+                }));
+                toast.success(
+                    res.data.message ??
+                        (event.is_attending
+                            ? "RSVP cancelled"
+                            : "You're going! 🎉"),
+                );
+            }
+        } catch (e) {
+            toast.error(e.response?.data?.message ?? "Failed to update RSVP.");
         } finally {
             setLoading(false);
         }
@@ -213,10 +153,10 @@ const EventCard = ({ event: initial }) => {
                         style={{
                             fontSize: "0.6rem",
                             fontWeight: 700,
+                            letterSpacing: "0.08em",
                             color: event.is_attending
                                 ? "rgba(255,255,255,0.8)"
                                 : "var(--accent)",
-                            letterSpacing: "0.08em",
                         }}
                     >
                         {fmtMonth(event.start_date)}
@@ -225,11 +165,11 @@ const EventCard = ({ event: initial }) => {
                         style={{
                             fontSize: "1.4rem",
                             fontWeight: 800,
+                            lineHeight: 1,
+                            fontFamily: "var(--font-display)",
                             color: event.is_attending
                                 ? "#fff"
                                 : "var(--accent)",
-                            lineHeight: 1,
-                            fontFamily: "var(--font-display)",
                         }}
                     >
                         {fmtDay(event.start_date)}
@@ -238,9 +178,9 @@ const EventCard = ({ event: initial }) => {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2 mb-1">
                         <h4
-                            className="font-bold mb-1"
+                            className="font-bold"
                             style={{
                                 color: "var(--text-primary)",
                                 fontFamily: "var(--font-display)",
@@ -249,28 +189,34 @@ const EventCard = ({ event: initial }) => {
                         >
                             {event.title}
                         </h4>
-                        <span
-                            className="pill pill-muted flex-shrink-0"
-                            style={{ fontSize: "0.68rem" }}
-                        >
-                            {event.category}
-                        </span>
+                        {event.category && (
+                            <span
+                                className="pill pill-muted flex-shrink-0"
+                                style={{ fontSize: "0.68rem" }}
+                            >
+                                {event.category}
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                        <p
-                            className="text-xs flex items-center gap-1"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            📍 {event.location}
-                        </p>
-                        <p
-                            className="text-xs flex items-center gap-1"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            🕐 {fmtDate(event.start_date)} ·{" "}
-                            {fmtTime(event.start_date)}
-                        </p>
+                        {event.location && (
+                            <p
+                                className="text-xs"
+                                style={{ color: "var(--text-muted)" }}
+                            >
+                                📍 {event.location}
+                            </p>
+                        )}
+                        {event.start_date && (
+                            <p
+                                className="text-xs"
+                                style={{ color: "var(--text-muted)" }}
+                            >
+                                🕐 {fmtDate(event.start_date)} ·{" "}
+                                {fmtTime(event.start_date)}
+                            </p>
+                        )}
                     </div>
 
                     {event.description && (
@@ -288,14 +234,17 @@ const EventCard = ({ event: initial }) => {
                         </p>
                     )}
 
-                    <div className="flex items-center justify-between">
+                    <div
+                        className="flex items-center justify-between pt-2"
+                        style={{ borderTop: "1px solid var(--border)" }}
+                    >
                         <span
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
                             {event.is_attending
-                                ? `✅ You + ${event.attendees_count - 1} others going`
-                                : `${event.attendees_count} going`}
+                                ? `✅ You + ${Math.max(0, (event.attendees_count ?? 1) - 1)} others going`
+                                : `${event.attendees_count ?? 0} going`}
                         </span>
                         <button
                             onClick={handleRsvp}
@@ -334,10 +283,14 @@ const CreateEventModal = ({ onClose, onCreated }) => {
         category: "Tech",
     });
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
+
+    const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
         try {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/events`,
@@ -345,14 +298,12 @@ const CreateEventModal = ({ onClose, onCreated }) => {
             );
             toast.success("Event created!");
             onCreated(res.data?.data ?? res.data);
-        } catch {
-            toast.error("Failed to create event.");
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to create event.");
         } finally {
             setSaving(false);
         }
     };
-
-    const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
     return (
         <div
@@ -388,6 +339,19 @@ const CreateEventModal = ({ onClose, onCreated }) => {
                         ✕
                     </button>
                 </div>
+
+                {error && (
+                    <div
+                        className="mb-3 px-3 py-2 rounded-xl text-sm"
+                        style={{
+                            background: "var(--danger-soft)",
+                            color: "var(--danger)",
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     {[
                         {
@@ -395,18 +359,21 @@ const CreateEventModal = ({ onClose, onCreated }) => {
                             key: "title",
                             type: "text",
                             placeholder: "Event name",
+                            required: true,
                         },
                         {
                             label: "Location",
                             key: "location",
                             type: "text",
-                            placeholder: "Where is it?",
+                            placeholder: "Where?",
+                            required: false,
                         },
                         {
                             label: "Date & Time",
                             key: "start_date",
                             type: "datetime-local",
                             placeholder: "",
+                            required: true,
                         },
                     ].map((f) => (
                         <div key={f.key} className="mb-3">
@@ -417,10 +384,10 @@ const CreateEventModal = ({ onClose, onCreated }) => {
                                 {f.label}
                             </label>
                             <input
-                                required
                                 type={f.type}
                                 className="input"
                                 placeholder={f.placeholder}
+                                required={f.required}
                                 value={form[f.key]}
                                 onChange={(e) => set(f.key, e.target.value)}
                             />
@@ -487,27 +454,44 @@ const CreateEventModal = ({ onClose, onCreated }) => {
 /* ── EventsPage ───────────────────────────────────────────────── */
 const EventsPage = () => {
     const { api } = useAxios();
+
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [category, setCategory] = useState("All");
     const [filter, setFilter] = useState("upcoming"); // upcoming | attending
-    const [showCreate, setShowCreate] = useState(false);
     const [search, setSearch] = useState("");
+    const [showCreate, setShowCreate] = useState(false);
+    const [searchParams] = useSearchParams();
+    useEffect(() => {
+        if (searchParams.get("create") === "true") setShowCreate(true);
+    }, []);
+
+    const fetchEvents = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/events`,
+            );
+            setEvents(res.data?.data ?? res.data ?? []);
+        } catch (e) {
+            setError(e.response?.data?.message ?? "Failed to load events.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setLoading(true);
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/events`)
-            .then((r) => setEvents(r.data?.data ?? r.data ?? []))
-            .catch(() => setEvents(MOCK_EVENTS))
-            .finally(() => setLoading(false));
+        fetchEvents();
     }, []);
 
     const filtered = events.filter((e) => {
         const matchCat = category === "All" || e.category === category;
         const matchFilter = filter === "attending" ? e.is_attending : true;
-        const matchSearch =
-            e.title.toLowerCase().includes(search.toLowerCase()) ||
-            e.location.toLowerCase().includes(search.toLowerCase());
+        const matchSearch = `${e.title} ${e.location ?? ""}`
+            .toLowerCase()
+            .includes(search.toLowerCase());
         return matchCat && matchFilter && matchSearch;
     });
 
@@ -559,46 +543,36 @@ const EventsPage = () => {
                 />
             </div>
 
-            {/* Filter pills */}
+            {/* Filter row */}
             <div className="flex items-center gap-2 flex-wrap">
-                <button
-                    onClick={() => setFilter("upcoming")}
-                    className="btn btn-sm btn-round"
-                    style={
-                        filter === "upcoming"
-                            ? { background: "var(--accent)", color: "#fff" }
-                            : {
-                                  background: "var(--bg-surface-2)",
-                                  color: "var(--text-muted)",
-                                  border: "1px solid var(--border)",
-                              }
-                    }
-                >
-                    Upcoming
-                </button>
-                <button
-                    onClick={() => setFilter("attending")}
-                    className="btn btn-sm btn-round"
-                    style={
-                        filter === "attending"
-                            ? { background: "var(--accent)", color: "#fff" }
-                            : {
-                                  background: "var(--bg-surface-2)",
-                                  color: "var(--text-muted)",
-                                  border: "1px solid var(--border)",
-                              }
-                    }
-                >
-                    Going
-                </button>
+                {["upcoming", "attending"].map((f) => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className="btn btn-sm btn-round"
+                        style={
+                            filter === f
+                                ? { background: "var(--accent)", color: "#fff" }
+                                : {
+                                      background: "var(--bg-surface-2)",
+                                      color: "var(--text-muted)",
+                                      border: "1px solid var(--border)",
+                                  }
+                        }
+                    >
+                        {f === "upcoming" ? "Upcoming" : "Going"}
+                    </button>
+                ))}
+
                 <div
                     style={{
                         width: 1,
                         height: 20,
                         background: "var(--border)",
-                        margin: "0 4px",
+                        margin: "0 2px",
                     }}
                 />
+
                 {CATEGORIES.map((cat) => (
                     <button
                         key={cat}
@@ -623,19 +597,25 @@ const EventsPage = () => {
                 ))}
             </div>
 
+            {/* Error */}
+            {error && <ErrorBanner message={error} onRetry={fetchEvents} />}
+
             {/* Count */}
-            {!loading && filtered.length > 0 && (
+            {!loading && !error && filtered.length > 0 && (
                 <p
                     className="text-xs px-1"
                     style={{ color: "var(--text-muted)" }}
                 >
-                    {filtered.length} events
+                    {filtered.length}{" "}
+                    {filtered.length === 1 ? "event" : "events"}
                 </p>
             )}
 
+            {/* Skeleton */}
             {loading && <Skeleton />}
 
-            {!loading && filtered.length === 0 && (
+            {/* Empty */}
+            {!loading && !error && filtered.length === 0 && (
                 <div
                     className="card flex-center flex-col"
                     style={{ padding: "4rem 2rem", textAlign: "center" }}
@@ -653,7 +633,9 @@ const EventsPage = () => {
                         className="text-sm mb-4"
                         style={{ color: "var(--text-muted)" }}
                     >
-                        Be the first to create one!
+                        {filter === "attending"
+                            ? "You haven't RSVPed to any events yet."
+                            : "Be the first to create one!"}
                     </p>
                     <button
                         onClick={() => setShowCreate(true)}
@@ -664,7 +646,8 @@ const EventsPage = () => {
                 </div>
             )}
 
-            {!loading && filtered.length > 0 && (
+            {/* List */}
+            {!loading && !error && filtered.length > 0 && (
                 <div className="flex flex-col gap-3">
                     {filtered.map((e) => (
                         <EventCard key={e.id} event={e} />
