@@ -1,11 +1,3 @@
-/* NearbyPage.jsx — Cirqle v2 (Step B — real API)
- * GET  /users/nearby?radius=10
- * PATCH /users/location  — saves lat/lng after browser geolocation
- *
- * Expected response shape:
- * [{ id, firstName, lastName, username, avatar, location_name, distance, isFollowing }]
- */
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -13,7 +5,13 @@ import Avatar from "../components/common/Avatar";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
 
-const RADIUS_OPTIONS = [1, 5, 10, 25, 50];
+const RADIUS_OPTIONS = [
+    { label: "All", value: 99999 }, // show everyone
+    { label: "5km", value: 5 },
+    { label: "10km", value: 10 },
+    { label: "25km", value: 25 },
+    { label: "50km", value: 50 },
+];
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
 const Skeleton = () => (
@@ -151,14 +149,13 @@ const NearbyUserCard = ({ person }) => {
 /* ── NearbyPage ───────────────────────────────────────────────── */
 const NearbyPage = () => {
     const { api } = useAxios();
-
-    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [radius, setRadius] = useState(10);
     const [locating, setLocating] = useState(false);
     const [locationSet, setLocationSet] = useState(false);
     const [search, setSearch] = useState("");
+    const [allUsers, setAllUsers] = useState([]);
 
     /* ── Step 1: request browser location, save to backend ─────── */
     const requestLocation = () => {
@@ -185,14 +182,16 @@ const NearbyPage = () => {
                 setLocationSet(true);
                 setLocating(false);
             },
+
             (err) => {
                 setLocating(false);
+                setLocationSet(true);
                 if (err.code === 1) {
                     setError(
-                        "Location access denied. Please allow location in your browser settings.",
+                        "Location access denied. Enable location to see nearby people.",
                     );
                 } else {
-                    setError("Could not get your location. Please try again.");
+                    setError("Could not get your location.");
                 }
             },
             { timeout: 10000 },
@@ -205,14 +204,13 @@ const NearbyPage = () => {
         setError(null);
         try {
             const res = await api.get(
-                `${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby?radius=${r}`,
+                `${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby`,
             );
-            setUsers(res.data?.data ?? res.data ?? []);
+            setAllUsers(res.data?.data ?? res.data ?? []);
         } catch (e) {
             const msg =
                 e.response?.data?.message ?? "Failed to load nearby people.";
             setError(msg);
-            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -223,10 +221,16 @@ const NearbyPage = () => {
         requestLocation();
     }, []);
 
-    /* When location confirmed or radius changes — fetch */
+    /* Fetch once location is confirmed */
     useEffect(() => {
-        if (locationSet) fetchNearby(radius);
-    }, [locationSet, radius]);
+        if (locationSet) fetchNearby();
+    }, [locationSet]);
+
+    // Client-side radius filter
+    const users =
+        radius === 99999
+            ? allUsers
+            : allUsers.filter((u) => u.distance <= radius);
 
     const filtered = users.filter((u) =>
         `${u.firstName} ${u.lastName} ${u.username}`
@@ -262,10 +266,10 @@ const NearbyPage = () => {
                     {RADIUS_OPTIONS.map((r) => (
                         <button
                             key={r}
-                            onClick={() => setRadius(r)}
+                            onClick={() => setRadius(r.value)}
                             className="btn btn-sm btn-round"
                             style={
-                                radius === r
+                                radius === r.value
                                     ? {
                                           background: "var(--accent)",
                                           color: "#fff",
@@ -277,7 +281,7 @@ const NearbyPage = () => {
                                       }
                             }
                         >
-                            {r}km
+                            {r.label}km
                         </button>
                     ))}
                 </div>
@@ -358,8 +362,8 @@ const NearbyPage = () => {
                     style={{ color: "var(--text-muted)" }}
                 >
                     {filtered.length}{" "}
-                    {filtered.length === 1 ? "person" : "people"} within{" "}
-                    {radius}km
+                    {filtered.length === 1 ? "person" : "people"}
+                    {radius === 99999 ? " total" : ` within ${radius}km`}
                 </p>
             )}
 

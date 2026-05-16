@@ -27,13 +27,6 @@
 /* dark: utilities respond to data-theme="dark" on <html> */
 @variant dark (&:is([data-theme="dark"] *));
 
-/* ─── Theme tokens (CSS vars) ────────────────────────────────────
-   Only needed for:
-   1. Components using inline style={{ color: "var(--text-primary)" }}
-   2. Runtime dark/light switching
-   Everything else → Tailwind utilities in JSX
-──────────────────────────────────────────────────────────────── */
-
 :root,
 [data-theme="dark"] {
     --bg-base: #0f1115;

@@ -27,20 +27,32 @@ class PostController extends Controller
                         ->orWhere('privacy', 'followers');
                 });
         } else if ($filter === 'nearby') {
-            // only posts from people I follow + my own, respecting privacy
-            // but only if they are nearby (for simplicity, let's say within 50km)
-            $query->whereIn('user_id', $followingIds)
-                ->where(function ($q) use ($authUser, $followingIds) {
-                    $q->where('privacy', 'public')
-                        ->orWhere('privacy', 'followers');
-                })
-                ->whereHas('author', function ($q) use ($authUser) {
-                    $q->whereRaw('ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?', [
-                        $authUser->longitude,
-                        $authUser->latitude,
-                        50000 // 50km in meters
-                    ]);
-                });
+            if (!$authUser->latitude || !$authUser->longitude) {
+                $query->where('privacy', 'public');
+            } else {
+                // PHP haversine — works on both SQLite and MySQL
+                $lat = $authUser->latitude;
+                $lng = $authUser->longitude;
+                $radius = 50; // km
+
+                $nearbyUserIds = \App\Models\User::whereNotNull('latitude')
+                    ->whereNotNull('longitude')
+                    ->where('id', '!=', $authUser->id)
+                    ->get()
+                    ->filter(function ($u) use ($lat, $lng, $radius) {
+                        $dLat = deg2rad($u->latitude - $lat);
+                        $dLon = deg2rad($u->longitude - $lng);
+                        $a = sin($dLat / 2) * sin($dLat / 2)
+                            + cos(deg2rad($lat)) * cos(deg2rad($u->latitude))
+                            * sin($dLon / 2) * sin($dLon / 2);
+                        $distance = 6371 * 2 * atan2(sqrt($a), sqrt(1 - $a));
+                        return $distance <= $radius;
+                    })
+                    ->pluck('id');
+
+                $query->whereIn('user_id', $nearbyUserIds)
+                    ->where('privacy', 'public');
+            }
         } else if ($filter === 'circles') {
             // only posts from people I follow + my own, respecting privacy
             // but only if they are in a circle (for simplicity, let's say within 50km)

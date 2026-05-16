@@ -7,7 +7,6 @@ import useAxios from "../hooks/useAxios";
 import { usePost } from "../hooks/usePost";
 import AppLayout from "../layouts/AppLayout";
 
-/* ── Feed tabs ────────────────────────────────────────────────── */
 const FEED_TABS = [
     { id: "public", label: "For You", icon: "✦", usesPostFeed: true },
     { id: "following", label: "Following", icon: "◯", usesPostFeed: true },
@@ -17,7 +16,6 @@ const FEED_TABS = [
     { id: "jobs", label: "Jobs", icon: "◧", usesPostFeed: false },
 ];
 
-/* ── Shared skeleton ──────────────────────────────────────────── */
 const FeedSkeleton = () => (
     <div className="flex flex-col gap-3">
         {[1, 2, 3].map((i) => (
@@ -63,7 +61,6 @@ const FeedSkeleton = () => (
     </div>
 );
 
-/* ── Empty state ──────────────────────────────────────────────── */
 const EmptyFeed = ({ tab }) => {
     const t = FEED_TABS.find((t) => t.id === tab);
     return (
@@ -104,7 +101,6 @@ const EmptyFeed = ({ tab }) => {
     );
 };
 
-/* ── Error state ──────────────────────────────────────────────── */
 const FeedError = ({ message, onRetry }) => (
     <div
         className="card"
@@ -124,9 +120,6 @@ const FeedError = ({ message, onRetry }) => (
     </div>
 );
 
-/* ══════════════════════════════════════════════════════════════
-   EVENTS TAB
-   ══════════════════════════════════════════════════════════════ */
 const EventsTab = () => {
     const { api } = useAxios();
     const [events, setEvents] = useState([]);
@@ -280,9 +273,6 @@ const EventCard = ({ event }) => (
     </div>
 );
 
-/* ══════════════════════════════════════════════════════════════
-   JOBS TAB
-   ══════════════════════════════════════════════════════════════ */
 const JobsTab = () => {
     const { api } = useAxios();
     const [jobs, setJobs] = useState([]);
@@ -440,9 +430,6 @@ const JobCard = ({ job }) => (
     </div>
 );
 
-/* ══════════════════════════════════════════════════════════════
-   HOME PAGE
-   ══════════════════════════════════════════════════════════════ */
 const HomePage = () => {
     const { state, dispatch } = usePost();
     const { api } = useAxios();
@@ -493,6 +480,7 @@ const HomePage = () => {
         if (!currentTabMeta?.usesPostFeed) return;
         setPage(1);
         setHasMore(true);
+        dispatch({ type: actions.post.DATA_FETCHING }); // ← clears previous error
         fetchPosts(1, activeTab, false);
     }, [activeTab]);
 

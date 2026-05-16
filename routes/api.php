@@ -39,24 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'Verification email sent']);
     })->middleware('throttle:3,1');
 
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-
-    Route::get('/posts', [PostController::class, 'index']);
-
-    Route::get('/profile/{identifier}', [ProfileController::class, 'show']);
-    Route::get('/profile/{identifier}/photos', [ProfileController::class, 'photos']);
-
-    Route::get('/users/search', [ProfileController::class, 'search']);
-    Route::get('/users/{identifier}', [ProfileController::class, 'showUser']);
-
-    Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
-    Route::get('/{identifier}/following', [FollowController::class, 'following']);
-
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
-    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead']);
-
     Route::middleware(EnsureEmailIsVerified::class)->group(function () {
         Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1');
         Route::delete('/posts/{id}', [PostController::class, 'destroy']);
@@ -78,11 +60,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    // Location update
-    Route::patch('/users/location', [UserController::class, 'updateLocation']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // Nearby users
-    Route::get('/users/nearby', [UserController::class, 'nearby']);
+    Route::get('/posts', [PostController::class, 'index']);
+
+    Route::get('/profile/{identifier}', [ProfileController::class, 'show']);
+    Route::get('/profile/{identifier}/photos', [ProfileController::class, 'photos']);
+
+    // ✅ FIX — specific routes first, wildcard last
+    Route::get('/users/search', [ProfileController::class, 'search']);
+    Route::get('/users/nearby', [UserController::class, 'nearby']);        // ← moved up
+    Route::patch('/users/location', [UserController::class, 'updateLocation']); // ← moved up
+    Route::get('/users/{identifier}', [ProfileController::class, 'showUser']); // ← wildcard last
+
+    Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
+    Route::get('/{identifier}/following', [FollowController::class, 'following']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead']);
 
     // Circles
     Route::get('/circles', [CircleController::class, 'index']);

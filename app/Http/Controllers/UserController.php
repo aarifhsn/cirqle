@@ -27,7 +27,7 @@ class UserController extends Controller
         $user->update([
             'latitude' => $data['latitude'],
             'longitude' => $data['longitude'],
-            'location' => $data['location'] ?? $user->location,
+            'location_name' => $data['location'] ?? $user->location_name,
         ]);
 
         return response()->json([
@@ -44,31 +44,50 @@ class UserController extends Controller
         $auth = $request->user();
 
         if (!$auth->latitude || !$auth->longitude) {
-            return response()->json([
-                'message' => 'Please set your location first.',
-            ], 422);
+            return response()->json([]);
         }
-
-        $radius = $request->input('radius', 10);
 
         $users = User::where('id', '!=', $auth->id)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->selectRaw("
-                *,
-                (6371 * acos(
-                    cos(radians(?))
-                    * cos(radians(latitude))
-                    * cos(radians(longitude) - radians(?))
-                    + sin(radians(?))
-                    * sin(radians(latitude))
-                )) AS distance
-            ", [$auth->latitude, $auth->longitude, $auth->latitude])
-            ->having('distance', '<=', $radius)
-            ->orderBy('distance')
-            ->limit(30)
-            ->get();
+            ->get()
+            ->map(function ($u) use ($auth) {
+                $u->distance = $this->haversine(
+                    $auth->latitude,
+                    $auth->longitude,
+                    $u->latitude,
+                    $u->longitude
+                );
+                return $u;
+            })
+            ->sortBy('distance')  // closest first
+            ->take(50)            // max 50 results
+            ->values();
 
-        return response()->json($users);
+        return response()->json(
+            $users->map(fn($u) => [
+                'id' => $u->id,
+                'firstName' => $u->firstName,
+                'lastName' => $u->lastName,
+                'username' => $u->username,
+                'avatar' => $u->avatar,
+                'location_name' => $u->location_name,
+                'distance' => round($u->distance, 1),
+                'isFollowing' => $auth->following()
+                    ->where('following_id', $u->id)
+                    ->exists(),
+            ])
+        );
+    }
+
+    private function haversine($lat1, $lon1, $lat2, $lon2): float
+    {
+        $R = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2)
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+            * sin($dLon / 2) * sin($dLon / 2);
+        return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }
