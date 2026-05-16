@@ -1,60 +1,9 @@
-/* RightSidebar.jsx
- * Cirqle — Right sidebar with widgets
- * Suggested users | Trending circles | Upcoming events | Online
- */
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import useAxios from "../hooks/useAxios";
 
-/* ── Placeholder data (wire to API later) ─────────────────────── */
-const SUGGESTED_USERS = [
-    {
-        id: 1,
-        name: "Nadia Rahman",
-        username: "nadia_r",
-        location: "Mirpur, Dhaka",
-        avatar: null,
-    },
-    {
-        id: 2,
-        name: "Arif Hossain",
-        username: "arifh",
-        location: "Gulshan, Dhaka",
-        avatar: null,
-    },
-    {
-        id: 3,
-        name: "Lamia Sultana",
-        username: "lamia_s",
-        location: "Dhanmondi",
-        avatar: null,
-    },
-];
-
-const TRENDING_CIRCLES = [
-    { emoji: "⌂", name: "Dhaka Circle", members: "12.4k", active: true },
-    { emoji: "◧", name: "Job Seekers", members: "8.2k", active: false },
-    { emoji: "◌", name: "Food Lovers", members: "3.1k", active: true },
-    { emoji: "▲", name: "Fitness Circle", members: "2.4k", active: false },
-];
-
-const UPCOMING_EVENTS = [
-    {
-        id: 1,
-        title: "Tech Meetup Dhaka",
-        date: "Sat, 14 Jun",
-        emoji: "💻",
-        attendees: 42,
-    },
-    {
-        id: 2,
-        title: "Photography Walk",
-        date: "Sun, 15 Jun",
-        emoji: "📷",
-        attendees: 18,
-    },
-];
-
-/* ── Initials avatar fallback ─────────────────────────────────── */
+/* ── Initials avatar fallback (unchanged) ─────────────────────── */
 const InitialsAvatar = ({ name, size = 36, fontSize = "0.8rem" }) => {
     const initials = name
         ?.split(" ")
@@ -62,9 +11,7 @@ const InitialsAvatar = ({ name, size = 36, fontSize = "0.8rem" }) => {
         .join("")
         .slice(0, 2)
         .toUpperCase();
-
     const hue = (name?.charCodeAt(0) * 37) % 360;
-
     return (
         <div
             style={{
@@ -87,70 +34,196 @@ const InitialsAvatar = ({ name, size = 36, fontSize = "0.8rem" }) => {
     );
 };
 
-/* ── Follow Button ────────────────────────────────────────────── */
-const SmallFollowBtn = () => (
-    <button
-        className="btn btn-secondary btn-sm btn-round"
-        style={{ fontSize: "0.75rem", padding: "0.25rem 0.7rem" }}
-    >
-        Follow
-    </button>
+/* ── Widget skeleton row ──────────────────────────────────────── */
+const SkeletonRow = () => (
+    <div className="flex items-center gap-2">
+        <div
+            className="skeleton flex-shrink-0"
+            style={{ width: 36, height: 36, borderRadius: "50%" }}
+        />
+        <div className="flex-1">
+            <div
+                className="skeleton mb-1"
+                style={{ height: 11, width: "60%", borderRadius: 4 }}
+            />
+            <div
+                className="skeleton"
+                style={{ height: 10, width: "40%", borderRadius: 4 }}
+            />
+        </div>
+    </div>
 );
 
-/* ── RightSidebar ─────────────────────────────────────────────── */
-const RightSidebar = () => {
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.85rem",
-                paddingTop: "0",
-            }}
-        >
-            {/* ── 1. Suggested Nearby People ────────────────────── */}
-            <div className="widget animate-fade-in">
-                <div className="widget-title">
-                    <span>👥 People Nearby</span>
-                    <Link to="/nearby">See all</Link>
-                </div>
+/* ══════════════════════════════════════════════════════════════
+   WIDGET 1 — People Nearby
+   ══════════════════════════════════════════════════════════════ */
+const NearbyWidget = () => {
+    const { api } = useAxios();
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [following, setFollowing] = useState({}); // { userId: bool }
 
-                {SUGGESTED_USERS.map((u, i) => (
+    useEffect(() => {
+        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby`)
+            .then((r) => {
+                const data = r.data?.data ?? r.data ?? [];
+                const sorted = [...data].sort((a, b) => {
+                    // unfollowed first
+                    if (a.isFollowing === b.isFollowing) return 0;
+                    return a.isFollowing ? 1 : -1;
+                });
+                setUsers(sorted.slice(0, 3));
+                // seed following state from API response
+                const init = {};
+                data.forEach((u) => {
+                    init[u.id] = u.isFollowing;
+                });
+                setFollowing(init);
+            })
+            .catch(() => {
+                /* silent — widget just stays empty */
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleFollow = async (userId) => {
+        try {
+            const res = await api.post(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/users/${userId}/follow`,
+            );
+            if (res.status === 200) {
+                setFollowing((prev) => ({
+                    ...prev,
+                    [userId]: res.data.isFollowing,
+                }));
+                toast.success(res.data.message);
+            }
+        } catch {
+            toast.error("Failed to update follow.");
+        }
+    };
+
+    return (
+        <div className="widget animate-fade-in">
+            <div className="widget-title">
+                <span>👥 People Nearby</span>
+                <Link to="/nearby">See all</Link>
+            </div>
+
+            {loading && [1, 2, 3].map((i) => <SkeletonRow key={i} />)}
+
+            {!loading && users.length === 0 && (
+                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    No nearby users found.{" "}
+                    <Link to="/nearby" style={{ color: "var(--accent)" }}>
+                        Enable location
+                    </Link>
+                </p>
+            )}
+
+            {!loading &&
+                users.map((u, i) => (
                     <div
                         key={u.id}
                         className="user-row"
-                        style={{
-                            animationDelay: `${i * 60}ms`,
-                        }}
+                        style={{ animationDelay: `${i * 60}ms` }}
                     >
-                        <InitialsAvatar name={u.name} size={38} />
+                        <InitialsAvatar
+                            name={`${u.firstName} ${u.lastName}`}
+                            size={38}
+                        />
                         <div className="user-row-info">
-                            <p className="user-row-name">{u.name}</p>
-                            <p className="user-row-sub">📍 {u.location}</p>
+                            <p className="user-row-name">
+                                {u.firstName} {u.lastName}
+                            </p>
+                            <p className="user-row-sub">
+                                {u.distance != null
+                                    ? `📍 ${u.distance < 1 ? `${Math.round(u.distance * 1000)}m` : `${u.distance}km`} away`
+                                    : u.location_name
+                                      ? `📍 ${u.location_name}`
+                                      : "@" + u.username}
+                            </p>
                         </div>
-                        <SmallFollowBtn />
+                        <button
+                            onClick={() => handleFollow(u.id)}
+                            className="btn btn-secondary btn-sm btn-round"
+                            style={{
+                                fontSize: "0.75rem",
+                                padding: "0.25rem 0.7rem",
+                                ...(following[u.id]
+                                    ? {
+                                          background: "var(--bg-surface-2)",
+                                          color: "var(--text-muted)",
+                                      }
+                                    : {}),
+                            }}
+                        >
+                            {following[u.id] ? "Following" : "Follow"}
+                        </button>
                     </div>
                 ))}
+        </div>
+    );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   WIDGET 2 — Trending Circles
+   ══════════════════════════════════════════════════════════════ */
+const CirclesWidget = () => {
+    const { api } = useAxios();
+    const [circles, setCircles] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles`)
+            .then((r) => {
+                const data = r.data?.data ?? r.data ?? [];
+                // Sort by members_count desc, take top 4
+                const sorted = [...data]
+                    .sort(
+                        (a, b) =>
+                            (b.members_count ?? 0) - (a.members_count ?? 0),
+                    )
+                    .slice(0, 4);
+                setCircles(sorted);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
+    const fmtCount = (n) =>
+        (n ?? 0) >= 1000 ? `${((n ?? 0) / 1000).toFixed(1)}k` : (n ?? 0);
+
+    return (
+        <div
+            className="widget animate-fade-in"
+            style={{ animationDelay: "80ms" }}
+        >
+            <div className="widget-title">
+                <span>🔥 Trending Circles</span>
+                <Link to="/circles">See all</Link>
             </div>
 
-            {/* ── 2. Trending Circles ───────────────────────────── */}
-            <div
-                className="widget animate-fade-in"
-                style={{ animationDelay: "80ms" }}
-            >
-                <div className="widget-title">
-                    <span>🔥 Trending Circles</span>
-                    <Link to="/circles">See all</Link>
-                </div>
+            {loading && [1, 2, 3, 4].map((i) => <SkeletonRow key={i} />)}
 
-                {TRENDING_CIRCLES.map((c) => (
+            {!loading && circles.length === 0 && (
+                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    No circles yet.{" "}
+                    <Link to="/circles" style={{ color: "var(--accent)" }}>
+                        Create one
+                    </Link>
+                </p>
+            )}
+
+            {!loading &&
+                circles.map((c) => (
                     <Link
-                        key={c.name}
-                        to={`/circles/${c.name.toLowerCase().replace(" ", "-")}`}
+                        key={c.id}
+                        to={`/circles/${c.id}`}
                         className="circle-chip"
                         style={{ textDecoration: "none" }}
                     >
-                        <span className="circle-icon">{c.emoji}</span>
+                        <span className="circle-icon">{c.emoji || "⭕"}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <p
                                 style={{
@@ -167,104 +240,185 @@ const RightSidebar = () => {
                                     color: "var(--text-muted)",
                                 }}
                             >
-                                {c.members} members
+                                {fmtCount(c.members_count)} members
                             </p>
                         </div>
-                        {c.active && (
+                        {c.is_member && (
                             <span
                                 className="pill pill-success"
                                 style={{ fontSize: "0.68rem" }}
                             >
-                                Active
+                                Joined
                             </span>
                         )}
                     </Link>
                 ))}
-            </div>
-
-            {/* ── 3. Upcoming Events ────────────────────────────── */}
-            <div
-                className="widget animate-fade-in"
-                style={{ animationDelay: "160ms" }}
-            >
-                <div className="widget-title">
-                    <span>📅 Upcoming Events</span>
-                    <Link to="/events">See all</Link>
-                </div>
-
-                {UPCOMING_EVENTS.map((ev) => (
-                    <div
-                        key={ev.id}
-                        style={{
-                            display: "flex",
-                            gap: "0.65rem",
-                            alignItems: "flex-start",
-                            padding: "0.4rem",
-                            borderRadius: 10,
-                            cursor: "pointer",
-                            transition: "background var(--transition-fast)",
-                        }}
-                        onMouseEnter={(e) =>
-                            (e.currentTarget.style.background =
-                                "var(--hover-bg)")
-                        }
-                        onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "transparent")
-                        }
-                    >
-                        <div
-                            style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 10,
-                                background: "var(--accent-soft)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "1.1rem",
-                                flexShrink: 0,
-                            }}
-                        >
-                            {ev.emoji}
-                        </div>
-                        <div>
-                            <p
-                                style={{
-                                    fontSize: "0.85rem",
-                                    fontWeight: 600,
-                                    color: "var(--text-primary)",
-                                    lineHeight: 1.3,
-                                }}
-                            >
-                                {ev.title}
-                            </p>
-                            <p
-                                style={{
-                                    fontSize: "0.73rem",
-                                    color: "var(--text-muted)",
-                                    marginTop: 2,
-                                }}
-                            >
-                                {ev.date} · {ev.attendees} going
-                            </p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* ── Footer ────────────────────────────────────────── */}
-            <p
-                style={{
-                    fontSize: "0.72rem",
-                    color: "var(--text-muted)",
-                    padding: "0 0.25rem",
-                    lineHeight: 1.8,
-                }}
-            >
-                © 2025 Cirqle · Privacy · Terms · About
-            </p>
         </div>
     );
 };
+
+/* ══════════════════════════════════════════════════════════════
+   WIDGET 3 — Upcoming Events
+   ══════════════════════════════════════════════════════════════ */
+const EventsWidget = () => {
+    const { api } = useAxios();
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/events`)
+            .then((r) => {
+                const data = r.data?.data ?? r.data ?? [];
+                // Sort by start_date asc, take next 2
+                const upcoming = [...data]
+                    .filter(
+                        (e) =>
+                            !e.start_date ||
+                            new Date(e.start_date) >= new Date(),
+                    )
+                    .sort(
+                        (a, b) =>
+                            new Date(a.start_date) - new Date(b.start_date),
+                    )
+                    .slice(0, 2);
+                setEvents(upcoming);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
+    const fmtDate = (d) =>
+        new Date(d).toLocaleDateString("en", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+        });
+
+    return (
+        <div
+            className="widget animate-fade-in"
+            style={{ animationDelay: "160ms" }}
+        >
+            <div className="widget-title">
+                <span>📅 Upcoming Events</span>
+                <Link to="/events">See all</Link>
+            </div>
+
+            {loading && [1, 2].map((i) => <SkeletonRow key={i} />)}
+
+            {!loading && events.length === 0 && (
+                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    No upcoming events.{" "}
+                    <Link to="/events" style={{ color: "var(--accent)" }}>
+                        Create one
+                    </Link>
+                </p>
+            )}
+
+            {!loading &&
+                events.map((ev) => (
+                    <Link
+                        key={ev.id}
+                        to="/events"
+                        style={{ textDecoration: "none" }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "0.65rem",
+                                alignItems: "flex-start",
+                                padding: "0.4rem",
+                                borderRadius: 10,
+                                cursor: "pointer",
+                                transition: "background var(--transition-fast)",
+                            }}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                    "var(--hover-bg)")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                    "transparent")
+                            }
+                        >
+                            <div
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 10,
+                                    background: "var(--accent-soft)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "1.1rem",
+                                    flexShrink: 0,
+                                }}
+                            >
+                                {ev.emoji || "📅"}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                                <p
+                                    style={{
+                                        fontSize: "0.85rem",
+                                        fontWeight: 600,
+                                        color: "var(--text-primary)",
+                                        lineHeight: 1.3,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {ev.title}
+                                </p>
+                                <p
+                                    style={{
+                                        fontSize: "0.73rem",
+                                        color: "var(--text-muted)",
+                                        marginTop: 2,
+                                    }}
+                                >
+                                    {ev.start_date
+                                        ? fmtDate(ev.start_date)
+                                        : "Date TBD"}
+                                    {ev.attendees_count > 0
+                                        ? ` · ${ev.attendees_count} going`
+                                        : ""}
+                                </p>
+                            </div>
+                        </div>
+                    </Link>
+                ))}
+        </div>
+    );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN RIGHT SIDEBAR
+   ══════════════════════════════════════════════════════════════ */
+const RightSidebar = () => (
+    <div
+        style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.85rem",
+            paddingTop: "0",
+        }}
+    >
+        <NearbyWidget />
+        <CirclesWidget />
+        <EventsWidget />
+
+        <p
+            style={{
+                fontSize: "0.72rem",
+                color: "var(--text-muted)",
+                padding: "0 0.25rem",
+                lineHeight: 1.8,
+            }}
+        >
+            © 2025 Cirqle · Privacy · Terms · About
+        </p>
+    </div>
+);
 
 export default RightSidebar;

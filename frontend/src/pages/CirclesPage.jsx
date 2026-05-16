@@ -1,12 +1,3 @@
-/* CirclesPage.jsx — Cirqle v2 (Step B — real API)
- * GET  /circles              — list all circles
- * POST /circles              — create a circle
- * POST /circles/:id/join     — join or leave
- *
- * Expected response shape (GET /circles):
- * [{ id, name, emoji, description, category, members_count, posts_count, is_member }]
- */
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -125,7 +116,7 @@ const CircleCard = ({ circle: initial }) => {
             if (res.status === 200) {
                 setCircle((c) => ({
                     ...c,
-                    is_member: res.data.is_member,
+                    is_member: res.data.is_member ?? !c.is_member,
                     members_count:
                         res.data.members_count ??
                         (c.is_member

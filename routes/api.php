@@ -54,7 +54,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/circles/{circle}/join', [CircleController::class, 'join']);
         Route::post('/circles', [CircleController::class, 'store']);
+        // Events
+        Route::get('/events', [EventController::class, 'index']);
+        Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp']);
         Route::post('/events', [EventController::class, 'store']);
+        Route::patch('/events/{event}', [EventController::class, 'update']);
+        Route::delete('/events/{event}', [EventController::class, 'destroy']);
         Route::post('/listings', [ListingController::class, 'store']);
         Route::post('/jobs', [JobController::class, 'store']);
 
@@ -86,10 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/circles/{circle}', [CircleController::class, 'show']);
     Route::post('/circles/{circle}/leave', [CircleController::class, 'leave']);
 
-    // Events
-    Route::get('/events', [EventController::class, 'index']);
 
-    Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp']);
 
     // Marketplace
     Route::get('/listings', [ListingController::class, 'index']);

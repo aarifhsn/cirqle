@@ -1,12 +1,3 @@
-/* CirclePage.jsx — Cirqle v2 (Step B — real API)
- * GET  /circles/:id          — { circle, posts, members }
- * POST /circles/:id/join     — toggle membership
- *
- * Expected response shape (GET /circles/:id):
- * { id, name, emoji, description, category, members_count,
- *   posts_count, is_member, cover, members: [], posts: [] }
- */
-
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";

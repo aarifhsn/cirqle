@@ -10,35 +10,32 @@ class CircleController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $radius = $request->input('radius', 10);
 
-        $query = Circle::query();
+        $circles = Circle::latest()->get()->map(fn($c) => [
+            ...$c->toArray(),
+            'is_member' => $c->users()->where('user_id', $user->id)->exists(),
+        ]);
 
-        if ($request->get('nearby') && $user->latitude && $user->longitude) {
-            $query->selectRaw("
-                *,
-                (6371 * acos(
-                    cos(radians(?))
-                    * cos(radians(latitude))
-                    * cos(radians(longitude) - radians(?))
-                    + sin(radians(?))
-                    * sin(radians(latitude))
-                )) AS distance
-            ", [$user->latitude, $user->longitude, $user->latitude])
-                ->having('distance', '<=', $radius)
-                ->orderBy('distance');
-        }
-
-        return response()->json(
-            $query->latest()->paginate(10)
-        );
+        return response()->json($circles);
     }
 
-    public function show(Circle $circle)
+    public function show(Request $request, Circle $circle)
     {
-        return response()->json(
-            $circle->load('users:id,firstName,lastName,avatar')
-        );
+        $user = $request->user();
+        $circle->load('users:id,firstName,lastName,avatar,username');
+
+        return response()->json([
+            ...$circle->toArray(),
+            'is_member' => $circle->users()->where('user_id', $user->id)->exists(),
+            'members' => $circle->users->map(fn($u) => [
+                'id' => $u->id,
+                'firstName' => $u->firstName,
+                'lastName' => $u->lastName,
+                'username' => $u->username,
+                'avatar' => $u->avatar,
+                'role' => $u->pivot->role,
+            ]),
+        ]);
     }
 
     public function store(Request $request)
@@ -64,14 +61,23 @@ class CircleController extends Controller
 
     public function join(Request $request, Circle $circle)
     {
-        $circle->users()->syncWithoutDetaching([
-            $request->user()->id => ['role' => 'member']
-        ]);
+        $userId = $request->user()->id;
+        $isMember = $circle->users()->where('user_id', $userId)->exists();
 
-        $circle->increment('members_count');
+        if ($isMember) {
+            $circle->users()->detach($userId);
+            $circle->decrement('members_count');
+            $isMember = false;
+        } else {
+            $circle->users()->attach($userId, ['role' => 'member']);
+            $circle->increment('members_count');
+            $isMember = true;
+        }
 
         return response()->json([
-            'message' => 'Joined circle.'
+            'message' => $isMember ? 'Joined circle.' : 'Left circle.',
+            'is_member' => $isMember,
+            'members_count' => $circle->fresh()->members_count,
         ]);
     }
 

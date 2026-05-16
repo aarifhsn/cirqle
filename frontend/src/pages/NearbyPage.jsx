@@ -7,10 +7,10 @@ import AppLayout from "../layouts/AppLayout";
 
 const RADIUS_OPTIONS = [
     { label: "All", value: 99999 }, // show everyone
-    { label: "5km", value: 5 },
-    { label: "10km", value: 10 },
-    { label: "25km", value: 25 },
-    { label: "50km", value: 50 },
+    { label: "5", value: 5 },
+    { label: "10", value: 10 },
+    { label: "25", value: 25 },
+    { label: "50", value: 50 },
 ];
 
 /* ── Skeleton ─────────────────────────────────────────────────── */
@@ -281,7 +281,7 @@ const NearbyPage = () => {
                                       }
                             }
                         >
-                            {r.label}km
+                            {r.label} {r.value === 99999 ? "🌎" : "km"}
                         </button>
                     ))}
                 </div>

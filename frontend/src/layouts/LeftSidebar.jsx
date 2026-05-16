@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import LogoDark from "../assets/cirqle-logo-dark.png";
 import LogoLight from "../assets/cirqle-logo-light.png";
 import Avatar from "../components/common/Avatar";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
+import useAxios from "../hooks/useAxios";
 
 const NAV_ITEMS = [
     { icon: "⌂", label: "Home", href: "/" },
@@ -16,46 +18,26 @@ const NAV_ITEMS = [
     { icon: "⌑", label: "Saved", href: "/saved" },
 ];
 
-const CIRCLES = [
-    {
-        emoji: "⌂",
-        name: "Dhaka Circle",
-        href: "/circles/dhaka",
-        members: "12.4k",
-    },
-    {
-        emoji: "◧",
-        name: "Job Seekers",
-        href: "/circles/jobs",
-        members: "8.2k",
-    },
-    {
-        emoji: "⌘",
-        name: "Students",
-        href: "/circles/students",
-        members: "5.6k",
-    },
-    {
-        emoji: "◌",
-        name: "Food Lovers",
-        href: "/circles/food",
-        members: "3.1k",
-    },
-    {
-        emoji: "▲",
-        name: "Fitness",
-        href: "/circles/fitness",
-        members: "2.4k",
-    },
-];
-
 const LeftSidebar = ({ onOpenPanel, activePanel }) => {
+    const { api } = useAxios();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
     const { auth } = useAuth();
     const user = auth?.user;
     const displayName =
         user?.name ?? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
+
+    const [myCircles, setMyCircles] = useState([]);
+
+    useEffect(() => {
+        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles`)
+            .then((r) => {
+                const data = r.data?.data ?? r.data ?? [];
+                // Only show circles user has joined
+                setMyCircles(data.filter((c) => c.is_member).slice(0, 5));
+            })
+            .catch(() => {});
+    }, []);
 
     return (
         <div
@@ -180,114 +162,146 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                         gap: "2px",
                     }}
                 >
-                    {CIRCLES.map((c) => (
-                        <Link
-                            key={c.name}
-                            to={c.href}
-                            className="circle-chip"
-                            style={{ textDecoration: "none" }}
-                        >
-                            <span className="circle-icon">{c.emoji}</span>
-                            <div style={{ minWidth: 0 }}>
-                                <p
-                                    style={{
-                                        fontSize: "0.85rem",
-                                        fontWeight: 500,
-                                        color: "var(--text-primary)",
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                    }}
-                                >
-                                    {c.name}
-                                </p>
-                                <p
-                                    style={{
-                                        fontSize: "0.72rem",
-                                        color: "var(--text-muted)",
-                                    }}
-                                >
-                                    {c.members} members
-                                </p>
-                            </div>
-                        </Link>
-                    ))}
+                    {myCircles.length > 0 &&
+                        myCircles.map((c) => (
+                            <Link
+                                key={c.name}
+                                to={`/circles/${c.id}`}
+                                className="circle-chip"
+                                style={{ textDecoration: "none" }}
+                            >
+                                <span className="circle-icon">{c.emoji}</span>
+                                <div style={{ minWidth: 0 }}>
+                                    <p
+                                        style={{
+                                            fontSize: "0.85rem",
+                                            fontWeight: 500,
+                                            color: "var(--text-primary)",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {c.name}
+                                    </p>
+                                    <p
+                                        style={{
+                                            fontSize: "0.72rem",
+                                            color: "var(--text-muted)",
+                                        }}
+                                    >
+                                        {c.members} members
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                    {myCircles.length === 0 && (
+                        <div style={{ padding: "0.5rem 0.5rem 0.25rem" }}>
+                            <p
+                                style={{
+                                    fontSize: "0.78rem",
+                                    color: "var(--text-muted)",
+                                    lineHeight: 1.5,
+                                }}
+                            >
+                                You haven't joined any circles yet.
+                            </p>
+                            <Link
+                                to="/circles"
+                                style={{
+                                    fontSize: "0.78rem",
+                                    color: "var(--accent)",
+                                    fontWeight: 600,
+                                }}
+                            >
+                                Browse circles →
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* ── Spacer ────────────────────────────────────────── */}
-            <div style={{ flex: 1 }} />
-
-            {/* ── Theme toggle ──────────────────────────────────── */}
-            <button
-                onClick={toggleTheme}
-                className="nav-item"
-                style={{ width: "100%", textAlign: "left" }}
+            <div
+                style={{
+                    position: "sticky",
+                    bottom: 0,
+                    background: "var(--sidebar-bg)",
+                    padding: "0.5rem 0",
+                    marginTop: "auto",
+                }}
             >
-                <span
-                    style={{
-                        fontSize: "1.1rem",
-                        flexShrink: 0,
-                        width: 20,
-                        textAlign: "center",
-                    }}
+                {/* ── Theme toggle ──────────────────────────────────── */}
+                <button
+                    onClick={toggleTheme}
+                    className="nav-item"
+                    style={{ width: "100%", textAlign: "left" }}
                 >
-                    {theme === "dark" ? "☀️" : "🌙"}
-                </span>
-                <span className="sidebar-label">
-                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                </span>
-            </button>
+                    <span
+                        style={{
+                            fontSize: "1.1rem",
+                            flexShrink: 0,
+                            width: 20,
+                            textAlign: "center",
+                        }}
+                    >
+                        {theme === "dark" ? "☀️" : "🌙"}
+                    </span>
+                    <span className="sidebar-label">
+                        {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                    </span>
+                </button>
 
-            {/* ── Profile quick-link ────────────────────────────── */}
-            {user && (
-                <Link
-                    to={`/${user.username}`}
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.65rem",
-                        padding: "0.6rem 0.5rem",
-                        borderRadius: 12,
-                        textDecoration: "none",
-                        marginTop: "0.25rem",
-                        transition: "background var(--transition-fast)",
-                    }}
-                    onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = "var(--hover-bg)")
-                    }
-                    onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "transparent")
-                    }
-                >
-                    <div style={{ position: "relative", flexShrink: 0 }}>
-                        <Avatar user={user} size="sm" />
-                        <span className="online-dot" />
-                    </div>
-                    <div className="sidebar-label" style={{ minWidth: 0 }}>
-                        <p
-                            style={{
-                                fontSize: "0.875rem",
-                                fontWeight: 600,
-                                color: "var(--text-primary)",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                            }}
-                        >
-                            {displayName}
-                        </p>
-                        <p
-                            style={{
-                                fontSize: "0.73rem",
-                                color: "var(--text-muted)",
-                            }}
-                        >
-                            @{user.username}
-                        </p>
-                    </div>
-                </Link>
-            )}
+                {/* ── Profile quick-link ────────────────────────────── */}
+                {user && (
+                    <Link
+                        to={`/${user.username}`}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.65rem",
+                            padding: "0.6rem 0.5rem",
+                            borderRadius: 12,
+                            textDecoration: "none",
+                            marginTop: "0.25rem",
+                            transition: "background var(--transition-fast)",
+                        }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                                "var(--hover-bg)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = "transparent")
+                        }
+                    >
+                        <div style={{ position: "relative", flexShrink: 0 }}>
+                            <Avatar user={user} size="sm" />
+                            <span className="online-dot" />
+                        </div>
+                        <div className="sidebar-label" style={{ minWidth: 0 }}>
+                            <p
+                                style={{
+                                    fontSize: "0.875rem",
+                                    fontWeight: 600,
+                                    color: "var(--text-primary)",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                }}
+                            >
+                                {displayName}
+                            </p>
+                            <p
+                                style={{
+                                    fontSize: "0.73rem",
+                                    color: "var(--text-muted)",
+                                }}
+                            >
+                                @{user.username}
+                            </p>
+                        </div>
+                    </Link>
+                )}
+            </div>
         </div>
     );
 };
