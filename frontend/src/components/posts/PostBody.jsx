@@ -1,20 +1,15 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 
 const PollWidget = ({ options = [], postId }) => {
     const { api } = useAxios();
-    const { auth } = useAuth();
 
-    // options shape from backend:
-    // [{ id, text, votes_count, has_voted }]
-    // If backend sends simpler array of strings, we normalise below
     const normalise = (opts) =>
         opts.map((o, i) =>
             typeof o === "string"
                 ? { id: i, text: o, votes_count: 0, has_voted: false }
-                : o,
+                : { ...o, id: i },
         );
 
     const [opts, setOpts] = useState(normalise(options));
@@ -22,32 +17,21 @@ const PollWidget = ({ options = [], postId }) => {
     const totalVotes = opts.reduce((s, o) => s + (o.votes_count ?? 0), 0);
     const hasVoted = opts.some((o) => o.has_voted);
 
-    const handleVote = async (optionId) => {
+    const handleVote = async (optionIndex) => {
         if (hasVoted || voting) return;
         setVoting(true);
         try {
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/posts/${postId}/poll/vote`,
-                { option_id: optionId },
+                { option_index: optionIndex },
             );
-            // Backend should return updated options array
-            if (res.data?.options) {
-                setOpts(normalise(res.data.options));
-            } else {
-                // Optimistic update if backend doesn't return options
-                setOpts((prev) =>
-                    prev.map((o) =>
-                        o.id === optionId
-                            ? {
-                                  ...o,
-                                  votes_count: (o.votes_count ?? 0) + 1,
-                                  has_voted: true,
-                              }
-                            : o,
-                    ),
-                );
-            }
-            toast.success("Vote recorded!");
+            setOpts((prev) =>
+                prev.map((o, i) => ({
+                    ...o,
+                    votes_count: res.data.votes?.[i] ?? o.votes_count,
+                    has_voted: i === optionIndex,
+                })),
+            );
         } catch (e) {
             toast.error(e.response?.data?.message ?? "Failed to vote.");
         } finally {
@@ -55,27 +39,43 @@ const PollWidget = ({ options = [], postId }) => {
         }
     };
 
+    const newTotal = hasVoted ? totalVotes + 1 : totalVotes;
+
     return (
-        <div className="flex flex-col gap-2 mb-3">
-            {opts.map((opt) => {
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                marginBottom: "0.75rem",
+            }}
+        >
+            {opts.map((opt, i) => {
+                const votes = opt.has_voted
+                    ? (opt.votes_count ?? 0) + 1
+                    : (opt.votes_count ?? 0);
                 const pct =
-                    totalVotes > 0
-                        ? Math.round(
-                              ((opt.votes_count ?? 0) / totalVotes) * 100,
-                          )
-                        : 0;
+                    newTotal > 0 ? Math.round((votes / newTotal) * 100) : 0;
+                const isChosen = opt.has_voted;
 
                 return (
                     <button
-                        key={opt.id}
-                        onClick={() => handleVote(opt.id)}
+                        key={i}
+                        onClick={() => handleVote(i)}
                         disabled={hasVoted || voting}
-                        className="relative w-full text-left rounded-xl overflow-hidden transition-all"
                         style={{
-                            border: `1.5px solid ${opt.has_voted ? "var(--accent)" : "var(--border)"}`,
-                            background: "var(--bg-surface-2)",
-                            padding: "0.6rem 0.85rem",
+                            position: "relative",
+                            width: "100%",
+                            textAlign: "left",
+                            border: `1.5px solid ${isChosen ? "var(--accent)" : "var(--border)"}`,
+                            background: isChosen
+                                ? "var(--accent-soft)"
+                                : "var(--bg-surface-2)",
+                            borderRadius: 10,
+                            padding: "0.6rem 0.875rem",
                             cursor: hasVoted ? "default" : "pointer",
+                            overflow: "hidden",
+                            transition: "border-color 0.15s",
                         }}
                         onMouseEnter={(e) => {
                             if (!hasVoted)
@@ -83,20 +83,24 @@ const PollWidget = ({ options = [], postId }) => {
                                     "var(--accent)";
                         }}
                         onMouseLeave={(e) => {
-                            if (!opt.has_voted)
+                            if (!isChosen)
                                 e.currentTarget.style.borderColor =
                                     "var(--border)";
                         }}
                     >
-                        {/* Progress bar fill */}
+                        {/* Progress bar */}
                         {hasVoted && (
                             <div
-                                className="absolute inset-0 rounded-xl"
                                 style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    height: "100%",
                                     width: `${pct}%`,
-                                    background: opt.has_voted
+                                    background: isChosen
                                         ? "var(--accent-soft)"
-                                        : "var(--bg-surface-2)",
+                                        : "var(--bg-surface-3, var(--bg-surface-2))",
+                                    borderRadius: 10,
                                     transition:
                                         "width 0.6s cubic-bezier(0.4,0,0.2,1)",
                                     zIndex: 0,
@@ -106,27 +110,52 @@ const PollWidget = ({ options = [], postId }) => {
 
                         {/* Label row */}
                         <div
-                            className="relative flex items-center justify-between gap-2"
-                            style={{ zIndex: 1 }}
+                            style={{
+                                position: "relative",
+                                zIndex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 8,
+                            }}
                         >
                             <span
-                                className="text-sm font-medium"
                                 style={{
-                                    color: opt.has_voted
+                                    fontSize: "0.875rem",
+                                    fontWeight: 500,
+                                    color: isChosen
                                         ? "var(--accent)"
                                         : "var(--text-primary)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4,
                                 }}
                             >
-                                {opt.has_voted && "✓ "}
+                                {isChosen && (
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M20 6L9 17l-5-5" />
+                                    </svg>
+                                )}
                                 {opt.text}
                             </span>
                             {hasVoted && (
                                 <span
-                                    className="text-xs font-bold flex-shrink-0"
                                     style={{
-                                        color: opt.has_voted
+                                        fontSize: "0.75rem",
+                                        fontWeight: 600,
+                                        color: isChosen
                                             ? "var(--accent)"
                                             : "var(--text-muted)",
+                                        flexShrink: 0,
                                     }}
                                 >
                                     {pct}%
@@ -137,10 +166,15 @@ const PollWidget = ({ options = [], postId }) => {
                 );
             })}
 
-            {/* Footer */}
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
-                {!hasVoted && " · Tap to vote"}
+            <p
+                style={{
+                    fontSize: "0.75rem",
+                    color: "var(--text-muted)",
+                    margin: "2px 0 0",
+                }}
+            >
+                {newTotal} {newTotal === 1 ? "vote" : "votes"}
+                {!hasVoted && " · tap to vote"}
             </p>
         </div>
     );

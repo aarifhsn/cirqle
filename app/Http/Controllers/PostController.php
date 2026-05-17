@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\Comment;
 use App\Models\PostLike;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
@@ -111,6 +112,10 @@ class PostController extends Controller
 
         $request->validate([
             'content' => 'required|string',
+            'type' => 'nullable|in:text,photo,poll,mood',
+            'poll_options' => 'nullable|array|min:2',
+            'poll_options.*' => 'string',
+            'poll_duration' => 'nullable|integer',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:4096',
             'privacy' => 'nullable|in:public,followers,circles,only_me',
@@ -122,6 +127,9 @@ class PostController extends Controller
             'content' => $request->input('content'),
             'privacy' => $request->input('privacy'),
             'circle_id' => $request->input('circle_id'),
+            'type' => $request->input('type', 'text'),
+            'poll_options' => $request->input('poll_options'),
+            'poll_duration' => $request->input('poll_duration'),
 
         ]);
 
@@ -153,6 +161,10 @@ class PostController extends Controller
 
         $request->validate([
             'content' => 'required|string',
+            'type' => 'nullable|in:text,photo,poll,mood',
+            'poll_options' => 'nullable|array|min:2',
+            'poll_options.*' => 'string',
+            'poll_duration' => 'nullable|integer',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:4096',
             'privacy' => 'required|in:public,followers,circles,only_me',
@@ -331,6 +343,18 @@ class PostController extends Controller
                 ->values()
                 ->map(fn($c) => $this->formatComment($c)),
             'is_saved' => in_array($post->id, $savedIds),
+            'type' => $post->type,
+            'poll_options' => $post->poll_options,
+            'poll_duration' => $post->poll_duration,
+            'votes' => DB::table('poll_votes')
+                ->where('post_id', $post->id)
+                ->selectRaw('option_index, count(*) as count')
+                ->groupBy('option_index')
+                ->pluck('count', 'option_index'),
+            'user_vote' => $authUser ? DB::table('poll_votes')
+                ->where('post_id', $post->id)
+                ->where('user_id', $authUser->id)
+                ->value('option_index') : null,
         ];
     }
 
@@ -363,6 +387,56 @@ class PostController extends Controller
 
         return response()->json([
             'data' => $posts->map(fn($post) => $this->formatPost($post, $request->user(), $savedIds)),
+        ]);
+    }
+
+    public function vote(Request $request, Post $post)
+    {
+        $request->validate([
+            'option_index' => 'required|integer|min:0',
+        ]);
+
+        $user = $request->user();
+        $options = $post->poll_options;
+        $index = $request->option_index;
+
+        if (!isset($options[$index])) {
+            return response()->json(['message' => 'Invalid option.'], 422);
+        }
+
+        // store votes in a separate table or as json — check your migration
+        // if you have a poll_votes table:
+        $existing = \DB::table('poll_votes')
+            ->where('post_id', $post->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            // update vote
+            \DB::table('poll_votes')
+                ->where('post_id', $post->id)
+                ->where('user_id', $user->id)
+                ->update(['option_index' => $index]);
+        } else {
+            \DB::table('poll_votes')->insert([
+                'post_id' => $post->id,
+                'user_id' => $user->id,
+                'option_index' => $index,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // return vote counts per option
+        $votes = \DB::table('poll_votes')
+            ->where('post_id', $post->id)
+            ->selectRaw('option_index, count(*) as count')
+            ->groupBy('option_index')
+            ->pluck('count', 'option_index');
+
+        return response()->json([
+            'votes' => $votes,
+            'user_vote' => $index,
         ]);
     }
 }

@@ -10,7 +10,7 @@ class JobController extends Controller
     public function index()
     {
         return response()->json(
-            Job::latest()->paginate(10)
+            Job::with('poster')->latest()->paginate(10)
         );
     }
 
@@ -21,15 +21,39 @@ class JobController extends Controller
             'description' => 'required|string',
             'company' => 'required|string|max:255',
             'location' => 'nullable|string',
-            'type' => 'required|in:full-time,part-time,remote',
+            'type' => 'required|in:full-time,part-time,remote,internship,freelance',
             'salary' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'category' => 'nullable|string',
+
         ]);
 
         $data['user_id'] = $request->user()->id;
 
+        $job = Job::create($data);
+
         return response()->json(
-            Job::create($data),
+            $job->load('poster'),
             201
         );
+    }
+
+    public function show(Job $job)
+    {
+        return response()->json(
+            $job->load('poster'),
+            200
+        );
+    }
+
+    public function destroy(Request $request, Job $job)
+    {
+        if ($job->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $job->delete();
+
+        return response()->json(['message' => 'Job deleted.']);
     }
 }

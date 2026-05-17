@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Avatar from "../components/common/Avatar";
+import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
 
@@ -81,157 +82,192 @@ const ErrorBanner = ({ message, onRetry }) => (
 );
 
 /* ── Job Card ─────────────────────────────────────────────────── */
-const JobCard = ({ job, onSelect }) => (
-    <div
-        className="card card-hover animate-fade-in cursor-pointer"
-        style={{ padding: "1.25rem 1.4rem" }}
-        onClick={() => onSelect(job)}
-    >
-        <div className="flex items-start gap-3">
+const JobCard = ({ job, onSelect, currentUserId, onDeleted }) => {
+    const { api } = useAxios();
+
+    const handleDelete = async (e) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this job?")) return;
+        try {
+            await api.delete(
+                `${import.meta.env.VITE_SERVER_BASE_URL}/jobs/${job.id}`,
+            );
+            toast.success("Job deleted.");
+            onDeleted(job.id);
+        } catch (e) {
+            toast.error(e.response?.data?.message ?? "Failed to delete job.");
+        }
+    };
+
+    const isOwner = Number(job.poster?.id) === Number(currentUserId);
+
+    return (
+        <>
             <div
-                className="flex-center flex-shrink-0"
-                style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    background: "var(--accent-soft)",
-                    fontSize: "1.4rem",
-                    border: "1px solid var(--border)",
-                }}
+                className="card card-hover animate-fade-in cursor-pointer"
+                style={{ padding: "1.25rem 1.4rem" }}
+                onClick={() => onSelect(job)}
             >
-                💼
-            </div>
-
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                    <h4
-                        className="font-bold"
+                <div className="flex items-start gap-3">
+                    <div
+                        className="flex-center flex-shrink-0"
                         style={{
-                            color: "var(--text-primary)",
-                            fontFamily: "var(--font-display)",
-                            fontSize: "0.95rem",
+                            width: 48,
+                            height: 48,
+                            borderRadius: 12,
+                            background: "var(--accent-soft)",
+                            fontSize: "1.4rem",
+                            border: "1px solid var(--border)",
                         }}
                     >
-                        {job.title}
-                    </h4>
-                    {job.type && (
-                        <span
-                            className="pill flex-shrink-0"
-                            style={{
-                                fontSize: "0.68rem",
-                                background:
-                                    job.type === "Remote"
-                                        ? "var(--success-soft)"
-                                        : "var(--accent-soft)",
-                                color:
-                                    job.type === "Remote"
-                                        ? "var(--success)"
-                                        : "var(--accent)",
-                            }}
-                        >
-                            {job.type}
-                        </span>
-                    )}
-                </div>
-
-                <p
-                    className="text-sm font-medium mb-2"
-                    style={{ color: "var(--text-secondary)" }}
-                >
-                    {job.company}
-                </p>
-
-                <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                    {job.location && (
-                        <span
-                            className="text-xs"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            📍 {job.location}
-                        </span>
-                    )}
-                    {job.salary && (
-                        <span
-                            className="text-xs"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            💵 {job.salary}
-                        </span>
-                    )}
-                    {job.created_at && (
-                        <span
-                            className="text-xs"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            {fmtDate(job.created_at)}
-                        </span>
-                    )}
-                </div>
-
-                {job.description && (
-                    <p
-                        className="text-xs leading-relaxed mb-3"
-                        style={{
-                            color: "var(--text-secondary)",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                        }}
-                    >
-                        {job.description}
-                    </p>
-                )}
-
-                {job.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                        {job.tags.slice(0, 4).map((tag) => (
-                            <span
-                                key={tag}
-                                className="pill pill-muted"
-                                style={{ fontSize: "0.68rem" }}
-                            >
-                                {tag}
-                            </span>
-                        ))}
+                        💼
                     </div>
-                )}
 
-                <div
-                    className="flex items-center justify-between pt-2"
-                    style={{ borderTop: "1px solid var(--border)" }}
-                >
-                    <div className="flex items-center gap-2">
-                        <Avatar user={job.poster} size="sm" />
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4
+                                className="font-bold"
+                                style={{
+                                    color: "var(--text-primary)",
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "0.95rem",
+                                }}
+                            >
+                                {job.title}
+                            </h4>
+                            {job.type && (
+                                <span
+                                    className="pill flex-shrink-0"
+                                    style={{
+                                        fontSize: "0.68rem",
+                                        background:
+                                            job.type === "Remote"
+                                                ? "var(--success-soft)"
+                                                : "var(--accent-soft)",
+                                        color:
+                                            job.type === "Remote"
+                                                ? "var(--success)"
+                                                : "var(--accent)",
+                                    }}
+                                >
+                                    {job.type}
+                                </span>
+                            )}
+                        </div>
+
                         <p
-                            className="text-xs"
-                            style={{ color: "var(--text-muted)" }}
+                            className="text-sm font-medium mb-2"
+                            style={{ color: "var(--text-secondary)" }}
                         >
-                            by{" "}
-                            <Link
-                                to={`/${job.poster?.username}`}
-                                className="font-medium transition-colors"
-                                style={{ color: "var(--accent)" }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {job.poster?.firstName ?? job.poster?.name}
-                            </Link>
+                            {job.company}
                         </p>
+
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
+                            {job.location && (
+                                <span
+                                    className="text-xs"
+                                    style={{ color: "var(--text-muted)" }}
+                                >
+                                    📍 {job.location}
+                                </span>
+                            )}
+                            {job.salary && (
+                                <span
+                                    className="text-xs"
+                                    style={{ color: "var(--text-muted)" }}
+                                >
+                                    💵 {job.salary}
+                                </span>
+                            )}
+                            {job.created_at && (
+                                <span
+                                    className="text-xs"
+                                    style={{ color: "var(--text-muted)" }}
+                                >
+                                    {fmtDate(job.created_at)}
+                                </span>
+                            )}
+                        </div>
+
+                        {job.description && (
+                            <p
+                                className="text-xs leading-relaxed mb-3"
+                                style={{
+                                    color: "var(--text-secondary)",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                {job.description}
+                            </p>
+                        )}
+
+                        {job.tags?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                                {job.tags.slice(0, 4).map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="pill pill-muted"
+                                        style={{ fontSize: "0.68rem" }}
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        <div
+                            className="flex items-center justify-between pt-2"
+                            style={{ borderTop: "1px solid var(--border)" }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Avatar user={job.poster} size="sm" />
+                                <p
+                                    className="text-xs"
+                                    style={{ color: "var(--text-muted)" }}
+                                >
+                                    by{" "}
+                                    <Link
+                                        to={`/${job.poster?.username}`}
+                                        className="font-medium transition-colors"
+                                        style={{ color: "var(--accent)" }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {job.poster?.firstName ??
+                                            job.poster?.name}
+                                    </Link>
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 ml-auto">
+                                {isOwner && (
+                                    <button
+                                        className="btn btn-ghost btn-sm"
+                                        style={{ color: "var(--danger)" }}
+                                        onClick={handleDelete}
+                                    >
+                                        🗑️
+                                    </button>
+                                )}
+                                <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelect(job);
+                                    }}
+                                >
+                                    Apply Now
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <button
-                        className="btn btn-primary btn-sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onSelect(job);
-                        }}
-                    >
-                        Apply Now
-                    </button>
                 </div>
             </div>
-        </div>
-    </div>
-);
+        </>
+    );
+};
 
 /* ── Job Detail Modal ─────────────────────────────────────────── */
 const JobModal = ({ job, onClose }) => {
@@ -423,7 +459,7 @@ const PostJobModal = ({ onClose, onCreated }) => {
         title: "",
         company: "",
         location: "",
-        type: "Full-time",
+        type: "full-time",
         salary: "",
         description: "",
         tags: "",
@@ -440,6 +476,7 @@ const PostJobModal = ({ onClose, onCreated }) => {
         try {
             const payload = {
                 ...form,
+                type: form.type.toLowerCase().replace(" ", "-"),
                 tags: form.tags
                     .split(",")
                     .map((t) => t.trim())
@@ -627,6 +664,7 @@ const PostJobModal = ({ onClose, onCreated }) => {
 /* ── JobsPage ─────────────────────────────────────────────────── */
 const JobsPage = () => {
     const { api } = useAxios();
+    const { auth } = useAuth();
 
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -636,8 +674,9 @@ const JobsPage = () => {
     const [selectedJob, setSelectedJob] = useState(null);
     const [showPost, setShowPost] = useState(false);
     const [searchParams] = useSearchParams();
+
     useEffect(() => {
-        if (searchParams.get("create") === "true") setShowCreate(true);
+        if (searchParams.get("create") === "true") setShowPost(true);
     }, []);
 
     const fetchJobs = async () => {
@@ -789,7 +828,17 @@ const JobsPage = () => {
             {!loading && !error && filtered.length > 0 && (
                 <div className="flex flex-col gap-3">
                     {filtered.map((j) => (
-                        <JobCard key={j.id} job={j} onSelect={setSelectedJob} />
+                        <JobCard
+                            key={j.id}
+                            job={j}
+                            onSelect={setSelectedJob}
+                            currentUserId={auth?.user?.id}
+                            onDeleted={(id) =>
+                                setJobs((prev) =>
+                                    prev.filter((j) => j.id !== id),
+                                )
+                            }
+                        />
                     ))}
                 </div>
             )}

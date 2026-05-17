@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/events/{event}', [EventController::class, 'destroy']);
         Route::post('/listings', [ListingController::class, 'store']);
         Route::post('/jobs', [JobController::class, 'store']);
+        Route::delete('/jobs/{job}', [JobController::class, 'destroy']);
 
         Route::post('/posts/{post}/save', [PostController::class, 'save']);
         Route::get('/posts/saved', [PostController::class, 'saved']);

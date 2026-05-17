@@ -11,11 +11,21 @@ use App\Models\PostImage;
 
 class Post extends Model
 {
-    protected $fillable = ['user_id', 'content', 'image', 'privacy', 'circle_id'];
+    protected $fillable = [
+        'user_id',
+        'content',
+        'image',
+        'privacy',
+        'circle_id',
+        'type',
+        'poll_options',
+        'poll_duration',
+    ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'poll_options' => 'array',
     ];
 
     public function author()

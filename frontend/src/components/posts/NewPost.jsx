@@ -1,13 +1,3 @@
-/* NewPost.jsx — Cirqle v2
- * Each composer action opens its own dedicated modal:
- * Photo → PostEntry (existing)
- * Poll  → PollModal (new inline)
- * Mood  → MoodModal (new inline)
- * Job   → navigate("/jobs?create=true")
- * Event → navigate("/events?create=true")
- * Sell  → navigate("/marketplace?create=true")
- */
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -150,6 +140,9 @@ const PollModal = ({ onClose }) => {
                 toast.success("Poll created!");
                 onClose();
             }
+
+            console.log("poll response:", res.data);
+            // should have type: "poll", poll_options: [...]
         } catch (e) {
             toast.error(e.response?.data?.message ?? "Failed to create poll.");
         } finally {
