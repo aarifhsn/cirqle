@@ -15,6 +15,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Http\Request;
+use App\Http\Controllers\MessageController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // 10 attempts per minute
@@ -66,8 +67,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/posts/{post}/save', [PostController::class, 'save']);
         Route::get('/posts/saved', [PostController::class, 'saved']);
-
     });
+
+    Route::get('/conversations', [MessageController::class, 'conversations']);
+    Route::get('/messages/{userId}', [MessageController::class, 'index']);
+    Route::post('/messages', [MessageController::class, 'store']);
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 

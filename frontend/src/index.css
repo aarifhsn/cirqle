@@ -371,12 +371,6 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CIRQLE — Design System v2.0
-   Tailwind v4 + CSS Custom Properties
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Light Mode Tokens ────────────────────────────────────────── */
 :root {
     /* Brand */
     --accent: #6c63ff;
@@ -1270,16 +1264,11 @@ a:hover {
         display: none;
     }
 }
-
-/* Mobile: hide sidebars, show bottom nav */
 .hide-on-mobile {
     display: flex;
 }
 .show-on-mobile {
     display: none;
-}
-.hide-on-small {
-    display: block;
 }
 
 @media (max-width: 768px) {
@@ -1289,14 +1278,6 @@ a:hover {
     .show-on-mobile {
         display: flex !important;
     }
-
-    /* Add bottom padding so content isn't hidden under mobile nav */
-    main {
-        padding-bottom: 80px !important;
-    }
-}
-
-@media (max-width: 1280px) {
     .hide-on-small {
         display: none !important;
     }

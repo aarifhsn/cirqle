@@ -140,8 +140,7 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                 <div
                     className="sidebar-icon-only"
                     style={{
-                        fontSize: "2rem",
-                        fontWeight: 500,
+                        fontSize: "1.5rem",
                         fontFamily: "var(--font-logo)",
                     }}
                 >
@@ -458,20 +457,20 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                 {/* ── Theme toggle ──────────────────────────────────── */}
                 <button
                     onClick={toggleTheme}
-                    className="nav-item"
+                    className="nav-item text-sm"
                     style={{ width: "100%", textAlign: "left" }}
                 >
                     <span
                         style={{
-                            fontSize: "1.1rem",
                             flexShrink: 0,
                             width: 20,
                             textAlign: "center",
+                            fontSize: "1rem",
                         }}
                     >
                         {theme === "dark" ? "☀️" : "🌙"}
                     </span>
-                    <span className="sidebar-label">
+                    <span className="sidebar-label text-sm">
                         {theme === "dark" ? "Light Mode" : "Dark Mode"}
                     </span>
                 </button>

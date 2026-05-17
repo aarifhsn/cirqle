@@ -343,8 +343,7 @@ const NotificationsPage = () => {
                                         className="text-xs mt-1"
                                         style={{ color: "var(--text-muted)" }}
                                     >
-                                        {getDateDifferenceFromNow(n.created_at)}{" "}
-                                        ago
+                                        {getDateDifferenceFromNow(n.created_at)}
                                     </p>
                                 </div>
 

@@ -20,6 +20,8 @@ export const PostCard = ({ post, onUnsave }) => {
                 type={post?.type}
                 pollOptions={post?.poll_options ?? []}
                 postId={post?.id}
+                votes={post?.votes ?? {}}
+                userVote={post?.user_vote ?? null}
             />
             <PostAction post={post} commentCount={comments?.length} />
             <PostComments

@@ -2,13 +2,18 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import useAxios from "../../hooks/useAxios";
 
-const PollWidget = ({ options = [], postId }) => {
+const PollWidget = ({ options = [], postId, votes = {}, userVote = null }) => {
     const { api } = useAxios();
 
     const normalise = (opts) =>
         opts.map((o, i) =>
             typeof o === "string"
-                ? { id: i, text: o, votes_count: 0, has_voted: false }
+                ? {
+                      id: i,
+                      text: o,
+                      votes_count: votes[i] ?? 0,
+                      has_voted: userVote === i,
+                  }
                 : { ...o, id: i },
         );
 
@@ -187,6 +192,8 @@ const PostBody = ({
     type,
     pollOptions = [],
     postId,
+    votes = {},
+    userVote = null,
 }) => {
     const [lightbox, setLightbox] = useState(null);
     const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -241,7 +248,12 @@ const PostBody = ({
 
             {/* Poll UI */}
             {type === "poll" && pollOptions?.length > 0 && (
-                <PollWidget options={pollOptions} postId={postId} />
+                <PollWidget
+                    options={pollOptions}
+                    postId={postId}
+                    votes={votes} // ← add
+                    userVote={userVote}
+                />
             )}
 
             {/* ── Image grid ────────────────────────────────────── */}

@@ -61,7 +61,7 @@ const PostCommentList = ({ comments, onReply }) => {
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
-                            {getDateDifferenceFromNow(comment?.createdAt)} ago
+                            {getDateDifferenceFromNow(comment?.createdAt)}
                         </span>
                         {!isReply && (
                             <button
