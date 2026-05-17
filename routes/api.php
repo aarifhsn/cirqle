@@ -63,11 +63,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/listings', [ListingController::class, 'store']);
         Route::post('/jobs', [JobController::class, 'store']);
 
+        Route::post('/posts/{post}/save', [PostController::class, 'save']);
+        Route::get('/posts/saved', [PostController::class, 'saved']);
+
     });
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     Route::get('/posts', [PostController::class, 'index']);
+    Route::get('/posts/{id}', [PostController::class, 'show']);
 
     Route::get('/profile/{identifier}', [ProfileController::class, 'show']);
     Route::get('/profile/{identifier}/photos', [ProfileController::class, 'photos']);

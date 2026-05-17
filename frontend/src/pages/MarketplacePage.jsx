@@ -84,8 +84,9 @@ const ErrorBanner = ({ message, onRetry }) => (
 
 /* ── Listing Card ─────────────────────────────────────────────── */
 const ListingCard = ({ listing }) => {
-    const firstImage = listing.images?.[0]
-        ? `${import.meta.env.VITE_STORAGE_URL}/${listing.images[0]}`
+    const raw = listing.images?.[0];
+    const firstImage = raw
+        ? `${import.meta.env.VITE_STORAGE_URL}/${raw}`
         : null;
 
     return (
@@ -216,9 +217,11 @@ const CreateListingModal = ({ onClose, onCreated }) => {
     const [form, setForm] = useState({
         title: "",
         price: "",
+        images: [],
         description: "",
         category: "Electronics",
         location: "",
+        status: "active",
     });
     const [images, setImages] = useState([]);
     const [saving, setSaving] = useState(false);
@@ -443,6 +446,24 @@ const CreateListingModal = ({ onClose, onCreated }) => {
                             value={form.description}
                             onChange={(e) => set("description", e.target.value)}
                         />
+                    </div>
+
+                    {/* add status : enum: active, sold */}
+                    <div className="mb-3">
+                        <label
+                            className="block text-xs font-semibold mb-1.5"
+                            style={{ color: "var(--text-secondary)" }}
+                        >
+                            Status
+                        </label>
+                        <select
+                            className="input"
+                            value={form.status}
+                            onChange={(e) => set("status", e.target.value)}
+                        >
+                            <option value="active">Active</option>
+                            <option value="sold">Sold</option>
+                        </select>
                     </div>
 
                     <div className="flex gap-3">

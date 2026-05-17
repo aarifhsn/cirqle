@@ -25,4 +25,9 @@ class Circle extends Model
             ->withPivot('role')
             ->withTimestamps();
     }
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
 }

@@ -11,11 +11,21 @@ use App\Models\PostImage;
 
 class Post extends Model
 {
-    protected $fillable = ['user_id', 'content', 'image', 'privacy'];
+    protected $fillable = ['user_id', 'content', 'image', 'privacy', 'circle_id'];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function author()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function likes()

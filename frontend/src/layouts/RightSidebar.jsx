@@ -98,8 +98,8 @@ const NearbyWidget = () => {
                 }));
                 toast.success(res.data.message);
             }
-        } catch {
-            toast.error("Failed to update follow.");
+        } catch (e) {
+            toast.error(e.response?.data?.message ?? "Failed to vote.");
         }
     };
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Avatar from "../components/common/Avatar";
+import CreateCirclePost from "../components/posts/CreateCirclePost";
 import PostList from "../components/posts/PostList";
 import useAxios from "../hooks/useAxios";
 import AppLayout from "../layouts/AppLayout";
@@ -254,6 +255,23 @@ const CirclePage = () => {
                     {/* ── Posts tab ─────────────────────────────── */}
                     {activeTab === "posts" && (
                         <div className="animate-fade-in">
+                            {/* ── Create post (members only) ─────────────────── */}
+                            {circle.is_member && (
+                                <CreateCirclePost
+                                    circleId={circle.id}
+                                    onCreated={(newPost) =>
+                                        setCircle((c) => ({
+                                            ...c,
+                                            posts: [
+                                                newPost,
+                                                ...(c.posts ?? []),
+                                            ],
+                                            posts_count:
+                                                (c.posts_count ?? 0) + 1,
+                                        }))
+                                    }
+                                />
+                            )}
                             {circle.posts?.length > 0 ? (
                                 <PostList posts={circle.posts} />
                             ) : (

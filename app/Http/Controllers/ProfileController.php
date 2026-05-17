@@ -136,6 +136,7 @@ class ProfileController extends Controller
         $users = User::where('firstName', 'like', "%{$query}%")
             ->orWhere('lastName', 'like', "%{$query}%")
             ->orWhere('email', 'like', "%{$query}%")
+            ->orWhere('username', 'like', "%{$query}%")
             ->limit(5)
             ->get()
             ->map(fn($user) => [

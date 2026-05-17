@@ -1,12 +1,3 @@
-/* NotificationsPage.jsx — Cirqle v2
- * Changes:
- * - PageLayout → AppLayout
- * - bg-lighterDark, text-lwsGreen, text-white, text-gray-* → CSS vars
- * - NotificationIcon uses CSS vars for colors
- * - Unread dot border uses CSS var
- * - All API / infinite scroll logic 100% untouched
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Avatar from "../components/common/Avatar";

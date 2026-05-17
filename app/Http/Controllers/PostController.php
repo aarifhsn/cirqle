@@ -13,6 +13,8 @@ class PostController extends Controller
     public function index(Request $request)
     {
         $authUser = $request->user();
+
+        $savedIds = $authUser->savedPosts()->pluck('post_id')->toArray();
         $filter = $request->query('filter', 'public');
 
         $followingIds = $authUser->following()->pluck('following_id');
@@ -54,21 +56,25 @@ class PostController extends Controller
                     ->where('privacy', 'public');
             }
         } else if ($filter === 'circles') {
-            // only posts from people I follow + my own, respecting privacy
-            // but only if they are in a circle (for simplicity, let's say within 50km)
-            $query->whereIn('user_id', $followingIds)
-                ->where(function ($q) use ($authUser, $followingIds) {
-                    $q->where('privacy', 'public')
-                        ->orWhere('privacy', 'followers');
-                });
+            // get circle IDs the user is a member of
+            $userCircleIds = $authUser->circles()->pluck('circles.id');
+
+            $query->where('privacy', 'circles')
+                ->whereIn('circle_id', $userCircleIds);
+
         } else {
-            // public feed — all public posts + followers-only from people I follow + my own
-            $query->where(function ($q) use ($authUser, $followingIds) {
+            $userCircleIds = $authUser->circles()->pluck('circles.id');
+
+            $query->where(function ($q) use ($authUser, $followingIds, $userCircleIds) {
                 $q->where('privacy', 'public')
                     ->orWhere('user_id', $authUser->id)
                     ->orWhere(function ($q2) use ($followingIds) {
                         $q2->where('privacy', 'followers')
                             ->whereIn('user_id', $followingIds);
+                    })
+                    ->orWhere(function ($q3) use ($userCircleIds) {
+                        $q3->where('privacy', 'circles')
+                            ->whereIn('circle_id', $userCircleIds);
                     });
             });
         }
@@ -76,27 +82,50 @@ class PostController extends Controller
         $paginated = $query->paginate(10);
 
         return response()->json([
-            'data' => collect($paginated->items())->map(fn($post) => $this->formatPost($post)),
+            'data' => collect($paginated->items())->map(fn($post) => $this->formatPost($post, $authUser, $savedIds)),
             'current_page' => $paginated->currentPage(),
             'last_page' => $paginated->lastPage(),
             'has_more' => $paginated->hasMorePages(),
         ]);
     }
 
+    public function show($id)
+    {
+        $authUser = auth()->user();
+
+        $post = Post::with([
+            'author',           // use author not user, matching your index
+            'comments.author',
+            'comments.replies.author',
+            'images',
+            'likes',
+        ])->findOrFail($id);
+
+        $savedIds = $authUser->savedPosts()->pluck('post_id')->toArray();
+
+        return response()->json($this->formatPost($post, $authUser, $savedIds));
+    }
+
     public function store(Request $request)
     {
+
         $request->validate([
             'content' => 'required|string',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:4096',
-            'privacy' => 'required|in:public,followers,only_me',
+            'privacy' => 'nullable|in:public,followers,circles,only_me',
+            'circle_id' => 'nullable|exists:circles,id',
         ]);
 
         $post = Post::create([
             'user_id' => $request->user()->id,
             'content' => $request->input('content'),
             'privacy' => $request->input('privacy'),
+            'circle_id' => $request->input('circle_id'),
+
         ]);
+
+
 
         // 👇 this block was missing in your store method
         if ($request->hasFile('images')) {
@@ -106,7 +135,10 @@ class PostController extends Controller
             }
         }
 
+
+
         $post->load(['author', 'likes', 'comments.author', 'comments.replies.author', 'images']);
+
 
         return response()->json($this->formatPost($post));
     }
@@ -123,7 +155,7 @@ class PostController extends Controller
             'content' => 'required|string',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:4096',
-            'privacy' => 'required|in:public,followers,only_me',
+            'privacy' => 'required|in:public,followers,circles,only_me',
             'removed_images' => 'nullable|array',
             'removed_images.*' => 'integer',
         ]);
@@ -273,8 +305,9 @@ class PostController extends Controller
         ];
     }
 
-    public function formatPost(Post $post): array
+    public function formatPost(Post $post, $authUser = null, array $savedIds = []): array
     {
+        $authUser = $authUser ?? auth()->user();
         return [
             'id' => $post->id,
             'content' => $post->content,
@@ -297,6 +330,39 @@ class PostController extends Controller
                 ->whereNull('parent_id')
                 ->values()
                 ->map(fn($c) => $this->formatComment($c)),
+            'is_saved' => in_array($post->id, $savedIds),
         ];
+    }
+
+    public function save(Request $request, Post $post)
+    {
+        $user = $request->user();
+        $isSaved = $user->savedPosts()->where('post_id', $post->id)->exists();
+
+        if ($isSaved) {
+            $user->savedPosts()->detach($post->id);
+        } else {
+            $user->savedPosts()->attach($post->id);
+        }
+
+        return response()->json([
+            'is_saved' => !$isSaved,
+            'message' => $isSaved ? 'Post unsaved.' : 'Post saved!',
+        ]);
+    }
+
+    public function saved(Request $request)
+    {
+        $posts = $request->user()
+            ->savedPosts()
+            ->with(['author', 'likes', 'comments.author', 'comments.replies.author', 'images'])
+            ->latest('saved_posts.created_at')
+            ->get();
+
+        $savedIds = $posts->pluck('id')->toArray();
+
+        return response()->json([
+            'data' => $posts->map(fn($post) => $this->formatPost($post, $request->user(), $savedIds)),
+        ]);
     }
 }

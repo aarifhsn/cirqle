@@ -4,15 +4,15 @@ import PostBody from "./PostBody";
 import PostComments from "./PostComments";
 import PostHeader from "./PostHeader";
 
-export const PostCard = ({ post }) => {
+export const PostCard = ({ post, onUnsave }) => {
     const [comments, setComments] = useState(post?.comments ?? []);
 
     return (
         <article
-            className="card card-hover animate-fade-in"
+            className="card card-hover animate-fade-in mb-2"
             style={{ padding: "1.25rem 1.4rem 0.75rem" }}
         >
-            <PostHeader post={post} />
+            <PostHeader post={post} onUnsave={onUnsave} />
             <PostBody
                 content={post?.content}
                 images={post?.images ?? []}

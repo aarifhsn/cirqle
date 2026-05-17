@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Circle;
 use Illuminate\Http\Request;
+use App\Http\Controllers\PostController;
 
 class CircleController extends Controller
 {
@@ -24,6 +25,12 @@ class CircleController extends Controller
         $user = $request->user();
         $circle->load('users:id,firstName,lastName,avatar,username');
 
+        $posts = $circle->posts()
+            ->with(['author', 'likes', 'comments.author', 'comments.replies.author', 'images'])
+            ->latest()
+            ->get()
+            ->map(fn($post) => app(PostController::class)->formatPost($post, $user));
+
         return response()->json([
             ...$circle->toArray(),
             'is_member' => $circle->users()->where('user_id', $user->id)->exists(),
@@ -35,6 +42,7 @@ class CircleController extends Controller
                 'avatar' => $u->avatar,
                 'role' => $u->pivot->role,
             ]),
+            'posts' => $posts,
         ]);
     }
 

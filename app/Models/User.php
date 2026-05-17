@@ -122,4 +122,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Job::class);
     }
+
+    public function savedPosts()
+    {
+        return $this->belongsToMany(Post::class, 'saved_posts')->withTimestamps();
+    }
 }
