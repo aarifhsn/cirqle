@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useCircles } from "../context/CirclesContext";
 import useAxios from "../hooks/useAxios";
 
-/* ── Initials avatar fallback (unchanged) ─────────────────────── */
 const InitialsAvatar = ({ name, size = 36, fontSize = "0.8rem" }) => {
     const initials = name
         ?.split(" ")
@@ -34,7 +34,6 @@ const InitialsAvatar = ({ name, size = 36, fontSize = "0.8rem" }) => {
     );
 };
 
-/* ── Widget skeleton row ──────────────────────────────────────── */
 const SkeletonRow = () => (
     <div className="flex items-center gap-2">
         <div
@@ -54,16 +53,16 @@ const SkeletonRow = () => (
     </div>
 );
 
-/* ══════════════════════════════════════════════════════════════
-   WIDGET 1 — People Nearby
-   ══════════════════════════════════════════════════════════════ */
 const NearbyWidget = () => {
     const { api } = useAxios();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [following, setFollowing] = useState({}); // { userId: bool }
+    const [following, setFollowing] = useState({});
+    const hasFetched = useRef(false);
 
     useEffect(() => {
+        if (hasFetched.current) return; // ← add this
+        hasFetched.current = true;
         api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/users/nearby`)
             .then((r) => {
                 const data = r.data?.data ?? r.data ?? [];
@@ -166,30 +165,8 @@ const NearbyWidget = () => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════════
-   WIDGET 2 — Trending Circles
-   ══════════════════════════════════════════════════════════════ */
 const CirclesWidget = () => {
-    const { api } = useAxios();
-    const [circles, setCircles] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles`)
-            .then((r) => {
-                const data = r.data?.data ?? r.data ?? [];
-                // Sort by members_count desc, take top 4
-                const sorted = [...data]
-                    .sort(
-                        (a, b) =>
-                            (b.members_count ?? 0) - (a.members_count ?? 0),
-                    )
-                    .slice(0, 4);
-                setCircles(sorted);
-            })
-            .catch(() => {})
-            .finally(() => setLoading(false));
-    }, []);
+    const { circles, loading } = useCircles();
 
     const fmtCount = (n) =>
         (n ?? 0) >= 1000 ? `${((n ?? 0) / 1000).toFixed(1)}k` : (n ?? 0);
@@ -257,15 +234,15 @@ const CirclesWidget = () => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════════
-   WIDGET 3 — Upcoming Events
-   ══════════════════════════════════════════════════════════════ */
 const EventsWidget = () => {
     const { api } = useAxios();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const hasFetched = useRef(false);
 
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/events`)
             .then((r) => {
                 const data = r.data?.data ?? r.data ?? [];
@@ -392,9 +369,6 @@ const EventsWidget = () => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════════
-   MAIN RIGHT SIDEBAR
-   ══════════════════════════════════════════════════════════════ */
 const RightSidebar = () => (
     <div
         style={{

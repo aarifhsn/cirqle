@@ -11,9 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('posts', function (Blueprint $table) {
-            $table->string('type')->default('text')->after('content');
-            $table->json('poll_options')->nullable()->after('type');
-            $table->integer('poll_duration')->nullable()->after('poll_options');
+            $table->string('type')->default('text');
+            $table->json('poll_options')->nullable();
+            $table->integer('poll_duration')->nullable();
         });
     }
 

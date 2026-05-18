@@ -39,36 +39,4 @@ const echo = new Echo({
     },
 });
 
-// Connection debug listeners (deferred until socket is ready)
-if (echo.connector?.socket) {
-    echo.connector.socket.on("connected", () => {
-        console.log("Echo connected to Reverb");
-    });
-
-    echo.connector.socket.on("disconnected", () => {
-        console.warn("Echo disconnected from Reverb");
-    });
-
-    echo.connector.socket.on("error", (error) => {
-        console.error("Echo connection error:", error);
-    });
-} else {
-    // Fallback: attach listeners after a brief delay
-    setTimeout(() => {
-        if (echo.connector?.socket) {
-            echo.connector.socket.on("connected", () => {
-                console.log("Echo connected to Reverb");
-            });
-
-            echo.connector.socket.on("disconnected", () => {
-                console.warn("Echo disconnected from Reverb");
-            });
-
-            echo.connector.socket.on("error", (error) => {
-                console.error("Echo connection error:", error);
-            });
-        }
-    }, 1000);
-}
-
 export default echo;

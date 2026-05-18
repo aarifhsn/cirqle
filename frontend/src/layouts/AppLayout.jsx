@@ -10,7 +10,6 @@ import LeftSidebar from "./LeftSidebar";
 import MessagesPanel, { NotificationsPanel } from "./MessagesPanel";
 import RightSidebar from "./RightSidebar";
 
-/* ── Mobile Top Header ────────────────────────────────────────── */
 const MobileHeader = () => {
     const { theme } = useTheme();
     const { api } = useAxios();
@@ -221,8 +220,12 @@ const MobileHeader = () => {
     );
 };
 
-/* ── Mobile Bottom Navigation ─────────────────────────────────── */
-const MobileBottomNav = ({ onOpenPanel, activePanel, unreadCount = 0 }) => {
+const MobileBottomNav = ({
+    onOpenPanel,
+    activePanel,
+    unreadCount = 0,
+    unreadMessagesCount = 0,
+}) => {
     const location = useLocation();
     const { auth } = useAuth();
     const user = auth?.user;
@@ -304,6 +307,27 @@ const MobileBottomNav = ({ onOpenPanel, activePanel, unreadCount = 0 }) => {
                                         {unreadCount > 9 ? "9+" : unreadCount}
                                     </span>
                                 )}
+                            {item.panel === "messages" &&
+                                unreadMessagesCount > 0 && (
+                                    <span
+                                        style={{
+                                            position: "absolute",
+                                            top: -4,
+                                            right: -6,
+                                            fontSize: "0.55rem",
+                                            fontWeight: 700,
+                                            padding: "1px 4px",
+                                            borderRadius: 999,
+                                            background: "var(--accent)",
+                                            color: "#fff",
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
+                                        {unreadMessagesCount > 9
+                                            ? "9+"
+                                            : unreadMessagesCount}
+                                    </span>
+                                )}
                         </span>
                         <span
                             style={{
@@ -355,29 +379,39 @@ const MobileBottomNav = ({ onOpenPanel, activePanel, unreadCount = 0 }) => {
     );
 };
 
-/* ── AppLayout ────────────────────────────────────────────────── */
 const AppLayout = ({ children, hideRightSidebar = false }) => {
     const { api } = useAxios();
     const [activePanel, setActivePanel] = useState(null);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
 
     useEffect(() => {
-        const fetchUnread = async () => {
+        let cancelled = false;
+
+        const fetchCounts = async () => {
             try {
                 const res = await api.get(
-                    `${import.meta.env.VITE_SERVER_BASE_URL}/notifications/unread-count`,
+                    `${import.meta.env.VITE_SERVER_BASE_URL}/unread-counts`,
                 );
-                setUnreadCount(res.data.count);
+                if (!cancelled) {
+                    setUnreadCount(res.data.notifications);
+                    setUnreadMessages(res.data.messages);
+                }
             } catch {}
         };
-        fetchUnread();
-        const interval = setInterval(fetchUnread, 30000);
-        return () => clearInterval(interval);
-    }, []);
+
+        fetchCounts();
+        const interval = setInterval(fetchCounts, 30000);
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, []); // ← empty deps, no api dependency
 
     const openPanel = (panel) => {
         setActivePanel(panel);
         if (panel === "notifications") setUnreadCount(0);
+        if (panel === "messages") setUnreadMessages(0);
     };
     const closePanel = () => setActivePanel(null);
 
@@ -415,6 +449,8 @@ const AppLayout = ({ children, hideRightSidebar = false }) => {
                     <LeftSidebar
                         onOpenPanel={openPanel}
                         activePanel={activePanel}
+                        unreadCount={unreadCount}
+                        unreadMessagesCount={unreadMessages}
                     />
                 </aside>
 
@@ -474,6 +510,12 @@ const AppLayout = ({ children, hideRightSidebar = false }) => {
             <MessagesPanel
                 open={activePanel === "messages"}
                 onClose={closePanel}
+                unreadCount={unreadCount}
+                unreadMessages={unreadMessages}
+                onNewMessage={() => {
+                    // Increment unread count when new message arrives
+                    setUnreadMessages((prev) => prev + 1);
+                }}
             />
             <NotificationsPanel
                 open={activePanel === "notifications"}
@@ -485,6 +527,7 @@ const AppLayout = ({ children, hideRightSidebar = false }) => {
                 onOpenPanel={openPanel}
                 activePanel={activePanel}
                 unreadCount={unreadCount}
+                unreadMessagesCount={unreadMessages}
             />
         </div>
     );

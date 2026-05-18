@@ -70,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/conversations', [MessageController::class, 'conversations']);
+    Route::get('/messages/unread-count', [MessageController::class, 'unreadCount']);
     Route::get('/messages/{userId}', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store']);
 
@@ -100,8 +101,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/circles/{circle}', [CircleController::class, 'show']);
     Route::post('/circles/{circle}/leave', [CircleController::class, 'leave']);
 
-
-
     // Marketplace
     Route::get('/listings', [ListingController::class, 'index']);
 
@@ -109,6 +108,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/jobs', [JobController::class, 'index']);
 
     Route::post('/posts/{post}/poll/vote', [PostController::class, 'vote']);
+
+    Route::get('/unread-counts', function (Request $request) {
+        $user = $request->user();
+        return response()->json([
+            'notifications' => $user->unreadNotifications()->count(),
+            'messages' => \App\Models\Message::where('receiver_id', $user->id)
+                ->whereNull('read_at')->count(),
+        ]);
+    });
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash

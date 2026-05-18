@@ -12,10 +12,13 @@
         "php": "^8.3",
         "laramint/laravel-brain": "^1.2",
         "laravel/framework": "^13.0",
+        "laravel/octane": "^2.17",
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.27",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "spiral/roadrunner-cli": "^2.6.0",
+        "spiral/roadrunner-http": "^3.3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import LogoDark from "../../assets/cirqle-logo-dark.png"; // 👈 add your dark logo
-import LogoLight from "../../assets/cirqle-logo-light.png";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
-import { useProfile } from "../../hooks/useProfile";
 import Logout from "../auth/Logout";
 import Avatar from "./Avatar";
 
-const Header = () => {
+const Header = ({ unreadCount }) => {
     const { auth } = useAuth();
-    const { state } = useProfile();
     const { api } = useAxios();
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
@@ -22,8 +18,6 @@ const Header = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [notificationCount] = useState(3);
-    const [unreadCount, setUnreadCount] = useState(0);
 
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
@@ -44,23 +38,6 @@ const Header = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () =>
             document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        const fetchUnread = async () => {
-            try {
-                const res = await api.get(
-                    `${import.meta.env.VITE_SERVER_BASE_URL}/notifications/unread-count`,
-                );
-                setUnreadCount(res.data.count);
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
-        fetchUnread();
-        const interval = setInterval(fetchUnread, 30000); // poll every 30s
-        return () => clearInterval(interval);
     }, []);
 
     const handleSearch = async (e) => {
@@ -102,11 +79,15 @@ const Header = () => {
             <div className="container flex items-center justify-between gap-3 p-3">
                 {/* ── Logo ───────────────────────────────────── */}
                 <Link to="/" className="shrink-0 flex items-center gap-2">
-                    <img
-                        className="max-w-[80px] lg:max-w-[100px]"
-                        src={theme === "dark" ? LogoLight : LogoDark} // 👈 swap based on theme
-                        alt="Cirqle"
-                    />
+                    <div
+                        className="sidebar-icon-only"
+                        style={{
+                            fontSize: "1.5rem",
+                            fontFamily: "var(--font-logo)",
+                        }}
+                    >
+                        Cirqle
+                    </div>
                 </Link>
 
                 {/* ── Search ─────────────────────────────────── */}

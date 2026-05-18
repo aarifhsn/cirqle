@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 import { getDateDifferenceFromNow } from "../utils";
 
-const MessagesPanel = ({ open, onClose }) => {
+const MessagesPanel = ({ open, onClose, onNewMessage }) => {
     const { api } = useAxios();
     const { auth } = useAuth();
     const authUser = auth?.user;
@@ -65,41 +65,46 @@ const MessagesPanel = ({ open, onClose }) => {
 
         const channel = echo.private(channelName);
 
-        channel.listen("MessageSent", (e) => {
-            console.log("Message received:", e);
+        channel.listen(".MessageSent", (e) => {
             setMessages((prev) => {
-                // avoid duplicates
+                // skip if already in list (sent by self via optimistic)
                 if (prev.find((m) => m.id === e.id)) return prev;
+                // skip if this is our own message (sender is current user)
+                if (e.sender_id === authUser.id) return prev;
                 return [...prev, e];
             });
+
+            // notify parent of new message
+            if (onNewMessage) onNewMessage();
         });
 
         channel.error((e) => {
-            console.error("Channel error:", e);
+            console.error("❌ Channel error:", e);
+        });
+
+        channel.subscribed(() => {
+            console.log("✅ Successfully subscribed to channel:", channelName);
         });
 
         return () => {
             echo.leave(channelName);
             channelRef.current = null;
         };
-    }, [activeUser, authUser]);
+    }, [activeUser?.id, authUser?.id]);
 
     /* ── Cleanup on panel close ───────────────────────────── */
     useEffect(() => {
         if (!open) {
-            if (channelRef.current) {
-                echo.leave(channelRef.current);
-                channelRef.current = null;
-            }
+            // DON'T leave channel here — the subscription effect handles it
             setView("conversations");
-            setActiveUser(null);
+            setActiveUser(null); // ← this triggers the subscription effect cleanup
             setMessages([]);
             setBody("");
         }
     }, [open]);
 
-    const fetchConversations = async () => {
-        setLoading(true);
+    const fetchConversations = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const res = await api.get(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/conversations`,
@@ -108,7 +113,7 @@ const MessagesPanel = ({ open, onClose }) => {
         } catch (e) {
             console.error(e);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -117,12 +122,18 @@ const MessagesPanel = ({ open, onClose }) => {
         setView("chat");
         setLoading(true);
         try {
+            console.log("🔍 Opening chat with user:", user);
             const res = await api.get(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/messages/${user.id}`,
             );
-            setMessages(res.data);
+            console.log("📨 Fetched messages:", res.data);
+            setMessages(res.data || []);
         } catch (e) {
-            console.error(e);
+            console.error(
+                "❌ Error loading messages:",
+                e.response?.data || e.message,
+            );
+            setMessages([]);
         } finally {
             setLoading(false);
         }
@@ -131,8 +142,9 @@ const MessagesPanel = ({ open, onClose }) => {
     const sendMessage = async () => {
         if (!body.trim() || sending) return;
         setSending(true);
+        const tempId = `temp-${Date.now()}`;
         const optimistic = {
-            id: `temp-${Date.now()}`,
+            id: tempId,
             body: body.trim(),
             sender_id: authUser.id,
             receiver_id: activeUser.id,
@@ -146,15 +158,18 @@ const MessagesPanel = ({ open, onClose }) => {
                 `${import.meta.env.VITE_SERVER_BASE_URL}/messages`,
                 { receiver_id: activeUser.id, body: optimistic.body },
             );
+            console.log("API response:", res.data);
             // replace optimistic with real message
             setMessages((prev) =>
-                prev.map((m) => (m.id === optimistic.id ? res.data : m)),
+                prev.map((m) =>
+                    m.id === tempId ? { ...res.data, _fromSelf: true } : m,
+                ),
             );
             // refresh conversations list
-            fetchConversations();
+            fetchConversations(true);
         } catch (e) {
             // remove optimistic on error
-            setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
             console.error(e);
         } finally {
             setSending(false);
@@ -577,7 +592,7 @@ const MessagesPanel = ({ open, onClose }) => {
                                             ? "flex-end"
                                             : "flex-start",
                                         gap: "0.5rem",
-                                        alignItems: "flex-end",
+                                        alignItems: "center",
                                     }}
                                 >
                                     {!isMine && (
@@ -610,6 +625,7 @@ const MessagesPanel = ({ open, onClose }) => {
                                         </div>
                                         <p
                                             style={{
+                                                padding: "0.2rem 0.85rem",
                                                 fontSize: "0.65rem",
                                                 color: "var(--text-muted)",
                                                 marginTop: 3,

@@ -123,6 +123,10 @@ const HomePage = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const sentinelRef = useRef(null);
+    const apiRef = useRef(api);
+    useEffect(() => {
+        apiRef.current = api;
+    }, [api]);
 
     const currentTabMeta = FEED_TABS.find((t) => t.id === activeTab);
 
@@ -135,7 +139,7 @@ const HomePage = () => {
                 dispatch({ type: actions.post.DATA_FETCHING });
             }
             try {
-                const response = await api.get(
+                const response = await apiRef.current.get(
                     `${import.meta.env.VITE_SERVER_BASE_URL}/posts?filter=${currentFilter}&page=${pageNum}`,
                 );
                 if (response.status === 200) {
@@ -193,14 +197,7 @@ const HomePage = () => {
         );
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [
-        hasMore,
-        loadingMore,
-        state?.loading,
-        activeTab,
-        fetchPosts,
-        currentTabMeta,
-    ]);
+    }, [hasMore, loadingMore, state?.loading, activeTab, currentTabMeta]);
 
     return (
         <AppLayout>

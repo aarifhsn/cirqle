@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logout from "../components/auth/Logout";
 import Avatar from "../components/common/Avatar";
+import { useCircles } from "../context/CirclesContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
@@ -19,7 +20,12 @@ const NAV_ITEMS = [
     { icon: "⌑", label: "Saved", href: "/saved" },
 ];
 
-const LeftSidebar = ({ onOpenPanel, activePanel }) => {
+const LeftSidebar = ({
+    onOpenPanel,
+    activePanel,
+    unreadCount = 0,
+    unreadMessagesCount = 0,
+}) => {
     const { api } = useAxios();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
@@ -28,8 +34,6 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
     const displayName =
         user?.name ?? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
 
-    const [myCircles, setMyCircles] = useState([]);
-
     const navigate = useNavigate();
     const [showSettings, setShowSettings] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
@@ -37,7 +41,8 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
     const [searchResults, setSearchResults] = useState([]);
     const settingsRef = useRef(null);
     const searchRef = useRef(null);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const { circles } = useCircles();
+    const myCircles = circles.filter((c) => c.is_member).slice(0, 5);
 
     // Close settings on outside click
     useEffect(() => {
@@ -89,32 +94,6 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
         setShowSearch(false);
         navigate(`/${username}`);
     };
-
-    useEffect(() => {
-        api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/circles`)
-            .then((r) => {
-                const data = r.data?.data ?? r.data ?? [];
-                // Only show circles user has joined
-                setMyCircles(data.filter((c) => c.is_member).slice(0, 5));
-            })
-            .catch(() => {});
-    }, []);
-
-    useEffect(() => {
-        const fetchUnread = async () => {
-            try {
-                const res = await api.get(
-                    `${import.meta.env.VITE_SERVER_BASE_URL}/notifications/unread-count`,
-                );
-                setUnreadCount(res.data.count);
-            } catch (e) {
-                console.error(e);
-            }
-        };
-        fetchUnread();
-        const interval = setInterval(fetchUnread, 30000);
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <div
@@ -191,7 +170,7 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                                                     fontSize: "0.65rem",
                                                     fontWeight: 700,
                                                     lineHeight: 1,
-                                                    padding: "2px 6px",
+                                                    padding: "5px 7px",
                                                     borderRadius: 999,
                                                     background: "var(--accent)",
                                                     color: "#fff",
@@ -201,6 +180,25 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                                                 {unreadCount > 9
                                                     ? "9+"
                                                     : unreadCount}
+                                            </span>
+                                        )}
+                                    {item.panel === "messages" &&
+                                        unreadMessagesCount > 0 && (
+                                            <span
+                                                style={{
+                                                    fontSize: "0.65rem",
+                                                    fontWeight: 700,
+                                                    lineHeight: 1,
+                                                    padding: "5px 7px",
+                                                    borderRadius: 999,
+                                                    background: "var(--accent)",
+                                                    color: "#fff",
+                                                    marginLeft: "auto",
+                                                }}
+                                            >
+                                                {unreadMessagesCount > 9
+                                                    ? "9+"
+                                                    : unreadMessagesCount}
                                             </span>
                                         )}
                                 </span>
@@ -216,8 +214,6 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                                     setShowSearch((p) => !p);
                                 } else {
                                     onOpenPanel(item.panel);
-                                    if (item.panel === "notifications")
-                                        setUnreadCount(0);
                                 }
                             }}
                             className={`nav-item ${isActive ? "active" : ""}`}
@@ -251,7 +247,7 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                                                 fontSize: "0.65rem",
                                                 fontWeight: 700,
                                                 lineHeight: 1,
-                                                padding: "2px 6px",
+                                                padding: "5px 7px",
                                                 borderRadius: 999,
                                                 background: "var(--accent)",
                                                 color: "#fff",
@@ -261,6 +257,25 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                                             {unreadCount > 9
                                                 ? "9+"
                                                 : unreadCount}
+                                        </span>
+                                    )}
+                                {item.panel === "messages" &&
+                                    unreadMessagesCount > 0 && (
+                                        <span
+                                            style={{
+                                                fontSize: "0.65rem",
+                                                fontWeight: 700,
+                                                lineHeight: 1,
+                                                padding: "5px 7px",
+                                                borderRadius: 999,
+                                                background: "var(--accent)",
+                                                color: "#fff",
+                                                marginLeft: "auto",
+                                            }}
+                                        >
+                                            {unreadMessagesCount > 9
+                                                ? "9+"
+                                                : unreadMessagesCount}
                                         </span>
                                     )}
                             </span>
@@ -452,6 +467,7 @@ const LeftSidebar = ({ onOpenPanel, activePanel }) => {
                     background: "var(--sidebar-bg)",
                     padding: "0.5rem 0",
                     marginTop: "auto",
+                    boxShadow: "0 -4px 10px rgba(0, 0, 0, 0.05)",
                 }}
             >
                 {/* ── Theme toggle ──────────────────────────────────── */}
