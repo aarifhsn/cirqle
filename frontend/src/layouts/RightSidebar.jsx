@@ -376,6 +376,7 @@ const RightSidebar = () => (
             flexDirection: "column",
             gap: "0.85rem",
             paddingTop: "0",
+            maxWidth: "100%",
         }}
     >
         <NearbyWidget />
@@ -390,7 +391,7 @@ const RightSidebar = () => (
                 lineHeight: 1.8,
             }}
         >
-            © 2025 Cirqle · Privacy · Terms · About
+            © {new Date().getFullYear()} Cirqle · Privacy · Terms · About
         </p>
     </div>
 );

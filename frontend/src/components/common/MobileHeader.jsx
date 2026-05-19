@@ -3,13 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import LogoDark from "../../assets/cirqle-logo-dark.png";
 import LogoLight from "../../assets/cirqle-logo-light.png";
 import { useTheme } from "../../context/ThemeContext";
-import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 import Avatar from "./Avatar";
 
-const MobileHeader = () => {
+const MobileHeader = ({ onOpenSidebar, onOpenRightSidebar }) => {
     const { theme } = useTheme();
-    const { auth } = useAuth();
     const { api } = useAxios();
     const navigate = useNavigate();
     const [showSearch, setShowSearch] = useState(false);
@@ -33,17 +31,53 @@ const MobileHeader = () => {
 
     return (
         <header
-            className="lg:hidden sticky top-0 z-50 glass"
-            style={{ borderBottom: "1px solid var(--border)" }}
+            className="show-on-mobile glass width-full"
+            style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 50,
+                borderBottom: "1px solid var(--border)",
+                maxWidth: "var(--max-content-width)",
+            }}
         >
             <div
+                className="w-full"
                 style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "0.75rem",
-                    padding: "0.6rem 1rem",
+                    padding: "0.6rem 0",
+                    maxWidth: "var(--feed-max-w)",
+                    margin: "0 auto",
                 }}
             >
+                {/* Hamburger button */}
+                <button
+                    onClick={onOpenSidebar}
+                    style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "0.25rem",
+                        flexShrink: 0,
+                        color: "var(--text-primary)",
+                    }}
+                >
+                    <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 6h16M4 12h16M4 18h16"
+                        />
+                    </svg>
+                </button>
                 <Link to="/" style={{ flexShrink: 0 }}>
                     <img
                         style={{ maxWidth: 70 }}
@@ -147,6 +181,34 @@ const MobileHeader = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Right sidebar toggle */}
+                <button
+                    onClick={onOpenRightSidebar}
+                    style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "0.25rem",
+                        flexShrink: 0,
+                        color: "var(--text-primary)",
+                    }}
+                >
+                    <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 6h16M4 12h10M4 18h16"
+                        />
+                    </svg>
+                </button>
             </div>
         </header>
     );

@@ -25,6 +25,7 @@ const LeftSidebar = ({
     activePanel,
     unreadCount = 0,
     unreadMessagesCount = 0,
+    onNavigate,
 }) => {
     const { api } = useAxios();
     const location = useLocation();
@@ -101,7 +102,7 @@ const LeftSidebar = ({
                 display: "flex",
                 flexDirection: "column",
                 height: "100%",
-                padding: "1.25rem 0.75rem",
+                padding: "1.25rem 0.1rem",
                 gap: "0.15rem",
             }}
         >
@@ -141,6 +142,7 @@ const LeftSidebar = ({
                             <Link
                                 key={item.label}
                                 to={item.href}
+                                onClick={onNavigate}
                                 className={`nav-item ${isActive ? "active" : ""}`}
                             >
                                 <span
@@ -212,6 +214,7 @@ const LeftSidebar = ({
                             onClick={() => {
                                 if (item.panel === "search") {
                                     setShowSearch((p) => !p);
+                                    if (onNavigate) onNavigate();
                                 } else {
                                     onOpenPanel(item.panel);
                                 }
@@ -390,7 +393,10 @@ const LeftSidebar = ({
                 )}
 
             {/* ── My Circles ────────────────────────────────────── */}
-            <div className="sidebar-label" style={{ marginTop: "1.25rem" }}>
+            <div
+                className="sidebar-label"
+                style={{ marginTop: "1.25rem", flexDirection: "column" }}
+            >
                 <p className="section-label" style={{ paddingLeft: "0.5rem" }}>
                     My Circles
                 </p>
@@ -465,7 +471,9 @@ const LeftSidebar = ({
                     position: "sticky",
                     bottom: 0,
                     background: "var(--sidebar-bg)",
-                    padding: "0.5rem 0",
+                    padding: "0.5rem 0.75rem",
+                    marginLeft: "-0.75rem",
+                    marginRight: "-0.75rem",
                     marginTop: "auto",
                     boxShadow: "0 -4px 10px rgba(0, 0, 0, 0.05)",
                 }}
@@ -496,13 +504,16 @@ const LeftSidebar = ({
                         style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: "0.25rem",
+                            gap: "0.5rem",
                             marginTop: "0.25rem",
+                            justifyContent: "space-between",
+                            width: "100%",
                         }}
                     >
                         {/* Profile link */}
                         <Link
                             to={`/${user.username}`}
+                            onClick={onNavigate}
                             style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -510,8 +521,8 @@ const LeftSidebar = ({
                                 padding: "0.6rem 0.5rem",
                                 borderRadius: 12,
                                 textDecoration: "none",
-                                flex: 1,
                                 transition: "background var(--transition-fast)",
+                                justifyContent: "space-between",
                             }}
                             onMouseEnter={(e) =>
                                 (e.currentTarget.style.background =
@@ -529,7 +540,7 @@ const LeftSidebar = ({
                                 <span className="online-dot" />
                             </div>
                             <div
-                                className="sidebar-label"
+                                className="sidebar-label flex flex-col"
                                 style={{ minWidth: 0 }}
                             >
                                 <p

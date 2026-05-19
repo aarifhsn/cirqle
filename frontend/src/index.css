@@ -2,15 +2,20 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap");
 
-@import url("https://fonts.googleapis.com/css2?family=Coiny&display=swap");
-
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
+
+@font-face {
+    font-family: "Davigo";
+    src: url("./assets/fonts/Davigo.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
 
 @theme {
     --font-sans: "DM Sans", sans-serif;
     --font-display: "Playfair Display", serif;
-    --font-logo: "Coiny", sans-serif;
+    --font-logo: "Davigo", sans-serif;
 
     /* Softer, modern, minimal colors */
     --color-accent: #4f46e5; /* elegant indigo */
@@ -448,6 +453,9 @@
     /* Scrollbar */
     --scrollbar-thumb: rgba(108, 99, 255, 0.25);
     --scrollbar-track: transparent;
+
+    /* Width */
+    --max-content-width: 1600px;
 }
 
 /* ── Dark Mode Tokens ─────────────────────────────────────────── */
@@ -1243,7 +1251,7 @@ a:hover {
 /* Sidebar label — hidden in icon-only mode */
 @media (max-width: 1024px) and (min-width: 769px) {
     .sidebar-label {
-        display: none !important;
+        display: none;
     }
 
     /* Narrow the left sidebar to icon-only */
@@ -1264,6 +1272,14 @@ a:hover {
         display: none;
     }
 }
+
+@media (min-width: 1025px) {
+    /* ← match your hide-on-mobile breakpoint + 1 */
+    .sidebar-label {
+        display: flex;
+    }
+}
+
 .hide-on-mobile {
     display: flex;
 }
@@ -1271,7 +1287,7 @@ a:hover {
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .hide-on-mobile {
         display: none !important;
     }
