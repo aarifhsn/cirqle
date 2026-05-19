@@ -91,7 +91,6 @@ class CircleController extends Controller
         return response()->json([
             'message' => $isMember ? 'Joined circle.' : 'Left circle.',
             'is_member' => $isMember,
-            // 'users_count' => $circle->fresh()->users_count,
         ]);
     }
 

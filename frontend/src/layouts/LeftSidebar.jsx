@@ -435,7 +435,7 @@ const LeftSidebar = ({
                                             color: "var(--text-muted)",
                                         }}
                                     >
-                                        {c.members} members
+                                        {c.users_count} members
                                     </p>
                                 </div>
                             </Link>
@@ -475,7 +475,7 @@ const LeftSidebar = ({
                     marginLeft: "-0.75rem",
                     marginRight: "-0.75rem",
                     marginTop: "auto",
-                    boxShadow: "0 -4px 10px rgba(0, 0, 0, 0.05)",
+                    borderTop: "1px solid #eee",
                 }}
             >
                 {/* ── Theme toggle ──────────────────────────────────── */}
