@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('content');
             $table->string('image')->nullable();
-            $table->enum('privacy', ['public', 'followers', 'only_me'])->default('public');
+            $table->enum('privacy', ['public', 'followers', 'circles', 'only_me'])->default('public');
             $table->timestamps();
         });
     }

@@ -91,7 +91,7 @@ const PostAction = ({ post, commentCount }) => {
             {/* ── Like ──────────────────────────────────────────── */}
             <button
                 onClick={handleLike}
-                className="post-action flex-1 justify-center"
+                className="post-action flex-1 justify-start"
                 style={
                     liked
                         ? {
@@ -143,7 +143,7 @@ const PostAction = ({ post, commentCount }) => {
             </button>
 
             {/* ── Comment ───────────────────────────────────────── */}
-            <button className="post-action flex-1 justify-center">
+            <button className="post-action flex-1 justify-start">
                 <svg
                     className="w-4 h-4"
                     fill="none"

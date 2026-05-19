@@ -186,7 +186,7 @@ const CircleCard = ({ circle: initial }) => {
                             className="text-xs"
                             style={{ color: "var(--text-muted)" }}
                         >
-                            {fmtCount(circle.members_count ?? 0)} members
+                            {fmtCount(circle.users_count ?? 0)} members
                         </span>
                     </div>
                 </div>

@@ -164,7 +164,7 @@ const CirclePage = () => {
                         <div style={{ padding: "1.25rem 1.4rem" }}>
                             <div className="flex items-start justify-between gap-3 mb-2">
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex items-start gap-2 mb-1">
                                         <h1
                                             className="font-bold"
                                             style={{
@@ -195,7 +195,7 @@ const CirclePage = () => {
                                             </span>
                                         )}
                                         <span>
-                                            👥 {fmtCount(circle.members_count)}{" "}
+                                            👥 {fmtCount(circle.users_count)}{" "}
                                             members
                                         </span>
                                         {circle.posts_count > 0 && (
@@ -429,7 +429,7 @@ const CirclePage = () => {
                                     },
                                     {
                                         label: "Members",
-                                        value: fmtCount(circle.members_count),
+                                        value: fmtCount(circle.users_count),
                                     },
                                     {
                                         label: "Posts",
