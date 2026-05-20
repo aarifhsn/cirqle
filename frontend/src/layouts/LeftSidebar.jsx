@@ -117,14 +117,9 @@ const LeftSidebar = ({
                     flexShrink: 0,
                 }}
             >
-                <div
-                    className="sidebar-icon-only"
-                    style={{
-                        fontSize: "1.5rem",
-                        fontFamily: "var(--font-logo)",
-                    }}
-                >
-                    Cirqle
+                <div className="logo-wrap">
+                    <div className="logo-icon"></div>
+                    <div className="logo-text">Cirqle</div>
                 </div>
             </Link>
 

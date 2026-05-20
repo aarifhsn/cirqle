@@ -17,5 +17,7 @@ export const actions = {
         COVER_UPDATED: "PROFILE_COVER_UPDATED",
         FOLLOW_TOGGLED: "PROFILE_FOLLOW_TOGGLED",
         POST_CREATED: "profile/POST_CREATED",
+        POST_UPDATED: "profile/POST_UPDATED",
+        POST_DELETED: "profile/POST_DELETED",
     },
 };

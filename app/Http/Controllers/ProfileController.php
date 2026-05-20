@@ -27,38 +27,38 @@ class ProfileController extends Controller
     }
 
     // shared post format
-    private function formatPosts(User $user): array
+    private function formatPosts(User $user, User $authUser): array
     {
-        return $user->posts()->latest()->get()
-            ->map(fn($post) => (new PostController)->formatPost($post))
+        $savedIds = $authUser->savedPosts()->pluck('post_id')->toArray();
+
+        return $user->posts()
+            ->with(['author', 'likes', 'comments.author', 'comments.replies.author', 'images'])
+            ->latest()
+            ->get()
+            ->map(fn($post) => (new PostController)->formatPost($post, $authUser, $savedIds))
             ->toArray();
     }
     public function show(Request $request, string $identifier)
     {
-        // resolve by username or numeric ID
-        $user = is_numeric($identifier)
-            ? User::with(['posts.author', 'posts.likes', 'posts.comments.author'])->findOrFail($identifier)
-            : User::with(['posts.author', 'posts.likes', 'posts.comments.author'])
-                ->where('username', $identifier)->firstOrFail();
+        $user = $this->resolveUser($identifier);
 
         $authUser = $request->user();
 
         return response()->json([
             'user' => $this->formatUser($user, $authUser),
-            'posts' => $this->formatPosts($user),
+            'posts' => $this->formatPosts($user, $authUser),
         ]);
     }
 
     // /users/{userId} — other user's profile
     public function showUser(Request $request, $userId)
     {
-        $user = User::with(['posts.author', 'posts.likes', 'posts.comments.author'])
-            ->findOrFail($userId);
+        $user = User::findOrFail($userId);
         $authUser = $request->user();
 
         return response()->json([
             'user' => $this->formatUser($user, $authUser),
-            'posts' => $this->formatPosts($user),
+            'posts' => $this->formatPosts($user, $authUser),
         ]);
     }
 
@@ -95,7 +95,7 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate(['avatar' => 'required|image|max:4096']);
+        $request->validate(['avatar' => 'required|image|max:1024']);
 
         if ($user->avatar) {
             Storage::disk('public')->delete($user->avatar);
@@ -116,7 +116,7 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate(['cover_photo' => 'required|image|max:8192']);
+        $request->validate(['cover_photo' => 'required|image|max:2048']);
 
         if ($user->cover_photo) {
             Storage::disk('public')->delete($user->cover_photo);

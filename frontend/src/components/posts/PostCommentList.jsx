@@ -1,12 +1,3 @@
-/* PostCommentList.jsx — Cirqle v2
- * Changes:
- * - hover:text-lwsGreen → CSS var via onMouseEnter/Leave
- * - divide-lighterDark → border CSS var
- * - border-[#3F3F3F] → var(--border) on reply indent
- * - text color uses var(--text-primary/secondary/muted)
- * - All comment tree / reply logic 100% untouched
- */
-
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getDateDifferenceFromNow } from "../../utils";
@@ -17,8 +8,18 @@ const PostCommentList = ({ comments, onReply }) => {
 
     const CommentItem = ({ comment, isReply = false }) => {
         const isMe = comment?.author?.id === auth?.user?.id;
+
+        const author = isMe
+            ? {
+                  ...comment?.author,
+                  avatar: auth?.user?.avatar,
+                  name: `${auth?.user?.firstName} ${auth?.user?.lastName}`,
+                  username: auth?.user?.username,
+              }
+            : comment?.author;
+
         const profileLink = isMe
-            ? "/me"
+            ? `/${auth?.user?.username}`
             : `/${comment?.author?.username ?? "users/" + comment?.author?.id}`;
 
         return (
@@ -27,7 +28,7 @@ const PostCommentList = ({ comments, onReply }) => {
                 style={isReply ? { borderLeft: "2px solid var(--border)" } : {}}
             >
                 <Link to={profileLink} className="flex-shrink-0 mt-0.5">
-                    <Avatar user={comment?.author} size="sm" />
+                    <Avatar user={author} size="sm" />
                 </Link>
 
                 <div className="flex-1 min-w-0">
@@ -48,7 +49,7 @@ const PostCommentList = ({ comments, onReply }) => {
                                     "var(--text-primary)")
                             }
                         >
-                            {comment?.author?.name}:
+                            {author?.name}:
                         </Link>
                         <span style={{ color: "var(--text-secondary)" }}>
                             {comment.comment}
@@ -65,9 +66,7 @@ const PostCommentList = ({ comments, onReply }) => {
                         </span>
                         {!isReply && (
                             <button
-                                onClick={() =>
-                                    onReply(comment.id, comment.author.name)
-                                }
+                                onClick={() => onReply(comment.id, author.name)}
                                 className="text-xs font-medium transition-colors"
                                 style={{ color: "var(--text-muted)" }}
                                 onMouseEnter={(e) =>

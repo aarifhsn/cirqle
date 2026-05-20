@@ -1,7 +1,3 @@
-/* UserProfilePage.jsx — Cirqle v2 (flicker fix)
- * Same fix as ProfilePage: resets state on username change.
- */
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { actions } from "../actions";
@@ -190,7 +186,28 @@ const UserProfilePage = () => {
                     {activeTab === "marketplace" && (
                         <ComingSoon tab="marketplace" />
                     )}
-                    {activeTab === "saved" && <ComingSoon tab="saved" />}
+                    {activeTab === "saved" && isMe && <UserSaved />}
+                    {activeTab === "saved" && !isMe && (
+                        <div
+                            className="card flex-center flex-col"
+                            style={{
+                                padding: "4rem 2rem",
+                                textAlign: "center",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: "2.5rem",
+                                    marginBottom: "1rem",
+                                }}
+                            >
+                                🔒
+                            </span>
+                            <p style={{ color: "var(--text-muted)" }}>
+                                Saved posts are private.
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
         </AppLayout>

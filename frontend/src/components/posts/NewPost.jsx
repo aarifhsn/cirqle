@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
 import { useAuth } from "../../hooks/useAuth";
@@ -95,9 +95,6 @@ const ModalFooter = ({ onClose, saving, label }) => (
     </div>
 );
 
-/* ══════════════════════════════════════════════════════════════
-   POLL MODAL
-   ══════════════════════════════════════════════════════════════ */
 const PollModal = ({ onClose }) => {
     const { api } = useAxios();
     const { dispatch } = usePost();
@@ -410,7 +407,8 @@ const NewPost = () => {
     const { auth } = useAuth();
     const navigate = useNavigate();
     const [activeModal, setActiveModal] = useState(null);
-    // null | "photo" | "poll" | "mood"
+
+    const { username } = useParams();
 
     const handleAction = (key) => {
         switch (key) {
@@ -440,6 +438,9 @@ const NewPost = () => {
     };
 
     const closeModal = () => setActiveModal(null);
+
+    const isMe =
+        auth?.user?.username?.toLowerCase() === username?.toLowerCase();
 
     return (
         <>
@@ -474,7 +475,9 @@ const NewPost = () => {
                                 "var(--input-bg)";
                         }}
                     >
-                        What's on your mind, {auth?.user?.firstName}?
+                        {isMe
+                            ? `Share something with your circles, ${auth?.user?.firstName}?`
+                            : `What's on your mind, ${auth?.user?.firstName}?`}
                     </button>
                 </div>
 

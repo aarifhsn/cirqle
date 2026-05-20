@@ -1,16 +1,14 @@
-/* ProfilePage.jsx — Cirqle v2 (flicker fix)
- * Fix: resets notFound + activeTab + dispatches DATA_FETCHING
- * whenever the username param changes, preventing stale user
- * data from the previous profile briefly showing.
- */
-
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { actions } from "../actions";
 import NewPost from "../components/posts/NewPost";
 import MyPosts from "../components/profile/MyPosts";
 import PhotosTab from "../components/profile/PhotosTab";
 import ProfileInfo from "../components/profile/ProfileInfo";
+import UserAbout from "../components/profile/UserAbout";
+import UserCircles from "../components/profile/UserCircles";
+import UserMarketplace from "../components/profile/UserMarketPlace";
+import UserSaved from "../components/profile/UserSaved";
 import { useAuth } from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 import { useProfile } from "../hooks/useProfile";
@@ -85,39 +83,26 @@ const ProfileSkeleton = () => (
     </div>
 );
 
-const ComingSoon = ({ tab }) => (
-    <div
-        className="card flex-center flex-col"
-        style={{ padding: "4rem 2rem", textAlign: "center" }}
-    >
-        <span style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>
-            {PROFILE_TABS.find((t) => t.id === tab)?.icon ?? "🚧"}
-        </span>
-        <h4
-            className="font-semibold mb-1"
-            style={{ color: "var(--text-primary)" }}
-        >
-            {PROFILE_TABS.find((t) => t.id === tab)?.label} — Coming Soon
-        </h4>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            This section is under construction.
-        </p>
-    </div>
-);
-
 const ProfilePage = () => {
     const { state, dispatch } = useProfile();
     const { api } = useAxios();
     const { auth } = useAuth();
     const { username } = useParams();
-    const [activeTab, setActiveTab] = useState("posts");
+
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const activeTab = searchParams.get("tab") || "posts";
     const [notFound, setNotFound] = useState(false);
-    const isMe = auth?.user?.username === username;
+    const isMe =
+        auth?.user?.username?.toLowerCase() === username?.toLowerCase();
 
     useEffect(() => {
         // Reset page state for new username
         setNotFound(false);
-        setActiveTab("posts");
+
+        if (!searchParams.get("tab")) {
+            setSearchParams({ tab: "posts" }, { replace: true });
+        }
         dispatch({ type: actions.profile.DATA_FETCHING });
 
         const fetchProfile = async () => {
@@ -144,8 +129,7 @@ const ProfilePage = () => {
         };
 
         fetchProfile();
-    }, [username]); // ← key fix: re-runs on every username change
-
+    }, [username, api, dispatch]);
     if (notFound) return <NotFoundPage />;
 
     return (
@@ -163,7 +147,7 @@ const ProfilePage = () => {
                     {PROFILE_TABS.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => setSearchParams({ tab: tab.id })}
                             className={`feed-tab ${activeTab === tab.id ? "active" : ""}`}
                         >
                             <span>{tab.icon}</span>
@@ -181,12 +165,16 @@ const ProfilePage = () => {
                     {activeTab === "media" && (
                         <PhotosTab userId={state?.user?.id} />
                     )}
-                    {activeTab === "about" && <ComingSoon tab="about" />}
-                    {activeTab === "circles" && <ComingSoon tab="circles" />}
-                    {activeTab === "marketplace" && (
-                        <ComingSoon tab="marketplace" />
+                    {activeTab === "about" && <UserAbout user={state?.user} />}
+                    {activeTab === "circles" && (
+                        <UserCircles userId={state?.user?.id} />
                     )}
-                    {activeTab === "saved" && <ComingSoon tab="saved" />}
+                    {activeTab === "marketplace" && (
+                        <UserMarketplace userId={state?.user?.id} />
+                    )}
+                    {activeTab === "saved" && (
+                        <UserSaved userId={state?.user?.id} />
+                    )}
                 </div>
             )}
         </AppLayout>

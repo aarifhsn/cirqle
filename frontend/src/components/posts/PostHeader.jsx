@@ -20,6 +20,15 @@ const PostHeader = ({ post, onUnsave }) => {
     const { api } = useAxios();
     const [isSaved, setIsSaved] = useState(post?.is_saved ?? false);
 
+    const author = isMe
+        ? {
+              ...post?.author,
+              avatar: auth?.user?.avatar,
+              name: `${auth?.user?.firstName} ${auth?.user?.lastName}`,
+              username: auth?.user?.username,
+          }
+        : post?.author;
+
     const handleSave = async () => {
         try {
             const res = await api.post(
@@ -67,7 +76,7 @@ const PostHeader = ({ post, onUnsave }) => {
                 {/* ── Left: Avatar + name + time ────────────────── */}
                 <div className="flex items-center gap-3">
                     <Link to={profileLink} className="flex-shrink-0">
-                        <Avatar user={post?.author} size="md" />
+                        <Avatar user={author} size="md" />
                     </Link>
 
                     <div>
@@ -86,7 +95,7 @@ const PostHeader = ({ post, onUnsave }) => {
                                         "var(--text-primary)")
                                 }
                             >
-                                {post?.author?.name}
+                                {author?.name}
                             </Link>
                             <PrivacyIcon privacy={post?.privacy} />
                         </div>

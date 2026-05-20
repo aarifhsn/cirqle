@@ -388,6 +388,9 @@ class PostController extends Controller
         return response()->json([
             'data' => $posts->map(fn($post) => $this->formatPost($post, $request->user(), $savedIds)),
         ]);
+
+
+
     }
 
     public function vote(Request $request, Post $post)

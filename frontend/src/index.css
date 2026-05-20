@@ -5,17 +5,17 @@
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
 
-@font-face {
+/* @font-face {
     font-family: "Davigo";
     src: url("./assets/fonts/Davigo.ttf") format("truetype");
     font-weight: normal;
     font-style: normal;
-}
+} */
 
 @theme {
     --font-sans: "DM Sans", sans-serif;
     --font-display: "Playfair Display", serif;
-    --font-logo: "Davigo", sans-serif;
+    --font-logo: "Outfit", sans-serif;
 
     /* Softer, modern, minimal colors */
     --color-accent: #4f46e5; /* elegant indigo */
@@ -61,6 +61,7 @@
     --accent: #4f46e5;
     --accent-dim: #4338ca;
     --accent-soft: rgba(79, 70, 229, 0.1);
+    --accent-hard: rgba(79, 70, 229, 0.8);
     --accent-glow: rgba(79, 70, 229, 0.18);
 
     --danger: #ef4444;
@@ -1297,4 +1298,28 @@ a:hover {
     .hide-on-small {
         display: none !important;
     }
+}
+.logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+
+    border: 4px solid #6c63ff;
+
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}
+
+.logo-text {
+    font-size: 2rem;
+    font-family: "Outfit", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.07em;
+    color: var(--text-primary);
+    line-height: 1;
 }

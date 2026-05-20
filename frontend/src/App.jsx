@@ -21,7 +21,6 @@ import NotificationsPage from "./pages/NotificationsPage";
 import PostPage from "./pages/PostPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SavedPage from "./pages/SavedPage";
-import UserProfilePage from "./pages/UserProfilePage";
 import VerifyEmailNoticePage from "./pages/VerifyEmailNoticePage";
 import PrivateRoutes from "./routes/PrivateRoutes";
 
@@ -34,10 +33,10 @@ function App() {
                     <Route element={<HomePage />} path="/" exact />
                     <Route element={<ProfilePage />} path="/:username" />
                     <Route path="/posts/:id" element={<PostPage />} />
-                    <Route
+                    {/* <Route
                         path="/users/:username"
                         element={<UserProfilePage />}
-                    />
+                    /> */}
                     <Route
                         element={<FollowersPage />}
                         path="/:username/followers"

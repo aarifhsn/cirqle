@@ -1,22 +1,13 @@
-/* EditProfileModal.jsx — Cirqle v2
- * Changes from original:
- * - `auth-input` → `.input` class (defined in index.css)
- * - `auth-label` → inline style with CSS vars
- * - `btn-ghost` / `btn-primary` → `.btn .btn-ghost` / `.btn .btn-primary`
- * - `icon-btn` → `.btn .btn-ghost .btn-icon`
- * - `spinner` → inline SVG spinner
- * - Modal overlay uses `var(--bg-overlay)`
- * - All form state + API submit logic 100% untouched
- */
-
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
+import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 import { useProfile } from "../../hooks/useProfile";
 
 const EditProfileModal = ({ onClose }) => {
     const { state, dispatch } = useProfile();
+    const { auth, setAuth } = useAuth();
     const { api } = useAxios();
 
     const [form, setForm] = useState({
@@ -44,6 +35,16 @@ const EditProfileModal = ({ onClose }) => {
                     type: actions.profile.USER_DATA_EDITED,
                     data: response.data,
                 });
+                setAuth((prev) => ({
+                    ...prev,
+                    user: {
+                        ...prev.user,
+                        firstName: response.data.firstName,
+                        lastName: response.data.lastName,
+                        bio: response.data.bio,
+                    },
+                }));
+
                 toast.success("Profile updated!");
                 onClose();
             }

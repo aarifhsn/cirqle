@@ -1,13 +1,3 @@
-/* ProfileInfo.jsx — Cirqle v2
- * Changes from original:
- * - Replaced ALL hardcoded dark colors (text-white, text-gray-400,
- *   bg-lighterDark, bg-[#2f3136]) with CSS variables
- * - Cover photo gradient fallback uses accent gradient
- * - Edit Profile / Follow buttons use .btn classes
- * - Stats section uses CSS vars (dark/light safe)
- * - All cover upload + API logic 100% untouched
- */
-
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";

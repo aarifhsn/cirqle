@@ -18,7 +18,7 @@ const SavedPage = () => {
                 );
                 setPosts(res.data?.data ?? res.data ?? []);
             } catch (e) {
-                setError("Failed to load saved posts.");
+                setError(e.response?.data?.message ?? "Failed to load posts.");
             } finally {
                 setLoading(false);
             }

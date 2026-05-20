@@ -1,12 +1,3 @@
-/* MyPosts.jsx — Cirqle v2
- * Changes from original:
- * - All inline style objects → Tailwind + CSS vars hybrid
- * - badge class replaced with .pill.pill-accent
- * - Skeleton uses .skeleton CSS class (shimmer animation)
- * - Empty state uses CSS vars (dark/light safe)
- * - All logic (posts from state, isMe check) 100% untouched
- */
-
 import { useAuth } from "../../hooks/useAuth";
 import { useProfile } from "../../hooks/useProfile";
 import PostList from "../posts/PostList";

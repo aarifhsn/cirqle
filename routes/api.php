@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/circles/{circle}/join', [CircleController::class, 'join']);
         Route::post('/circles', [CircleController::class, 'store']);
         // Events
-        Route::get('/events', [EventController::class, 'index']);
+
         Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp']);
         Route::post('/events', [EventController::class, 'store']);
         Route::patch('/events/{event}', [EventController::class, 'update']);
@@ -66,9 +66,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/jobs/{job}', [JobController::class, 'destroy']);
 
         Route::post('/posts/{post}/save', [PostController::class, 'save']);
-        Route::get('/posts/saved', [PostController::class, 'saved']);
+
     });
 
+    Route::get('/events', [EventController::class, 'index']);
+    Route::get('/posts', [PostController::class, 'index']);
+    Route::get('/posts/saved', [PostController::class, 'saved']);
     Route::get('/conversations', [MessageController::class, 'conversations']);
     Route::get('/messages/unread-count', [MessageController::class, 'unreadCount']);
     Route::get('/messages/{userId}', [MessageController::class, 'index']);
@@ -76,17 +79,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/{id}', [PostController::class, 'show']);
 
     Route::get('/profile/{identifier}', [ProfileController::class, 'show']);
     Route::get('/profile/{identifier}/photos', [ProfileController::class, 'photos']);
 
-    // ✅ FIX — specific routes first, wildcard last
     Route::get('/users/search', [ProfileController::class, 'search']);
-    Route::get('/users/nearby', [UserController::class, 'nearby']);        // ← moved up
-    Route::patch('/users/location', [UserController::class, 'updateLocation']); // ← moved up
-    Route::get('/users/{identifier}', [ProfileController::class, 'showUser']); // ← wildcard last
+    Route::get('/users/nearby', [UserController::class, 'nearby']);
+    Route::patch('/users/location', [UserController::class, 'updateLocation']);
+    Route::get('/users/{identifier}', [ProfileController::class, 'showUser']);
 
     Route::get('/{identifier}/followers', [FollowController::class, 'followers']);
     Route::get('/{identifier}/following', [FollowController::class, 'following']);

@@ -1,21 +1,14 @@
-/* ProfileImage.jsx — Cirqle v2
- * Changes from original:
- * - Fallback avatar: hardcoded gradient → CSS var accent gradient
- * - `bg-[var(--bg-card)]` border uses CSS var
- * - Camera overlay hover works properly (fixed SVG opacity bug in original)
- * - All upload API logic 100% untouched
- */
-
 import { useRef } from "react";
 import { toast } from "react-toastify";
 import { actions } from "../../actions";
 import { useAuth } from "../../hooks/useAuth";
 import useAxios from "../../hooks/useAxios";
 import { useProfile } from "../../hooks/useProfile";
+import Avatar from "../common/Avatar";
 
 const ProfileImage = () => {
     const { state, dispatch } = useProfile();
-    const { auth } = useAuth();
+    const { auth, setAuth } = useAuth();
     const { api } = useAxios();
     const fileUploaderRef = useRef();
     const isMe = Number(state?.user?.id) === Number(auth?.user?.id);
@@ -42,6 +35,13 @@ const ProfileImage = () => {
                     type: actions.profile.IMAGE_UPDATED,
                     data: response.data,
                 });
+                setAuth((prev) => ({
+                    ...prev,
+                    user: {
+                        ...prev.user,
+                        avatar: response.data.avatar,
+                    },
+                }));
                 toast.success("Profile photo updated!");
             }
         } catch (error) {
@@ -52,13 +52,9 @@ const ProfileImage = () => {
         }
     };
 
-    const initials = [state?.user?.firstName?.[0], state?.user?.lastName?.[0]]
-        .filter(Boolean)
-        .join("")
-        .toUpperCase();
-
     return (
         <div
+            className="flex justify-center items-center"
             onClick={handleImageUpload}
             style={{
                 position: "relative",
@@ -72,32 +68,7 @@ const ProfileImage = () => {
                 cursor: isMe ? "pointer" : "default",
             }}
         >
-            {/* ── Avatar image or initials fallback ─────────────── */}
-            {state?.user?.avatar ? (
-                <img
-                    src={`${import.meta.env.VITE_STORAGE_URL}/${state.user.avatar}`}
-                    alt={state?.user?.firstName}
-                    style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        display: "block",
-                    }}
-                />
-            ) : (
-                <div
-                    className="flex-center w-full h-full rounded-full font-bold text-2xl"
-                    style={{
-                        background:
-                            "linear-gradient(135deg, var(--accent), var(--accent-2))",
-                        color: "#fff",
-                        fontFamily: "var(--font-display)",
-                    }}
-                >
-                    {initials || "?"}
-                </div>
-            )}
+            <Avatar user={state?.user} size="lg" />
 
             {/* ── Camera overlay (isMe only) ────────────────────── */}
             {isMe && (

@@ -1,11 +1,3 @@
-/* Avatar.jsx — Cirqle v2
- * Changes:
- * - Initials fallback border: hardcoded rgba(0,217,145,0.25) → var(--border)
- * - background: var(--accent-soft) (already was, kept)
- * - color: var(--accent) (already was, kept)
- * - All logic (hasAvatar, getInitials, onError) 100% untouched
- */
-
 const Avatar = ({ user, size = "md", className = "" }) => {
     const sizes = {
         sm: { px: 32, text: "0.75rem" },
@@ -66,7 +58,7 @@ const Avatar = ({ user, size = "md", className = "" }) => {
             style={{
                 ...style,
                 background: "var(--accent-soft)",
-                border: "1px solid var(--border)" /* ← fixed: was hardcoded rgba green */,
+                border: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

@@ -1,17 +1,3 @@
-/* PostEntry.jsx — Cirqle v2
- * Changes:
- * - border-[#3F3F3F] → var(--border)
- * - bg-lighterDark, hover:bg-[#3F3F3F] → CSS vars
- * - text-white → var(--text-primary)
- * - text-gray-* → var(--text-muted / text-secondary)
- * - bg-lwsGreen text-deepDark → .btn.btn-primary
- * - hover:text-lwsGreen → CSS var hover
- * - text-lwsGreen → var(--accent)
- * - placeholder-gray-500 → var(--text-placeholder) via CSS
- * - privacy select uses CSS vars
- * - All form/upload/submit API logic 100% untouched
- */
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -27,8 +13,8 @@ import PrivacyIcon from "./PrivacyIcon";
 const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     const { auth } = useAuth();
     const { dispatch } = usePost();
+    const { state: profile, dispatch: profileDispatch } = useProfile();
     const { api } = useAxios();
-    const { state: profile } = useProfile();
     const user = profile?.user ?? auth?.user;
     const isEditMode = !!postToEdit;
 
@@ -95,6 +81,12 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                         type: actions.post.DATA_EDITED,
                         data: response.data,
                     });
+                    // ← also update profile context
+                    profileDispatch({
+                        type: actions.profile.POST_UPDATED,
+                        data: response.data,
+                    });
+                    toast.success("Post updated!");
                 }
             } else {
                 response = await api.post(
@@ -102,9 +94,14 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
                     data,
                     { headers: { "Content-Type": "multipart/form-data" } },
                 );
-                if (response.status === 200) {
+                if (response.status === 200 || response.status === 201) {
                     dispatch({
                         type: actions.post.DATA_CREATED,
+                        data: response.data,
+                    });
+                    // ← also update profile context
+                    profileDispatch({
+                        type: actions.profile.POST_CREATED,
                         data: response.data,
                     });
                     toast.success("Post created!");

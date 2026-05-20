@@ -1,10 +1,3 @@
-/* ProfileReducer.js — Cirqle v2
- * Fix: DATA_FETCHING now preserves previous user data instead of
- * keeping it null. This prevents the username/profile flicker
- * when navigating between profile pages.
- * All other cases untouched.
- */
-
 import { actions } from "../actions";
 
 const initialState = {
@@ -83,6 +76,32 @@ const profileReducer = (state, action) => {
                     followersCount: action.data.followersCount,
                     followingCount: action.data.followingCount,
                 },
+            };
+        }
+
+        case actions.profile.POST_CREATED: {
+            return {
+                ...state,
+                posts: [action.data, ...state.posts],
+            };
+        }
+
+        case actions.profile.POST_UPDATED: {
+            return {
+                ...state,
+                posts: state.posts.map((post) => {
+                    if (post.id === action.data.id) {
+                        return action.data;
+                    }
+                    return post;
+                }),
+            };
+        }
+
+        case actions.profile.POST_DELETED: {
+            return {
+                ...state,
+                posts: state.posts.filter((post) => post.id !== action.data),
             };
         }
 

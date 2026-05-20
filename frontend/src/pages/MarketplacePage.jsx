@@ -229,8 +229,23 @@ const CreateListingModal = ({ onClose, onCreated }) => {
 
     const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+    const MAX_FILE_SIZE_MB = 5;
+    const MAX_FILES = 5;
+
     const handleFiles = (e) => {
-        const files = Array.from(e.target.files).slice(0, 5);
+        const files = Array.from(e.target.files).slice(0, MAX_FILES);
+        const oversized = files.filter(
+            (f) => f.size > MAX_FILE_SIZE_MB * 1024 * 1024,
+        );
+
+        if (oversized.length > 0) {
+            setError(
+                `${oversized.length} file(s) exceed the ${MAX_FILE_SIZE_MB}MB limit: ${oversized.map((f) => f.name).join(", ")}`,
+            );
+            return;
+        }
+
+        setError(null);
         setImages(
             files.map((f) => ({ file: f, preview: URL.createObjectURL(f) })),
         );
@@ -238,12 +253,32 @@ const CreateListingModal = ({ onClose, onCreated }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const totalMB =
+            images.reduce((sum, img) => sum + img.file.size, 0) / (1024 * 1024);
+        if (totalMB > 20) {
+            setError(
+                `Total upload size is ${totalMB.toFixed(1)}MB. Maximum is 20MB.`,
+            );
+            return;
+        }
         setSaving(true);
         setError(null);
+
         try {
             const data = new FormData();
-            Object.entries(form).forEach(([k, v]) => data.append(k, v));
+
+            // 👇 append only non-image fields manually, skip images key
+            data.append("title", form.title);
+            data.append("price", form.price);
+            data.append("description", form.description);
+            data.append("category", form.category);
+            data.append("location", form.location);
+            data.append("status", form.status);
+
+            // 👇 append actual files
             images.forEach((img) => data.append("images[]", img.file));
+
             const res = await api.post(
                 `${import.meta.env.VITE_SERVER_BASE_URL}/listings`,
                 data,
@@ -251,8 +286,9 @@ const CreateListingModal = ({ onClose, onCreated }) => {
             );
             toast.success("Listing posted!");
             onCreated(res.data?.data ?? res.data);
-        } catch (e) {
-            setError(e.response?.data?.message ?? "Failed to post listing.");
+        } catch (err) {
+            console.error(err.response?.data); // 👈 add this to see exact error
+            setError(err.response?.data?.message ?? "Failed to post listing.");
         } finally {
             setSaving(false);
         }
