@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\JobFactory;
 
 class Job extends Model
 {
+    /** @use HasFactory<JobFactory> */
+    use HasFactory;
     protected $table = 'job_postings';
 
     protected $fillable = [
