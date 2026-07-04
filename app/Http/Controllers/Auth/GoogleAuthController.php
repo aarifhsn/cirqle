@@ -57,8 +57,10 @@ class GoogleAuthController extends Controller
             'bio' => $user->bio,
         ]));
 
+        $frontendUrl = config('app.frontend_url');
+
         return redirect(
-            "http://localhost:5173/google-success?token={$authToken}&refreshToken={$refreshToken}&user={$userData}"
+            "{$frontendUrl}/google-success?token={$authToken}&refreshToken={$refreshToken}&user={$userData}"
         );
     }
 }

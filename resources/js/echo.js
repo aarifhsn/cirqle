@@ -12,25 +12,20 @@ const getToken = () => {
     }
 };
 
-const appKey = import.meta.env.VITE_REVERB_APP_KEY;
-const host = import.meta.env.VITE_REVERB_HOST;
-const port = import.meta.env.VITE_REVERB_PORT;
-const scheme = import.meta.env.VITE_REVERB_SCHEME ?? "http";
+const appKey = import.meta.env.VITE_PUSHER_APP_KEY;
+const cluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
 
-if (!appKey || !host || !port) {
+if (!appKey || !cluster) {
     console.warn(
-        "Missing Reverb configuration. Please check your .env file for VITE_REVERB_APP_KEY, VITE_REVERB_HOST, and VITE_REVERB_PORT",
+        "Missing Pusher configuration. Please check your .env file for VITE_PUSHER_APP_KEY and VITE_PUSHER_APP_CLUSTER",
     );
 }
 
 const echo = new Echo({
-    broadcaster: "reverb",
+    broadcaster: "pusher",
     key: appKey,
-    wsHost: host,
-    wsPort: port,
-    wssPort: port,
-    forceTLS: scheme === "https",
-    enabledTransports: ["ws", "wss"],
+    cluster: cluster,
+    forceTLS: true,
     authEndpoint: `${import.meta.env.VITE_SERVER_BASE_URL}/broadcasting/auth`,
     auth: {
         headers: () => ({
