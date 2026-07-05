@@ -1173,9 +1173,6 @@ a:hover {
     }
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.3s ease forwards;
-}
 .animate-fade-in-scale {
     animation: fadeInScale 0.25s ease forwards;
 }
