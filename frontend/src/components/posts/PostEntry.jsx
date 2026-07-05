@@ -58,7 +58,6 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
     };
 
     const handlePostSubmit = async (formData) => {
-        dispatch({ type: actions.post.DATA_FETCHING });
         try {
             const data = new FormData();
             data.append("content", formData.content);
@@ -113,10 +112,6 @@ const PostEntry = ({ onCreate, onClose, postToEdit }) => {
             toast.error(
                 error.response?.data?.message || "Something went wrong!",
             );
-            dispatch({
-                type: actions.post.DATA_FETCH_ERROR,
-                error: error.message,
-            });
         }
     };
 
