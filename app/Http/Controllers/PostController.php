@@ -156,7 +156,7 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        if ($post->user_id !== $request->user()->id) {
+        if ($post->user_id != $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -210,7 +210,7 @@ class PostController extends Controller
             'post_id' => $post->id,
         ]);
 
-        if ($post->user_id !== $request->user()->id) {
+        if ($post->user_id != $request->user()->id) {
             return response()->json([
                 'message' => 'Unauthorized',
                 'auth_id' => $request->user()?->id,
