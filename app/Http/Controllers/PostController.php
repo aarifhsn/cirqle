@@ -96,7 +96,7 @@ class PostController extends Controller
         $authUser = auth()->user();
 
         $post = Post::with([
-            'author',           // use author not user, matching your index
+            'author',
             'comments.author',
             'comments.replies.author',
             'images',
@@ -314,6 +314,7 @@ class PostController extends Controller
                 'id' => $c->author->id,
                 'name' => $c->author->firstName . ' ' . $c->author->lastName,
                 'avatar' => $c->author->avatar,
+                'username' => $c->author->username,
             ],
             'replies' => $c->replies->map(fn($r) => [
                 'id' => $r->id,
@@ -323,6 +324,7 @@ class PostController extends Controller
                     'id' => $r->author->id,
                     'name' => $r->author->firstName . ' ' . $r->author->lastName,
                     'avatar' => $r->author->avatar,
+                    'username' => $r->author->username,
                 ],
                 'replies' => [], // one level deep only
             ])->values()->toArray(),
