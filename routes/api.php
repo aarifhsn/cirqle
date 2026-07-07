@@ -16,12 +16,14 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Http\Request;
 use App\Http\Controllers\MessageController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // 10 attempts per minute
 Route::post('/auth/refresh-token', [AuthController::class, 'refreshToken']);
 Route::post('/auth/forgot-password', [PasswordResetController::class, 'sendResetLink']);
 Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword']);
+
 
 Route::middleware('auth:sanctum')->group(function () {
     // Check verification status
@@ -112,14 +114,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/posts/{post}/poll/vote', [PostController::class, 'vote']);
 
-    // Route::get('/unread-counts', function (Request $request) {
-    //     $user = $request->user();
-    //     return response()->json([
-    //         'notifications' => $user->unreadNotifications()->count(),
-    //         'messages' => \App\Models\Message::where('receiver_id', $user->id)
-    //             ->whereNull('read_at')->count(),
-    //     ]);
-    // });
+    Route::post('/broadcasting/auth', function (Request $request) {
+        return Broadcast::auth($request);
+    });
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash

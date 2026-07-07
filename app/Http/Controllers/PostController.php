@@ -203,13 +203,6 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        Log::info('Delete Debug', [
-            'auth_user' => $request->user(),
-            'auth_id' => $request->user()?->id,
-            'post_user_id' => $post->user_id,
-            'post_id' => $post->id,
-        ]);
-
         if ($post->user_id != $request->user()->id) {
             return response()->json([
                 'message' => 'Unauthorized',
