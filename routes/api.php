@@ -117,6 +117,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/broadcasting/auth', function (Request $request) {
         return Broadcast::auth($request);
     });
+
+    Route::get('/unread-counts', [NotificationController::class, 'unreadCounts']);
+
+
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash
