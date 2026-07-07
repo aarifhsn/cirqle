@@ -1,3 +1,4 @@
+import axios from "axios";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
@@ -26,12 +27,18 @@ const echo = new Echo({
     key: appKey,
     cluster: cluster,
     forceTLS: true,
-    authEndpoint: `${import.meta.env.VITE_SERVER_BASE_URL}/broadcasting/auth`,
-    auth: {
-        headers: () => ({
-            Authorization: `Bearer ${getToken()}`,
-        }),
-    },
+    authorizer: (channel) => ({
+        authorize: (socketId, callback) => {
+            axios
+                .post(
+                    `${import.meta.env.VITE_SERVER_BASE_URL}/broadcasting/auth`,
+                    { socket_id: socketId, channel_name: channel.name },
+                    { headers: { Authorization: `Bearer ${getToken()}` } },
+                )
+                .then((response) => callback(false, response.data))
+                .catch((error) => callback(true, error));
+        },
+    }),
 });
 
 export default echo;
