@@ -104,6 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Marketplace
     Route::get('/listings', [ListingController::class, 'index']);
+    Route::get('/listings/{id}', [ListingController::class, 'show']);
 
     // jobs
     Route::get('/jobs', [JobController::class, 'index']);

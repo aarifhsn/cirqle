@@ -10,22 +10,27 @@ class ListingController extends Controller
 {
     public function index()
     {
-        return response()->json(
-            Listing::where('status', 'active')
-                ->latest()
-                ->paginate(10)
-        );
+        $paginated = Listing::where('status', 'active')
+            ->with('user')
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'data' => collect($paginated->items())->map(fn($l) => $this->formatListing($l)),
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'has_more' => $paginated->hasMorePages(),
+        ]);
+    }
+
+    public function show($id)
+    {
+        $listing = Listing::with('user')->findOrFail($id);
+        return response()->json($listing);
     }
 
     public function store(Request $request)
     {
-        // 👇 add before validate
-        Log::info('POST data:', $request->all());
-        Log::info('FILES:', $_FILES);
-        Log::info('PHP upload error codes:', array_map(
-            fn($f) => $f['error'] ?? 'unknown',
-            $_FILES['images'] ?? []
-        ));
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -51,11 +56,6 @@ class ListingController extends Controller
             }
         }
 
-        Log::info('files:', array_map(
-            fn($f) => ['name' => $f->getClientOriginalName(), 'size' => $f->getSize(), 'mime' => $f->getMimeType()],
-            $request->file('images') ?? []
-        ));
-
         unset($data['images']);
 
         $listing = Listing::create([
@@ -66,5 +66,27 @@ class ListingController extends Controller
         ]);
 
         return response()->json($listing->load('user'), 201);
+    }
+
+    private function formatListing($listing): array
+    {
+        return [
+            'id' => $listing->id,
+            'title' => $listing->title,
+            'description' => $listing->description,
+            'price' => $listing->price,
+            'category' => $listing->category,
+            'images' => $listing->images,
+            'location' => $listing->location,
+            'status' => $listing->status,
+            'created_at' => $listing->created_at,
+            'user' => [
+                'id' => $listing->user->id,
+                'firstName' => $listing->user->firstName,
+                'lastName' => $listing->user->lastName,
+                'username' => $listing->user->username,
+                'avatar' => $listing->user->avatar,
+            ],
+        ];
     }
 }
