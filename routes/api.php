@@ -112,14 +112,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/posts/{post}/poll/vote', [PostController::class, 'vote']);
 
-    Route::get('/unread-counts', function (Request $request) {
-        $user = $request->user();
-        return response()->json([
-            'notifications' => $user->unreadNotifications()->count(),
-            'messages' => \App\Models\Message::where('receiver_id', $user->id)
-                ->whereNull('read_at')->count(),
-        ]);
-    });
+    // Route::get('/unread-counts', function (Request $request) {
+    //     $user = $request->user();
+    //     return response()->json([
+    //         'notifications' => $user->unreadNotifications()->count(),
+    //         'messages' => \App\Models\Message::where('receiver_id', $user->id)
+    //             ->whereNull('read_at')->count(),
+    //     ]);
+    // });
 });
 
 // Verify email via signed URL — no sanctum needed, uses id+hash
