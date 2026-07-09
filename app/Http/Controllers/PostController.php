@@ -439,19 +439,19 @@ class PostController extends Controller
 
         // store votes in a separate table or as json — check your migration
         // if you have a poll_votes table:
-        $existing = \DB::table('poll_votes')
+        $existing = DB::table('poll_votes')
             ->where('post_id', $post->id)
             ->where('user_id', $user->id)
             ->first();
 
         if ($existing) {
             // update vote
-            \DB::table('poll_votes')
+            DB::table('poll_votes')
                 ->where('post_id', $post->id)
                 ->where('user_id', $user->id)
                 ->update(['option_index' => $index]);
         } else {
-            \DB::table('poll_votes')->insert([
+            DB::table('poll_votes')->insert([
                 'post_id' => $post->id,
                 'user_id' => $user->id,
                 'option_index' => $index,
@@ -461,7 +461,7 @@ class PostController extends Controller
         }
 
         // return vote counts per option
-        $votes = \DB::table('poll_votes')
+        $votes = DB::table('poll_votes')
             ->where('post_id', $post->id)
             ->selectRaw('option_index, count(*) as count')
             ->groupBy('option_index')
