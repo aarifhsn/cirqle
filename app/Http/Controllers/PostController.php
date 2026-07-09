@@ -112,7 +112,7 @@ class PostController extends Controller
     {
 
         $request->validate([
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'type' => 'nullable|in:text,photo,poll,mood',
             'poll_options' => 'nullable|array|min:2',
             'poll_options.*' => 'string',
@@ -122,6 +122,20 @@ class PostController extends Controller
             'privacy' => 'nullable|in:public,followers,circles,only_me',
             'circle_id' => 'nullable|exists:circles,id',
         ]);
+
+        // 👇 block a genuinely empty post — no text, no image, no poll
+        if (
+            !$request->filled('content') &&
+            !$request->hasFile('images') &&
+            !$request->filled('poll_options')
+        ) {
+            return response()->json([
+                'message' => 'Post must include text, an image, or poll options.',
+                'errors' => [
+                    'content' => ['Please add some text, an image, or create a poll.'],
+                ],
+            ], 422);
+        }
 
         $post = Post::create([
             'user_id' => $request->user()->id,
@@ -134,9 +148,6 @@ class PostController extends Controller
 
         ]);
 
-
-
-        // 👇 this block was missing in your store method
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $file) {
                 $path = $file->store('posts', 'public');
@@ -144,10 +155,7 @@ class PostController extends Controller
             }
         }
 
-
-
         $post->load(['author', 'likes', 'comments.author', 'comments.replies.author', 'images']);
-
 
         return response()->json($this->formatPost($post));
     }
@@ -161,7 +169,7 @@ class PostController extends Controller
         }
 
         $request->validate([
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'type' => 'nullable|in:text,photo,poll,mood',
             'poll_options' => 'nullable|array|min:2',
             'poll_options.*' => 'string',
@@ -172,6 +180,20 @@ class PostController extends Controller
             'removed_images' => 'nullable|array',
             'removed_images.*' => 'integer',
         ]);
+
+        // how many images will this post actually have once this update applies?
+        $remainingImages = $post->images()->count()
+            - count($request->input('removed_images', []))
+            + count($request->file('images', []));
+
+        if (!$request->filled('content') && $remainingImages <= 0 && !$post->poll_options) {
+            return response()->json([
+                'message' => 'Post must include text, an image, or poll options.',
+                'errors' => [
+                    'content' => ['Please add some text, an image, or create a poll.'],
+                ],
+            ], 422);
+        }
 
         // remove deleted images
         if ($request->has('removed_images')) {
@@ -357,7 +379,8 @@ class PostController extends Controller
                 ->where('post_id', $post->id)
                 ->selectRaw('option_index, count(*) as count')
                 ->groupBy('option_index')
-                ->pluck('count', 'option_index'),
+                ->pluck('count', 'option_index')
+                ->map(fn($c) => (int) $c),
             'user_vote' => $authUser ? DB::table('poll_votes')
                 ->where('post_id', $post->id)
                 ->where('user_id', $authUser->id)
